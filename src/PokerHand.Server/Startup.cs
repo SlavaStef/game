@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.BusinessLogic.Services;
 using PokerHand.Common;
+using PokerHand.Server.Helpers;
 using PokerHand.Server.Hubs;
 
 namespace PokerHand.Server
@@ -19,6 +20,7 @@ namespace PokerHand.Server
         {
             services.AddSignalR();
 
+            services.AddScoped<IGameManager, GameManager>();
             services.AddScoped<IGameService, GameService>();
             
             services.AddSingleton<TablesCollection>();

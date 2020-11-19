@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Claims;
+using System.Linq;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
@@ -22,12 +23,78 @@ namespace PokerHand.BusinessLogic.Services
             _mapper = mapper;
         }
         
-        public TableDto AddPlayerToTable(string user)
+        public void StartRound(Guid tableId)
         {
-            var table = GetFreeTable() ?? CreateNewTable();
-
-            return _mapper.Map<TableDto>(table);
+            var table = _allTables.First(t => t.Id == tableId);
+            
+            while (table.Players.Count > 0)
+            {
+                MakeBets(table.Players);
+            }
         }
+
+        public (TableDto, bool) AddPlayerToTable(string user)
+        {
+            var table = GetFreeTable();
+            bool isNewTable = false;
+
+            if (table == null)
+            {
+                table = CreateNewTable();
+                isNewTable = true;
+                return (_mapper.Map<TableDto>(table), isNewTable);
+            }
+
+            return (_mapper.Map<TableDto>(table), isNewTable);
+        }
+
+        private void MakeBets(List<Player> players)
+        {
+            foreach (var player in players)
+            {
+                
+            }
+        }
+
+        public void SetDealerAndBlinds()
+        {
+            
+        }
+
+        public void DealPocketCards()
+        {
+            
+        }
+
+        // Pre-flop
+        public void StartPreFlopWagering()
+        {
+            
+        }
+        
+        // Flop, Turn, River
+        public void StartWagering()
+        {
+            
+        }
+
+        public void GetFlopCards()
+        {
+            
+        }
+
+        // Turn, River
+        public void GetCard()
+        {
+            
+        }
+
+        public void ProcessShowdown()
+        {
+            
+        }
+
+        #region privateHelpers
 
         private Table GetFreeTable()
         {
@@ -47,12 +114,13 @@ namespace PokerHand.BusinessLogic.Services
 
         private Table CreateNewTable()
         {
-            Table newTable = new Table();
+            var maxPlayers = 2;
+            Table newTable = new Table(maxPlayers);
             _allTables.Add(newTable);
-
+            
             return newTable;
         }
-        
-        
+
+        #endregion
     }
 }

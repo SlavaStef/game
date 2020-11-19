@@ -8,9 +8,8 @@ namespace PokerHand.Common.Dto
     public class TableDto
     {
         public Guid Id { get; set; }
-        public Deck Deck { get; set; }
-        public PlayerDto Player { get; set; }
+        public List<PlayerDto> Players { get; set; }
         public int Pot { get; set; }
-        public List<Card> TableCards { get; set; }
+        public List<Card> CommunityCards { get; set; }
     }
 }

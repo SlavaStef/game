@@ -2,28 +2,35 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using PokerHand.BusinessLogic.Interfaces;
-using PokerHand.Common.Dto;
+using PokerHand.Server.Helpers;
 
 namespace PokerHand.Server.Hubs
 {
     public class GameHub : Hub
     {
         private readonly IGameService _gameService;
+        private readonly IGameManager _gameManager;
         
-        public GameHub(IGameService gameService)
+        public GameHub(
+            IGameService gameService,
+            IGameManager gameManager)
         {
+            _gameManager = gameManager;
             _gameService = gameService;
         }
         
         public async Task ConnectToTable()
         {
-            TableDto tableDto = _gameService.AddPlayerToTable(Context.ConnectionId);
+            var (tableDto, isNewTable) = _gameService.AddPlayerToTable(Context.ConnectionId);
             
-            await Clients.Caller.SendAsync("ReceiveTable", JsonSerializer.Serialize(tableDto));
+            if (isNewTable)
+                _gameManager.StartRound(tableDto.Id);
+            
             await Clients.Others.SendAsync("AnotherPlayerEnter", "NewUserName");
+            await Clients.All.SendAsync("ReceiveTable", JsonSerializer.Serialize(tableDto));
         }
 
-        public async Task Bet(int amount)
+        public async Task MakeBet(int amount)
         {
             await Clients.All.SendAsync("");
         }

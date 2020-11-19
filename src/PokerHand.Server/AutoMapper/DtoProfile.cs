@@ -8,7 +8,10 @@ namespace PokerHand.Server.AutoMapper
     {
         public Profiles()
         {
-            CreateMap<Table, TableDto>();
+            CreateMap<Player, PlayerDto>();
+            CreateMap<Table, TableDto>()
+                .ForMember(dest => dest.Players, opt => opt.MapFrom(
+                    src => src.Players));
         }
     }
 }

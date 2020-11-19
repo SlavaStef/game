@@ -5,6 +5,18 @@ namespace PokerHand.Common.Entities
 {
     public class Table
     {
+        public Table(int maxPlayers)
+        {
+            Id = Guid.NewGuid();
+            TimeCreated = DateTime.Now;
+            MaxPlayers = maxPlayers;
+            Deck = new Deck();
+            Players = new List<Player>();
+            Pot = 0; 
+            CommunityCards = new List<Card>();
+            Winner = null;
+        }
+        
         public Guid Id { get; set; }
         public DateTime TimeCreated { get; set; }
 

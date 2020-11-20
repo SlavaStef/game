@@ -7,6 +7,7 @@ using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers;
 
 namespace PokerHand.BusinessLogic.Services
 {
@@ -26,11 +27,9 @@ namespace PokerHand.BusinessLogic.Services
         public void StartRound(Guid tableId)
         {
             var table = _allTables.First(t => t.Id == tableId);
+            table.IsInGame = true;
             
-            while (table.Players.Count > 0)
-            {
-                MakeBets(table.Players);
-            }
+            SetDealerAndBlinds(ref table);
         }
 
         public (TableDto, bool) AddPlayerToTable(string user)
@@ -56,18 +55,25 @@ namespace PokerHand.BusinessLogic.Services
             }
         }
 
-        public void SetDealerAndBlinds()
+        private static void SetDealerAndBlinds(ref Table table)
         {
+            table.Players[0].Button = ButtonTypeNumber.Dealer;
+            table.Players[1].Button = ButtonTypeNumber.BigBlind;
+            table.Players[2].Button = ButtonTypeNumber.SmallBlind;
             
+            DealPocketCards(ref table);
         }
 
-        public void DealPocketCards()
+        private static void DealPocketCards(ref Table table)
         {
+            foreach (var player in table.Players)
+                player.PocketCards = table.Deck.GetRandomCardsFromDeck(2);
             
+            StartPreFlopWagering(ref table);
         }
 
         // Pre-flop
-        public void StartPreFlopWagering()
+        private static void StartPreFlopWagering(ref Table table)
         {
             
         }
@@ -78,15 +84,10 @@ namespace PokerHand.BusinessLogic.Services
             
         }
 
-        public void GetFlopCards()
+        private static void PutCardsOnTable(ref Table table, int numberOfCards)
         {
-            
-        }
-
-        // Turn, River
-        public void GetCard()
-        {
-            
+            var cardToAdd = table.Deck.GetRandomCardsFromDeck(numberOfCards);
+            table.CommunityCards.AddRange(cardToAdd);
         }
 
         public void ProcessShowdown()

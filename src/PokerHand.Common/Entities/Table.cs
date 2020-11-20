@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace PokerHand.Common.Entities
 {
@@ -9,16 +10,22 @@ namespace PokerHand.Common.Entities
         {
             Id = Guid.NewGuid();
             TimeCreated = DateTime.Now;
+            IsInGame = false;
             MaxPlayers = maxPlayers;
             Deck = new Deck();
             Players = new List<Player>();
-            Pot = 0; 
+            Pot = 0;
             CommunityCards = new List<Card>();
             Winner = null;
+
+            for (int i = 0; i < Players.Count; i++)
+                Players[i].IndexNumber = i;
+            
         }
         
         public Guid Id { get; set; }
         public DateTime TimeCreated { get; set; }
+        public bool IsInGame { get; set; }
 
         public int MaxPlayers { get; set; }
         public Deck Deck { get; set; }

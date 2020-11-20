@@ -10,4 +10,8 @@
     <ProjectReference Include="..\PokerHand.BusinessLogic\PokerHand.BusinessLogic.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />
+  </ItemGroup>
+
 </Project>

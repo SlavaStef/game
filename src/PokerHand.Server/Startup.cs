@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PokerHand.BusinessLogic.Interfaces;
@@ -20,7 +21,7 @@ namespace PokerHand.Server
         {
             services.AddSignalR();
 
-            services.AddScoped<IGameManager, GameManager>();
+            services.AddScoped<IGameProcessManager, GameProcessManager>();
             services.AddScoped<IGameService, GameService>();
             
             services.AddSingleton<TablesCollection>();

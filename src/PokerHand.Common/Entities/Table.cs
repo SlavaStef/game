@@ -20,18 +20,38 @@ namespace PokerHand.Common.Entities
 
             for (int i = 0; i < Players.Count; i++)
                 Players[i].IndexNumber = i;
-            
         }
         
         public Guid Id { get; set; }
         public DateTime TimeCreated { get; set; }
         public bool IsInGame { get; set; }
-
         public int MaxPlayers { get; set; }
+        public int SmallBlind { get; set; }
+        public int BigBlind { get; set; }
+        
         public Deck Deck { get; set; }
         public List<Player> Players { get; set; }
-        public int Pot { get; set; }
+        
+        //Current round
+        public List<Player> ActivePlayers { get; set; }
         public List<Card> CommunityCards { get; set; }
+        public Player CurrentPlayer { get; set; }
+        public int CurrentMaxBet { get; set; }
+        public int Pot { get; set; }
         public Player Winner { get; set; }
+       
+        
+
+        /// CurrentRound
+        /// List<Player> players
+        /// int maxBet
+        /// 
+        /// IF FOLD -> CurrentRound.Players.Remove(currentPlayer)
+        /// 
+        /// IF CALL -> 1) Players.First(...).CurrentBet = CurrentMaxBet 
+        ///  
+        /// IF RAISE(int amount) -> player.bet = maxBet = amount
     }
 }
+
+//active players - Any players still involved in the pot

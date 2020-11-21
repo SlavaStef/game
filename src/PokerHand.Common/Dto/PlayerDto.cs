@@ -14,6 +14,6 @@ namespace PokerHand.Common.Dto
         public int TotalMoney { get; set; }
         public int StackMoney { get; set; }
         public ButtonTypeNumber Button { get; set; }
-        public int IndexNumber { get; set; }
+        public int IndexNumber { get; set; } // place at the table
     }
 }

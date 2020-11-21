@@ -8,7 +8,6 @@ namespace PokerHand.BusinessLogic.Interfaces
 {
     public interface IGameService
     {
-        public void StartRound(Guid tableId);
         public (TableDto, bool) AddPlayerToTable(string userId);
     }
 }

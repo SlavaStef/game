@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using PokerHand.Common.Helpers;
 
@@ -20,12 +19,12 @@ namespace PokerHand.Common.Entities
 
         public List<Card> GetRandomCardsFromDeck(int numberOfCards)
         {
-            List<Card> resultCards = new List<Card>();
-            Random random = new Random();
+            var resultCards = new List<Card>();
+            var random = new Random();
 
-            for (int i = 0; i < numberOfCards; i++)
+            for (var i = 0; i < numberOfCards; i++)
             {
-                Card cardFromDeck = Cards[random.Next(0, Cards.Count-1)];
+                var cardFromDeck = Cards[random.Next(0, Cards.Count-1)];
                 resultCards.Add(cardFromDeck);
                 Cards.Remove(cardFromDeck);
             }
@@ -33,24 +32,24 @@ namespace PokerHand.Common.Entities
             return resultCards;
         }
         
-        private List<Card> GetShuffledDeck()
+        private static List<Card> GetShuffledDeck()
         {
-            List<Card> deck = CreateDeck();
+            var deck = CreateDeck();
 
-            List<Card> shuffledDeck = deck.OrderBy(x => Guid.NewGuid()).ToList();
+            var shuffledDeck = deck.OrderBy(x => Guid.NewGuid()).ToList();
 
             return shuffledDeck;
         }
 
-        private List<Card> CreateDeck()
+        private static IEnumerable<Card> CreateDeck()
         {
-            List<Card> newDeck = new List<Card>();
+            var newDeck = new List<Card>();
 
             foreach (int rank in Enum.GetValues(typeof(CardRankNumber)))
             {
                 foreach (int suit in Enum.GetValues(typeof(SuitTypeNumber)))
                 {
-                    Card newCard = new Card
+                    var newCard = new Card
                     {
                         Rank = Enum.Parse<CardRankNumber>(rank.ToString()),
                         Suit = Enum.Parse<SuitTypeNumber>(suit.ToString())

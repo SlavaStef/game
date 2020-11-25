@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PokerHand.DataAccess", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PokerHand.Common", "src\PokerHand.Common\PokerHand.Common.csproj", "{06E5C714-7508-45A5-84E0-7E6C8AA77CEC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PokerHand.Client", "client\PokerHand.Client\PokerHand.Client.csproj", "{7EBD1354-38E5-4E9E-8A46-C0AD28F6CF95}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{06E5C714-7508-45A5-84E0-7E6C8AA77CEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06E5C714-7508-45A5-84E0-7E6C8AA77CEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06E5C714-7508-45A5-84E0-7E6C8AA77CEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EBD1354-38E5-4E9E-8A46-C0AD28F6CF95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EBD1354-38E5-4E9E-8A46-C0AD28F6CF95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EBD1354-38E5-4E9E-8A46-C0AD28F6CF95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EBD1354-38E5-4E9E-8A46-C0AD28F6CF95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

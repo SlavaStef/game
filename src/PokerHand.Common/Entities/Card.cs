@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using PokerHand.Common.Helpers;
+﻿using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Entities
 {

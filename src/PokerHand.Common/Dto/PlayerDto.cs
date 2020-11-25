@@ -10,10 +10,10 @@ namespace PokerHand.Common.Dto
         public Guid Id { get; set; }
         public string UserName { get; set; }
         public List<Card> PocketCards { get; set; }
-        public int CurrentBet { get; set; }
+        public PlayerAction CurrentAction { get; set; }
         public int TotalMoney { get; set; }
-        public int StackMoney { get; set; }
+        public int StackMoney { get; set; } // The total chips and currency that a player has in play at a given moment
         public ButtonTypeNumber Button { get; set; }
-        public int IndexNumber { get; set; } // place at the table
+        public int IndexNumber { get; set; } // Place at the table
     }
 }

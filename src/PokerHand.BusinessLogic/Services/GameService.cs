@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using AutoMapper;
-using Microsoft.AspNetCore.SignalR;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
-using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 
 namespace PokerHand.BusinessLogic.Services
@@ -22,10 +20,10 @@ namespace PokerHand.BusinessLogic.Services
             _mapper = mapper;
         }
  
-        public (TableDto, bool) AddPlayerToTable(string userName)
+        public (Table, bool) AddPlayerToTable(string userName)
         {
             var table = GetFreeTable();
-            bool isNewTable = false;
+            var isNewTable = false;
 
             if (table == null)
             {
@@ -39,37 +37,27 @@ namespace PokerHand.BusinessLogic.Services
                 UserName = userName,
                 IndexNumber = table.Players.Count + 1
             };
+            
+            table.Players.Add(player);
 
-            return (_mapper.Map<TableDto>(table), isNewTable);
+            return (table, isNewTable);
         }
 
         #region privateHelpers
 
-        private Table GetFreeTable()
-        {
-            Table freeTable = null;
-            
-            foreach (var table in _allTables)
-            {
-                if (table.Players.Count < table.MaxPlayers)
-                {
-                    freeTable = table;
-                    break;
-                }
-            }
-
-            return freeTable;
-        }
+        private Table GetFreeTable() => 
+            _allTables?.FirstOrDefault(table => table.Players.Count < table.MaxPlayers);
 
         private Table CreateNewTable()
         {
-            var maxPlayers = 2;
-            Table newTable = new Table(maxPlayers);
+            // TODO: change usage of maxPlayers
+            const int maxPlayers = 2;
+            var newTable = new Table(maxPlayers);
             _allTables.Add(newTable);
             
             return newTable;
         }
-
-#endregion
+        
+        #endregion
     }
 }

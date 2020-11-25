@@ -4,6 +4,6 @@ namespace PokerHand.Common.Helpers
 {
     public static class Waiter
     {
-        public static AutoResetEvent waitForPlayerBet = new AutoResetEvent(true);
+        public static AutoResetEvent WaitForPlayerBet = new AutoResetEvent(true);
     }
 }

@@ -59,13 +59,13 @@ namespace PokerHand.Server.Helpers
             await SetDealerAndBlinds(table);
             await DealPocketCards(table);
             await StartPreFlopWagering(table);
-            await DealCommonCards(table, 3); // Deal Pre-flop cards
-            // await StartWagering(table); // Deal 2-nd wagering
-            // await DealCommonCards(table, 1); // Deal Turn card
-            // await StartWagering(table); // Deal 3-d wagering
-            // await DealCommonCards(table, 1); // Deal River card
-            // await StartWagering(table); // Deal 4-th wagering
-            // await DefineWinner(table);
+            await DealCommunityCards(table, 3);
+            await StartWagering(table); // Deal 2-nd wagering
+            await DealCommunityCards(table, 1); // Deal Turn card
+            await StartWagering(table); // Deal 3-d wagering
+            await DealCommunityCards(table, 1); // Deal River card
+            await StartWagering(table); // Deal 4-th wagering
+            await DefineWinner(table);
 
             table.IsInGame = false;
         }
@@ -163,15 +163,69 @@ namespace PokerHand.Server.Helpers
             _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering. Players made their choices");
             
             CollectBetsFromTable(table);
+            _logger.LogInformation($"Table pot after collecting: {table.Pot}");
+            
+            await _hub.Clients.All
+                .SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
+
+            table.CurrentPlayer = null;
+            
             _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering ends");
         }
         
-        private async Task DealCommonCards(Table table, int numberOfCards)
+        private async Task DealCommunityCards(Table table, int numberOfCards)
         {
             var cardsToAdd = table.Deck.GetRandomCardsFromDeck(numberOfCards);
             table.CommunityCards.AddRange(cardsToAdd);
             
             await _hub.Clients.Group(table.Id.ToString()).SendAsync("DealCommunityCards", JsonSerializer.Serialize(table.CommunityCards));
+            _logger.LogInformation($"Community cards ({numberOfCards}) are sent to all users");
+        }
+
+        private async Task StartWagering(Table table)
+        {
+            _logger.LogInformation($"table {table.Id}: Method StartWagering starts");
+
+            do
+            {
+                // choose next player to make choice
+                SetCurrentPlayer(table);
+                // player makes choice
+                await _hub.Clients.Group(table.Id.ToString())
+                    .SendAsync("ReceiveCurrentPlayerId", JsonSerializer.Serialize(table.CurrentPlayer.Id)); //receive player's choice
+                _logger.LogInformation($"table {table.Id}: Method StartWagering. Current player set and sent to all players");
+                
+                _logger.LogInformation($"table {table.Id}: Method StartWagering. Waiting for player's action");
+                Waiter.WaitForPlayerBet.WaitOne();
+                _logger.LogInformation($"table {table.Id}: Method StartWagering. Player's action recieved");
+                
+                ProcessPlayerAction(table, table.CurrentPlayer);
+                await _hub.Clients.Group(table.Id.ToString())
+                    .SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
+            } 
+            while (CheckIfAllBetsAreEqual(table.Players));
+
+            _logger.LogInformation($"table {table.Id}: Method StartWagering. Players made their choices");
+            
+            CollectBetsFromTable(table);
+            _logger.LogInformation($"Table pot after collecting: {table.Pot}");
+            
+            await _hub.Clients.All
+                .SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
+            
+            _logger.LogInformation($"table {table.Id}: Method StartWagering ends");
+        }
+
+        private async Task DefineWinner(Table table)
+        {
+            foreach (var player in table.ActivePlayers)
+            {
+                var playerCards = new List<Card>();
+                playerCards.AddRange(table.CommunityCards);
+                playerCards.AddRange(player.PocketCards);
+                
+                
+            }
         }
 
         #region PrivateHelpers
@@ -215,16 +269,16 @@ namespace PokerHand.Server.Helpers
                 table.CurrentPlayer = table.Players.First(player => player.IndexNumber == 1);
             else // if not the last
             {
-                var currentPlayerId = table.CurrentPlayer.IndexNumber;
-                table.CurrentPlayer = table.Players.First(player => player.IndexNumber == currentPlayerId + 1);
+                var currentPlayerIndex = table.CurrentPlayer.IndexNumber;
+                table.CurrentPlayer = table.Players.First(player => player.IndexNumber == currentPlayerIndex + 1);
             }
         }
         
         private static void CollectBetsFromTable(Table table)
         {
-            foreach (var player in table.Players.Where(player => player.CurrentAction.Amount != null))
+            foreach (var player in table.ActivePlayers.Where(player => player.CurrentAction.Amount != null))
             {
-                table.Pot += (int)player.CurrentAction.Amount;
+                table.Pot += player.CurrentBet;
             }
         }
 
@@ -242,7 +296,7 @@ namespace PokerHand.Server.Helpers
                     player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount;
                     break;
                 case PlayerActionType.Call:
-                    player.StackMoney -= table.CurrentMaxBet;
+                    player.StackMoney -= table.CurrentMaxBet - player.CurrentBet;
                     player.CurrentBet = table.CurrentMaxBet;
                     break;
                 case PlayerActionType.Raise:
@@ -288,5 +342,38 @@ namespace PokerHand.Server.Helpers
         }
         
         #endregion
+    }
+
+    public static class CardsAnalyzer
+    {
+        public static bool IsFlush(List<Card> cards) =>
+            cards.All(card => card.Suit == cards[0].Suit);
+
+        public static bool IsStraight(List<Card> cards)
+        {
+            cards = SortByRank(cards);
+            
+            
+        }
+
+        private static List<Card> SortByRank(List<Card> cards)
+        {
+            for (var i = 0; i < cards.Count; i++)
+            {
+                var minimalCardIndex = i;
+
+                for (var j = i + 1; j < cards.Count; j++)
+                {
+                    if ((int)cards[j].Rank < (int)cards[minimalCardIndex].Rank)
+                        minimalCardIndex = j;
+                }
+                
+                var tempCard = cards[i];
+                cards[i] = cards[minimalCardIndex];
+                cards[minimalCardIndex] = tempCard;
+            }
+
+            return cards;
+        }
     }
 }

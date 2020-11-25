@@ -50,10 +50,18 @@ namespace PokerHand.Server.Hubs
                 await _gameProcessManager.StartRound(table.Id);
             }
         }
-        public async void ReceivePlayerActionFromClient(PlayerAction action)
+        public async void ReceivePlayerActionFromClient(string actionFromPlayer)
         {
             _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient started");
-            await Clients.Group(action.TableId.ToString()).SendAsync("ReceivePlayerActionFromServer", action);
+            _logger.LogInformation($"Received from client: {actionFromPlayer}");
+
+            var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
+            
+            _logger.LogInformation($"Action after deserialization: tableId: {action.TableId}, playerId: {action.PlayerId}, action: {action.ActionType}");
+            
+            await Clients.Others.SendAsync("ReceivePlayerActionFromServer", actionFromPlayer);
+            
+            _logger.LogInformation("Action is sent to clients");
             
             //TODO: Optionally extract to a new method
             _allTables
@@ -61,6 +69,8 @@ namespace PokerHand.Server.Hubs
                 .Players
                 .First(player => player.Id == action.PlayerId)
                 .CurrentAction = action;
+            
+            _logger.LogInformation($"Action is added to Current player {_allTables.First(table => table.Id == action.TableId).Players.First(player => player.Id == action.PlayerId).CurrentAction}");
             
             _logger.LogInformation($"GameHub. Player's action received, sent to all players and added to entity.");
             Waiter.WaitForPlayerBet.Set();

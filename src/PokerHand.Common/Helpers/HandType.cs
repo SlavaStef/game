@@ -10,6 +10,7 @@
         Flush = 6,
         FullHouse = 7,
         FourOfAKind = 8,
-        StraightFlush = 9
+        StraightFlush = 9,
+        RoyalFlush = 10
     }
 }

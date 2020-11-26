@@ -52,16 +52,16 @@ namespace PokerHand.Server.Hubs
         }
         public async void ReceivePlayerActionFromClient(string actionFromPlayer)
         {
-            _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient started");
-            _logger.LogInformation($"Received from client: {actionFromPlayer}");
+                    _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient started");
+                    _logger.LogInformation($"Received from client: {actionFromPlayer}");
 
             var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
             
-            _logger.LogInformation($"Action after deserialization: tableId: {action.TableId}, playerId: {action.PlayerId}, action: {action.ActionType}");
+                    _logger.LogInformation($"Action after deserialization: tableId: {action.TableId}, playerId: {action.PlayerId}, action: {action.ActionType}");
             
             await Clients.Others.SendAsync("ReceivePlayerActionFromServer", actionFromPlayer);
             
-            _logger.LogInformation("Action is sent to clients");
+                    _logger.LogInformation("Action is sent to clients");
             
             //TODO: Optionally extract to a new method
             _allTables
@@ -70,18 +70,25 @@ namespace PokerHand.Server.Hubs
                 .First(player => player.Id == action.PlayerId)
                 .CurrentAction = action;
             
-            _logger.LogInformation($"Action is added to Current player {_allTables.First(table => table.Id == action.TableId).Players.First(player => player.Id == action.PlayerId).CurrentAction}");
+                    _logger.LogInformation($"Action is added to Current player {_allTables.First(table => table.Id == action.TableId).Players.First(player => player.Id == action.PlayerId).CurrentAction}");
             
-            _logger.LogInformation($"GameHub. Player's action received, sent to all players and added to entity.");
+                    _logger.LogInformation($"GameHub. Player's action received, sent to all players and added to entity.");
             Waiter.WaitForPlayerBet.Set();
-            _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient ended");
+                    _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient ended");
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            await Clients.All.SendAsync("PlayerDisconnected", Context.ConnectionId);
+                    _logger.LogInformation($"GameHub. Method OnDisconnectedAsync sterted");
 
-            //_gameProcessManager.DisconnectPlayer(Context.ConnectionId);
+            var (table, isPlayerRemoved, isTableRemoved) = _gameService.RemovePlayerFromTable(Context.ConnectionId);
+            
+                    _logger.LogInformation($"GameHub. Method OnDisconnectedAsync. player removed");
+                    _logger.LogInformation($"GameHub. players: {table.Players.Count}");
+
+            if (!isTableRemoved && isPlayerRemoved)
+                await Clients.Group(table.Id.ToString())
+                    .SendAsync("PlayerDisconnected", JsonSerializer.Serialize(table));
         }
     }
 }

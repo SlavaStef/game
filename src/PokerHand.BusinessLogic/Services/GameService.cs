@@ -43,6 +43,21 @@ namespace PokerHand.BusinessLogic.Services
             return (table, isNewTable);
         }
 
+        public (Table, bool, bool) RemovePlayerFromTable(string userName)
+        {
+            var table = _allTables.First(table => table.Players.FirstOrDefault(player => player.UserName == userName) != null);
+            var playerToRemove = table.Players.First(player => player.UserName == userName);
+
+            table.Players.Remove(playerToRemove);
+            table.ActivePlayers.Remove(playerToRemove);
+
+            var isPlayerRemoved = !table.Players.Contains(playerToRemove);
+
+            var isTableRemoved = table.Players.Count == 0;
+
+            return (table, isPlayerRemoved, isTableRemoved);
+        }
+
         #region privateHelpers
 
         private Table GetFreeTable() => 
@@ -51,7 +66,7 @@ namespace PokerHand.BusinessLogic.Services
         private Table CreateNewTable()
         {
             // TODO: change usage of maxPlayers
-            const int maxPlayers = 2;
+            const int maxPlayers = 5;
             var newTable = new Table(maxPlayers);
             _allTables.Add(newTable);
             

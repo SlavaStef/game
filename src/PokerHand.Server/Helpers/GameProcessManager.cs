@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
@@ -44,17 +45,21 @@ namespace PokerHand.Server.Helpers
         
         public async Task StartRound(Guid tableId)
         {
-            var table = _allTables.First(t => t.Id == tableId);
-            table.IsInGame = true;
-            
-            _logger.LogInformation($"table {table.Id}: Round started. Waiting for two players");
-            
+            var table = _allTables.First(table => table.Id == tableId);
+
+            if (table.Players.Count < 2)
+            {
+                _logger.LogInformation($"table {table.Id}: Round started. Waiting for two players");
+                await _hub.Clients.Group(table.Id.ToString()).SendAsync("WaitForPlayers");
+            }
+
             while (table.Players.Count < 2)
                 System.Threading.Thread.Sleep(1000);
             
             _logger.LogInformation($"table {table.Id}: Game started");
 
-            table.ActivePlayers = table.Players;
+            table.ActivePlayers = table.Players.ToList();
+            table.IsInGame = true;
             
             await SetDealerAndBlinds(table);
             await DealPocketCards(table);
@@ -68,71 +73,94 @@ namespace PokerHand.Server.Helpers
             await Showdown(table);
 
             table.IsInGame = false;
+            table.ActivePlayers = null;
         }
 
         private async Task SetDealerAndBlinds(Table table)
         {
             _logger.LogInformation($"table {table.Id}: Method SetDealerAndBlinds starts");
-
-            var currentDealer = table.Players.FirstOrDefault(player => player.Button == ButtonTypeNumber.Dealer)
-                ?.IndexNumber;
-            var currentSmallBlind = table.Players.FirstOrDefault(player => player.Button == ButtonTypeNumber.SmallBlind)
-                ?.IndexNumber;
-            var currentBigBlind = table.Players.FirstOrDefault(player => player.Button == ButtonTypeNumber.BigBlind)
-                ?.IndexNumber;
             
-            switch (table.Players.Count)
+            switch (table.ActivePlayers.Count)
             {
-                case 1:
-                    //TODO: handle this situation
-                    break;
-                case 2: // if two players, there is no dealer ( smallBlind == dealer )
-                    if (currentSmallBlind == null) // blinds are not set yet -> set blinds starting from the first player
+                case 2:
+                    if (table.DealerIndex < 0 && table.SmallBlindIndex < 0 && table.BigBlindIndex < 0 ||
+                        table.SmallBlindIndex == 1)
                     {
-                        table.Players.First(player => player.IndexNumber == 1).Button = ButtonTypeNumber.SmallBlind;
-                        table.Players.First(player => player.IndexNumber == 2).Button = ButtonTypeNumber.BigBlind;
+                        table.SmallBlindIndex = 0;
+                        table.ActivePlayers.First(player => player.IndexNumber == 0).Button =
+                            ButtonTypeNumber.SmallBlind;
+                        
+                        table.BigBlindIndex = 1;
+                        table.ActivePlayers.First(player => player.IndexNumber == 1).Button =
+                            ButtonTypeNumber.BigBlind;
                     }
-                    else if ((int) currentSmallBlind == 1)
+                    else if (table.SmallBlindIndex == 0)
                     {
-                        table.Players.First(player => player.IndexNumber == 1).Button = ButtonTypeNumber.BigBlind;
-                        table.Players.First(player => player.IndexNumber == 2).Button = ButtonTypeNumber.SmallBlind;
+                        table.BigBlindIndex = 0;
+                        table.ActivePlayers.First(player => player.IndexNumber == 0).Button =
+                            ButtonTypeNumber.BigBlind;
+                        
+                        table.SmallBlindIndex = 1;
+                        table.ActivePlayers.First(player => player.IndexNumber == 1).Button =
+                            ButtonTypeNumber.SmallBlind;
+                    }
+                    break;
+                
+                default:
+                    if (table.DealerIndex < 0 && table.SmallBlindIndex < 0 && table.BigBlindIndex < 0)
+                    {
+                        table.DealerIndex = 0;
+                        table.ActivePlayers[0].Button = ButtonTypeNumber.Dealer;
+                        
+                        table.SmallBlindIndex = 1;
+                        table.ActivePlayers[1].Button = ButtonTypeNumber.SmallBlind;
+                        
+                        table.BigBlindIndex = 2;
+                        table.ActivePlayers[2].Button = ButtonTypeNumber.BigBlind;
                     }
                     else
                     {
-                        table.Players.First(player => player.IndexNumber == 1).Button = ButtonTypeNumber.SmallBlind;
-                        table.Players.First(player => player.IndexNumber == 2).Button = ButtonTypeNumber.BigBlind;
+                       var dealer = table.ActivePlayers.First(player => player.Button == ButtonTypeNumber.Dealer);
+                       var nextDealer = dealer.IndexNumber == table.MaxPlayers - 1 ? 
+                                              table.ActivePlayers[0] :
+                                              table.ActivePlayers[table.ActivePlayers.IndexOf(dealer) + 1];
+                       
+                       var smallBlind = table.ActivePlayers.First(player => player.Button == ButtonTypeNumber.SmallBlind);
+                       var nextSmallBlind = smallBlind.IndexNumber == table.MaxPlayers ? 
+                                                  table.ActivePlayers[0] : 
+                                                  table.ActivePlayers[table.ActivePlayers.IndexOf(smallBlind) + 1];
+                       
+                       var bigBlind = table.ActivePlayers.First(player => player.Button == ButtonTypeNumber.BigBlind);
+                       var nextBigBlind = bigBlind.IndexNumber == table.MaxPlayers ? 
+                                                table.ActivePlayers[0] : 
+                                                table.ActivePlayers[table.ActivePlayers.IndexOf(bigBlind) + 1];
+                       
+                       nextDealer.Button = ButtonTypeNumber.Dealer;
+                       nextSmallBlind.Button = ButtonTypeNumber.SmallBlind;
+                       nextBigBlind.Button = ButtonTypeNumber.BigBlind;
+                       
+                       table.DealerIndex = nextDealer.IndexNumber;
+                       table.SmallBlindIndex = nextSmallBlind.IndexNumber;
+                       table.BigBlindIndex = nextBigBlind.IndexNumber;
                     }
+
                     break;
-                default:
-                    //TODO: think over this algorithm
-                    table.Players.First(player => player.Button == ButtonTypeNumber.BigBlind).Button =
-                        ButtonTypeNumber.SmallBlind;
-                    table.Players.First(player => player.Button == ButtonTypeNumber.SmallBlind).Button =
-                        ButtonTypeNumber.Dealer;
-                    table.Players.First(player => player.Button == ButtonTypeNumber.Dealer).Button =
-                        ButtonTypeNumber.BigBlind;
-                    break; 
             }
             _logger.LogInformation($"table {table.Id}: Method SetDealerAndBlinds. Dealer and Blinds are set");
-
-            // TODO: change playerDto to player
-            await _hub.Clients.Group(table.Id.ToString()).SendAsync("SetDealerAndBlinds", JsonSerializer.Serialize(_mapper.Map<List<PlayerDto>>(table.Players)));
+            
+            await _hub.Clients.Group(table.Id.ToString()).SendAsync("SetDealerAndBlinds", JsonSerializer.Serialize(_mapper.Map<List<TableDto>>(table)));
             _logger.LogInformation($"table {table.Id}: Method SetDealerAndBlinds. Dealer and Blinds are set. New table is sent to all players. Method ends");
         }
-        
+
         private async Task DealPocketCards(Table table)
         {
-            _logger.LogInformation($"table {table.Id}: Method DealPoketCards starts");
-            
-            //TODO: change to active players
-            foreach (var player in table.Players)
+            _logger.LogInformation($"Table {table.Id}: Method DealPocketCards starts");
+            foreach (var player in table.ActivePlayers)
                 player.PocketCards = table.Deck.GetRandomCardsFromDeck(2);
             
-            _logger.LogInformation($"table {table.Id}: Method DealPoketCards. Each player got two cards");
-
-            //TODO: change to active players
-            await _hub.Clients.Group(table.Id.ToString()).SendAsync("DealPocketCards", JsonSerializer.Serialize(_mapper.Map<List<PlayerDto>>(table.Players)));
-            _logger.LogInformation($"table {table.Id}: Method DealPoketCards. New tableDto is sent to all players. Method end");
+            await _hub.Clients.Group(table.Id.ToString())
+                .SendAsync("DealPocketCards", JsonSerializer.Serialize(_mapper.Map<List<PlayerDto>>(table.ActivePlayers)));
+            _logger.LogInformation($"Table {table.Id}: Pocket cards are sent to all players. Method ends");
         }
 
         private async Task StartPreFlopWagering(Table table)
@@ -142,17 +170,20 @@ namespace PokerHand.Server.Helpers
             await MakeSmallBlindBet(table, _hub);
             await MakeBigBlindBet(table, _hub);
             
+            await _hub.Clients.Group(table.Id.ToString())
+                .SendAsync("ReceiveTable", JsonSerializer.Serialize(table));
+            
             do
             {
-                // choose next player to make choice
                 SetCurrentPlayer(table);
-                // player makes choice
+                
                 await _hub.Clients.Group(table.Id.ToString())
-                    .SendAsync("ReceiveCurrentPlayerId", JsonSerializer.Serialize(table.CurrentPlayer.Id)); //receive player's choice
-                _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering. Current player set and sent to all players");
+                    .SendAsync("ReceiveCurrentPlayerId", JsonSerializer.Serialize(table.CurrentPlayer.Id));
+                _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering. Current player is set and sent to all players");
+                
                 _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering. Waiting for player's action");
                 Waiter.WaitForPlayerBet.WaitOne();
-                _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering. Player's action recieved");
+                _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering. Player's action received");
                 
                 ProcessPlayerAction(table, table.CurrentPlayer);
                 await _hub.Clients.Group(table.Id.ToString())
@@ -169,22 +200,25 @@ namespace PokerHand.Server.Helpers
                 .SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
 
             table.CurrentPlayer = null;
-            
+
             _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering ends");
         }
         
         private async Task DealCommunityCards(Table table, int numberOfCards)
         {
+            _logger.LogInformation($"Table {table.Id}: Method DealCommunityCards starts");
             var cardsToAdd = table.Deck.GetRandomCardsFromDeck(numberOfCards);
             table.CommunityCards.AddRange(cardsToAdd);
             
             await _hub.Clients.Group(table.Id.ToString()).SendAsync("DealCommunityCards", JsonSerializer.Serialize(table.CommunityCards));
-            _logger.LogInformation($"Community cards ({numberOfCards}) are sent to all users");
+            _logger.LogInformation($"Table {table.Id}: Community cards ({numberOfCards}) are sent to all users. Method ends");
         }
 
         private async Task StartWagering(Table table)
         {
             _logger.LogInformation($"table {table.Id}: Method StartWagering starts");
+
+            var counter = table.ActivePlayers.Count;
 
             do
             {
@@ -197,13 +231,15 @@ namespace PokerHand.Server.Helpers
                 
                 _logger.LogInformation($"table {table.Id}: Method StartWagering. Waiting for player's action");
                 Waiter.WaitForPlayerBet.WaitOne();
-                _logger.LogInformation($"table {table.Id}: Method StartWagering. Player's action recieved");
+                _logger.LogInformation($"table {table.Id}: Method StartWagering. Player's action received");
                 
                 ProcessPlayerAction(table, table.CurrentPlayer);
                 await _hub.Clients.Group(table.Id.ToString())
                     .SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
+
+                counter--;
             } 
-            while (CheckIfAllBetsAreEqual(table.Players));
+            while (counter > 0 || CheckIfAllBetsAreEqual(table.Players));
 
             _logger.LogInformation($"table {table.Id}: Method StartWagering. Players made their choices");
             
@@ -253,31 +289,28 @@ namespace PokerHand.Server.Helpers
             // if round starts
             if (table.CurrentPlayer == null)
             {
-                switch (table.Players.Count)
+                switch (table.ActivePlayers.Count)
                 {
                     case 2:
-                        table.CurrentPlayer = table.Players.First(player => player.Button == ButtonTypeNumber.SmallBlind);
+                        table.CurrentPlayer = table.ActivePlayers.First(player => player.IndexNumber == table.SmallBlindIndex);
                         break;
                     case 3:
-                        table.CurrentPlayer = table.Players.First(player => player.Button == ButtonTypeNumber.Dealer);
+                        table.CurrentPlayer = table.ActivePlayers.First(player => player.IndexNumber == table.DealerIndex);
                         break;
                     default:
-                    {
-                        var bigBlindIndex = table.Players.First(player => player.Button == ButtonTypeNumber.BigBlind).IndexNumber;
-                        table.CurrentPlayer = table.Players.First(player => player.IndexNumber == bigBlindIndex + 1);
+                        var bigBlind = table.ActivePlayers.First(player => player.IndexNumber == table.BigBlindIndex);
+                        table.CurrentPlayer = table.ActivePlayers.IndexOf(bigBlind) == table.ActivePlayers.Count - 1 
+                                            ? table.ActivePlayers[0] 
+                                            : table.ActivePlayers[table.ActivePlayers.IndexOf(bigBlind) + 1];
                         break;
-                    }
                 }
             }
             else  
-            // if round already started and current player is the last one
-            if (table.CurrentPlayer.IndexNumber == table.Players.Count)
-                table.CurrentPlayer = table.Players.First(player => player.IndexNumber == 1);
-            else // if not the last
-            {
-                var currentPlayerIndex = table.CurrentPlayer.IndexNumber;
-                table.CurrentPlayer = table.Players.First(player => player.IndexNumber == currentPlayerIndex + 1);
-            }
+                // if round already started and current player is the last one
+            if (table.CurrentPlayer.IndexNumber == table.MaxPlayers - 1)
+                table.CurrentPlayer = table.ActivePlayers[0];
+            else // if current player is not the last pne on table
+                table.CurrentPlayer = table.ActivePlayers[table.ActivePlayers.IndexOf(table.CurrentPlayer) + 1];
         }
         
         private static void CollectBetsFromTable(Table table)
@@ -307,7 +340,7 @@ namespace PokerHand.Server.Helpers
                     break;
                 case PlayerActionType.Raise:
                     player.StackMoney -= (int) player.CurrentAction.Amount;
-                    player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount;
+                    player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount + player.CurrentBet;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -316,235 +349,41 @@ namespace PokerHand.Server.Helpers
 
         private static async Task MakeSmallBlindBet(Table table, IHubContext<GameHub> hub)
         {
+            var player = table.ActivePlayers.First(player => player.IndexNumber == table.SmallBlindIndex);
+            
             var smallBlindAction = new PlayerAction
             {
-                TableId = table.Id,
-                PlayerId = table.Players.First(player => player.Button == ButtonTypeNumber.SmallBlind).Id,
+                PlayerId = player.Id,
                 ActionType = PlayerActionType.Bet,
                 Amount = table.SmallBlind
             };
 
-            table.Players.First(player => player.Id == smallBlindAction.PlayerId).CurrentAction = smallBlindAction;
+            player.CurrentAction = smallBlindAction;
             
-            //TODO: Add serialization
-            await hub.Clients.Group(table.Id.ToString()).SendAsync("ReceivePlayerAction", JsonSerializer.Serialize(smallBlindAction));
-            ProcessPlayerAction(table, table.Players.First(player => player.Id == smallBlindAction.PlayerId));
+            await hub.Clients.Group(table.Id.ToString())
+                .SendAsync("ReceivePlayerAction", JsonSerializer.Serialize(smallBlindAction));
+            
+            ProcessPlayerAction(table, player);
         }
         
         private static async Task MakeBigBlindBet(Table table, IHubContext<GameHub> hub)
         {
+            var player = table.ActivePlayers.First(player => player.IndexNumber == table.BigBlindIndex);
+            
             var bigBlindAction = new PlayerAction
             {
-                TableId = table.Id,
-                PlayerId = table.Players.First(player => player.Button == ButtonTypeNumber.BigBlind).Id,
+                PlayerId = player.Id,
                 ActionType = PlayerActionType.Raise,
                 Amount = table.BigBlind
             };
 
-            table.Players.First(player => player.Id == bigBlindAction.PlayerId).CurrentAction = bigBlindAction;
+            player.CurrentAction = bigBlindAction;
             
-            await hub.Clients.Group(table.Id.ToString()).SendAsync("ReceivePlayerAction", JsonSerializer.Serialize(bigBlindAction));
-            ProcessPlayerAction(table, table.Players.First(player => player.Id == bigBlindAction.PlayerId));
+            await hub.Clients.Group(table.Id.ToString())
+                .SendAsync("ReceivePlayerAction", JsonSerializer.Serialize(bigBlindAction));
+            
+            ProcessPlayerAction(table, player);
         }
         #endregion
-    }
-
-    public static class CardsAnalyzer
-    {
-        public static List<Player> DefineWinner(List<Card> communityCards, List<Player> players)
-        {
-            var maxHand = 0;
-            
-            foreach (var player in players)
-            {
-                var totalCards = new List<Card>();
-                totalCards.AddRange(communityCards);
-                totalCards.AddRange(player.PocketCards);
-
-                player.Hand = AnalyzePlayerCards(totalCards);
-                
-                if ((int) player.Hand > maxHand)
-                    maxHand = (int) player.Hand;
-            }
-
-            var winners = players.FindAll(player => (int) player.Hand == maxHand);
-
-            return winners;
-        }
-        
-        public static HandType AnalyzePlayerCards(List<Card> cards)
-        {
-            if (IsRoyalFlash(cards))
-                return HandType.RoyalFlush;
-
-            if (IsStraightFlush(cards))
-                return HandType.StraightFlush;
-
-            if (IsFourOfAKind(cards))
-                return HandType.FourOfAKind;
-
-            if (IsFullHouse(cards))
-                return HandType.FullHouse;
-
-            if (IsFlush(cards))
-                return HandType.Flush;
-
-            if (IsStraight(cards))
-                return HandType.Straight;
-
-            if (IsThreeOfAKind(cards))
-                return HandType.ThreeOfAKind;
-
-            if (IsTwoPairs(cards))
-                return HandType.TwoPairs;
-
-            if (IsOnePair(cards))
-                return HandType.OnePair;
-
-            return HandType.HighCard;
-        }
-        
-        public static Card GetHighCard(List<Card> cards) =>
-            SortByRank(cards)[4];
-        
-        
-        private static bool IsRoyalFlash(List<Card> cards) =>
-            IsStraight(cards) && IsFlush(cards) && (int) SortByRank(cards)[4].Rank == 12;
-        
-        private static bool IsStraightFlush(List<Card> cards) =>
-                    IsStraight(cards) && IsFlush(cards);
-        
-        private static bool IsFourOfAKind(List<Card> cards)
-        {
-            cards = SortByRank(cards);
-
-            var isFourWithHigherCard = (int) cards[0].Rank == (int) cards[1].Rank &&
-                                       (int) cards[1].Rank == (int) cards[2].Rank &&
-                                       (int) cards[2].Rank == (int) cards[3].Rank;
-            
-            var isFourWithLowerCard = (int) cards[1].Rank == (int) cards[2].Rank &&
-                                      (int) cards[2].Rank == (int) cards[3].Rank &&
-                                      (int) cards[3].Rank == (int) cards[4].Rank;
-
-            return isFourWithHigherCard || isFourWithLowerCard;
-        }
-        
-        private static bool IsFullHouse(List<Card> cards)
-        {
-            cards = SortByRank(cards);
-
-            var isThreeLower = (int) cards[0].Rank == (int) cards[1].Rank &&
-                               (int) cards[1].Rank == (int) cards[2].Rank &&
-                               (int) cards[3].Rank == (int) cards[4].Rank;
-            
-            var isThreeHigher = (int) cards[0].Rank == (int) cards[1].Rank &&
-                                (int) cards[2].Rank == (int) cards[3].Rank &&
-                                (int) cards[3].Rank == (int) cards[4].Rank;
-
-            return isThreeLower || isThreeHigher;
-        }
-        
-        private static bool IsFlush(List<Card> cards) =>
-            cards.All(card => card.Suit == cards[0].Suit);
-
-        private static bool IsStraight(List<Card> cards)
-        {
-            cards = SortByRank(cards);
-
-            if ((int) cards[4].Rank == 13)
-            {
-                var isFiveHighStraight = (int) cards[0].Rank == 1 && (int) cards[1].Rank == 2 &&
-                         (int) cards[2].Rank == 3 && (int) cards[3].Rank == 4;
-                var isAceHighStraight = (int) cards[0].Rank == 9 && (int) cards[1].Rank == 10 && 
-                         (int) cards[2].Rank == 11 && (int) cards[3].Rank == 12;
-
-                return isFiveHighStraight || isAceHighStraight;
-            }
-            else
-            {
-                var testRank = (int) cards[0].Rank + 1;
-
-                for (var i = 0; i < 5; i++)
-                {
-                    if ((int) cards[i].Rank != testRank)
-                        return false;
-
-                    testRank++;
-                }
-
-                return true;
-            }
-        }
-
-        private static bool IsThreeOfAKind(List<Card> cards)
-        {
-            cards = SortByRank(cards);
-
-            var isThreeAtBeginning = (int) cards[1].Rank == (int) cards[2].Rank && 
-                                     (int) cards[2].Rank == (int) cards[3].Rank && 
-                                     (int) cards[0].Rank != (int) cards[1].Rank && 
-                                     (int) cards[4].Rank != (int) cards[1].Rank && 
-                                     (int) cards[0].Rank != (int) cards[4].Rank;
-            
-            var isThreeInMiddle = (int) cards[1].Rank == (int) cards[2].Rank && 
-                                     (int) cards[2].Rank == (int) cards[3].Rank && 
-                                     (int) cards[0].Rank != (int) cards[1].Rank && 
-                                     (int) cards[4].Rank != (int) cards[1].Rank && 
-                                     (int) cards[0].Rank != (int) cards[4].Rank;
-            
-            var isThreeInEnd = (int) cards[0].Rank == (int) cards[1].Rank &&
-                                  (int) cards[1].Rank == (int) cards[2].Rank &&
-                                  (int) cards[3].Rank != (int) cards[0].Rank &&
-                                  (int) cards[4].Rank != (int) cards[0].Rank &&
-                                  (int) cards[3].Rank != (int) cards[4].Rank;
-
-            return isThreeAtBeginning || isThreeInMiddle || isThreeInEnd;
-        }
-        
-        private static bool IsTwoPairs(List<Card> cards)
-        {
-            cards = SortByRank(cards);
-
-            var isTwoPairsAtBeginning = (int) cards[0].Rank == (int) cards[1].Rank &&
-                                      (int) cards[1].Rank == (int) cards[3].Rank;
-            var isThoPairsOnSides = (int) cards[0].Rank == (int) cards[1].Rank &&
-                                      (int) cards[3].Rank == (int) cards[4].Rank;
-            var isTwoPairsInEnd = (int) cards[1].Rank == (int) cards[2].Rank &&
-                                      (int) cards[3].Rank == (int) cards[4].Rank;
-
-            return isTwoPairsAtBeginning || isThoPairsOnSides || isTwoPairsInEnd;
-        }
-
-        private static bool IsOnePair(List<Card> cards)
-        {
-            cards = SortByRank(cards);
-
-            var isFirstEqualsSecond = (int) cards[0].Rank == (int) cards[1].Rank;
-            var isSecondEqualsThird = (int) cards[1].Rank == (int) cards[2].Rank;
-            var isThirdEqualsFourth = (int) cards[2].Rank == (int) cards[3].Rank;
-            var isFourthEqualsFifth = (int) cards[3].Rank == (int) cards[4].Rank;
-
-            return isFirstEqualsSecond || isSecondEqualsThird || isThirdEqualsFourth || isFourthEqualsFifth;
-        }
-
-        private static List<Card> SortByRank(List<Card> cards)
-        {
-            for (var i = 0; i < cards.Count; i++)
-            {
-                var minimalCardIndex = i;
-
-                for (var j = i + 1; j < cards.Count; j++)
-                {
-                    if ((int)cards[j].Rank < (int)cards[minimalCardIndex].Rank)
-                        minimalCardIndex = j;
-                }
-                
-                var tempCard = cards[i];
-                cards[i] = cards[minimalCardIndex];
-                cards[minimalCardIndex] = tempCard;
-            }
-
-            return cards;
-        }
     }
 }

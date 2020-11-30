@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore.Internal;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Entities;
@@ -20,27 +21,29 @@ namespace PokerHand.BusinessLogic.Services
             _mapper = mapper;
         }
  
-        public (Table, bool) AddPlayerToTable(string userName)
+        public (Table, bool, Player) AddPlayerToTable(string userName, int maxPlayers)
         {
             var table = GetFreeTable();
             var isNewTable = false;
 
             if (table == null)
             {
-                table = CreateNewTable();
+                table = CreateNewTable(maxPlayers);
                 isNewTable = true;
             }
 
-            // Define player's position at the table
+            // Define player's position at the table (starts with 0)
             var player = new Player
             {
                 UserName = userName,
-                IndexNumber = table.Players.Count + 1
+                IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table)
             };
             
             table.Players.Add(player);
 
-            return (table, isNewTable);
+            table.Players = table.Players.OrderBy(player => player.IndexNumber).ToList();
+
+            return (table, isNewTable, player);
         }
 
         public (Table, bool, bool) RemovePlayerFromTable(string userName)
@@ -63,14 +66,29 @@ namespace PokerHand.BusinessLogic.Services
         private Table GetFreeTable() => 
             _allTables?.FirstOrDefault(table => table.Players.Count < table.MaxPlayers);
 
-        private Table CreateNewTable()
+        private Table CreateNewTable(int maxPlayers)
         {
-            // TODO: change usage of maxPlayers
-            const int maxPlayers = 5;
             var newTable = new Table(maxPlayers);
             _allTables.Add(newTable);
             
             return newTable;
+        }
+
+        private static int GetFreeSeatIndex(Table table)
+        {
+            // table seats counter starts from 0
+            var seatIndex = -1;
+
+            for (var i = 0; i < table.MaxPlayers; i++)
+            {
+                if (table.Players.Any(player => player.IndexNumber == i)) 
+                    continue;
+                
+                seatIndex = i;
+                break;
+            }
+
+            return seatIndex;
         }
         
         #endregion

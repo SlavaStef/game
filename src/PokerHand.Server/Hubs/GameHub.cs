@@ -36,12 +36,14 @@ namespace PokerHand.Server.Hubs
         public async Task ConnectToTable()
         {
             _logger.LogInformation($"Player {Context.ConnectionId} tries to connect");
-            var (table, isNewTable) = _gameService.AddPlayerToTable(Context.ConnectionId);
+            var (table, isNewTable, player) = _gameService.AddPlayerToTable(Context.ConnectionId, 5);
                                                                                                                                 
             await Groups.AddToGroupAsync(Context.ConnectionId, table.Id.ToString());
             
             await Clients.GroupExcept(table.Id.ToString(), Context.ConnectionId) // To all except connected player
                 .SendAsync("AnotherPlayerConnected", Context.ConnectionId);
+            //TODO: Map table to tableDto
+            await Clients.Caller.SendAsync("ReceivePlayerDto", JsonSerializer.Serialize(player));
             await Clients.Group(table.Id.ToString()).SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
 
             if (isNewTable)
@@ -50,36 +52,37 @@ namespace PokerHand.Server.Hubs
                 await _gameProcessManager.StartRound(table.Id);
             }
         }
-        public async void ReceivePlayerActionFromClient(string actionFromPlayer)
+        public async void ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer)
         {
-                    _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient started");
-                    _logger.LogInformation($"Received from client: {actionFromPlayer}");
+            _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient started");
+            _logger.LogInformation($"Received from client: {actionFromPlayer}");
 
             var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
+            var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
             
-                    _logger.LogInformation($"Action after deserialization: tableId: {action.TableId}, playerId: {action.PlayerId}, action: {action.ActionType}");
+            _logger.LogInformation($"Action after deserialization: tableId: {tableId}, playerId: {action.PlayerId}, action: {action.ActionType}");
             
             await Clients.Others.SendAsync("ReceivePlayerActionFromServer", actionFromPlayer);
             
-                    _logger.LogInformation("Action is sent to clients");
+            _logger.LogInformation("Action is sent to clients");
             
             //TODO: Optionally extract to a new method
             _allTables
-                .First(table => table.Id == action.TableId)
+                .First(table => table.Id == tableId)
                 .Players
                 .First(player => player.Id == action.PlayerId)
                 .CurrentAction = action;
             
-                    _logger.LogInformation($"Action is added to Current player {_allTables.First(table => table.Id == action.TableId).Players.First(player => player.Id == action.PlayerId).CurrentAction}");
+            _logger.LogInformation($"Action is added to Current player");
             
-                    _logger.LogInformation($"GameHub. Player's action received, sent to all players and added to entity.");
+            _logger.LogInformation($"GameHub. Player's action received, sent to all players and added to entity.");
             Waiter.WaitForPlayerBet.Set();
-                    _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient ended");
+            _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient ended");
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-                    _logger.LogInformation($"GameHub. Method OnDisconnectedAsync sterted");
+            _logger.LogInformation($"GameHub. Method OnDisconnectedAsync sterted");
 
             var (table, isPlayerRemoved, isTableRemoved) = _gameService.RemovePlayerFromTable(Context.ConnectionId);
             

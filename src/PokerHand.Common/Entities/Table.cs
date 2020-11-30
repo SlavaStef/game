@@ -23,6 +23,9 @@ namespace PokerHand.Common.Entities
             Pot = 0;
             CommunityCards = new List<Card>();
             Winners = null;
+            DealerIndex = -1;
+            SmallBlindIndex = -1;
+            BigBlindIndex = -1;
         }
 
         public Guid Id { get; set; }
@@ -41,6 +44,9 @@ namespace PokerHand.Common.Entities
         public Player CurrentPlayer { get; set; }
         public int CurrentMaxBet { get; set; }
         public int Pot { get; set; }
+        public int DealerIndex { get; set; }
+        public int SmallBlindIndex { get; set; }
+        public int BigBlindIndex { get; set; }
         public List<Player> Winners { get; set; }
     }
 }

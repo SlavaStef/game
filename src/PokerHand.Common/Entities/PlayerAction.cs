@@ -5,7 +5,7 @@ namespace PokerHand.Common.Entities
 {
     public class PlayerAction
     {
-        public Guid PlayerId { get; set; }
+        public int PlayerIndexNumber { get; set; }
         public PlayerActionType ActionType { get; set; }
         public int? Amount { get; set; }
     }

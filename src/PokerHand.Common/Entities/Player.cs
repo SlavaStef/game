@@ -9,6 +9,7 @@ namespace PokerHand.Common.Entities
         public Player()
         {
             Id = Guid.NewGuid();
+            //TODO: remove button
             Button = ButtonTypeNumber.None;
         }
         

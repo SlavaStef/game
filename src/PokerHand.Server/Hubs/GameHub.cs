@@ -52,6 +52,7 @@ namespace PokerHand.Server.Hubs
                 await _gameProcessManager.StartRound(table.Id);
             }
         }
+        
         public async void ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer)
         {
             _logger.LogInformation($"GameHub. Method ReceivePlayerActionFromClient started");
@@ -60,7 +61,7 @@ namespace PokerHand.Server.Hubs
             var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
             
-            _logger.LogInformation($"Action after deserialization: tableId: {tableId}, playerId: {action.PlayerId}, action: {action.ActionType}");
+            _logger.LogInformation($"Action after deserialization: tableId: {tableId}, playerIndex: {action.PlayerIndexNumber}, action: {action.ActionType}");
             
             await Clients.Others.SendAsync("ReceivePlayerActionFromServer", actionFromPlayer);
             
@@ -70,7 +71,7 @@ namespace PokerHand.Server.Hubs
             _allTables
                 .First(table => table.Id == tableId)
                 .Players
-                .First(player => player.Id == action.PlayerId)
+                .First(player => player.IndexNumber == action.PlayerIndexNumber)
                 .CurrentAction = action;
             
             _logger.LogInformation($"Action is added to Current player");
@@ -82,12 +83,12 @@ namespace PokerHand.Server.Hubs
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            _logger.LogInformation($"GameHub. Method OnDisconnectedAsync sterted");
+            _logger.LogInformation($"GameHub. Method OnDisconnectedAsync started");
 
             var (table, isPlayerRemoved, isTableRemoved) = _gameService.RemovePlayerFromTable(Context.ConnectionId);
             
-                    _logger.LogInformation($"GameHub. Method OnDisconnectedAsync. player removed");
-                    _logger.LogInformation($"GameHub. players: {table.Players.Count}");
+            _logger.LogInformation($"GameHub. Method OnDisconnectedAsync. player removed");
+            _logger.LogInformation($"GameHub. players: {table.Players.Count}");
 
             if (!isTableRemoved && isPlayerRemoved)
                 await Clients.Group(table.Id.ToString())

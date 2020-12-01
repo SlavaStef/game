@@ -353,7 +353,7 @@ namespace PokerHand.Server.Helpers
             
             var smallBlindAction = new PlayerAction
             {
-                PlayerId = player.Id,
+                PlayerIndexNumber = player.IndexNumber,
                 ActionType = PlayerActionType.Bet,
                 Amount = table.SmallBlind
             };
@@ -372,7 +372,7 @@ namespace PokerHand.Server.Helpers
             
             var bigBlindAction = new PlayerAction
             {
-                PlayerId = player.Id,
+                PlayerIndexNumber = player.IndexNumber,
                 ActionType = PlayerActionType.Raise,
                 Amount = table.BigBlind
             };

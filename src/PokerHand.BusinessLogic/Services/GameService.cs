@@ -41,22 +41,27 @@ namespace PokerHand.BusinessLogic.Services
             
             table.Players.Add(player);
 
-            table.Players = table.Players.OrderBy(player => player.IndexNumber).ToList();
+            table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
 
             return (table, isNewTable, player);
         }
 
         public (Table, bool, bool) RemovePlayerFromTable(string userName)
         {
-            var table = _allTables.First(table => table.Players.FirstOrDefault(player => player.UserName == userName) != null);
+            var table = _allTables.First(t => t.Players.FirstOrDefault(player => player.UserName == userName) != null);
             var playerToRemove = table.Players.First(player => player.UserName == userName);
 
             table.Players.Remove(playerToRemove);
             table.ActivePlayers.Remove(playerToRemove);
 
             var isPlayerRemoved = !table.Players.Contains(playerToRemove);
-
-            var isTableRemoved = table.Players.Count == 0;
+            var isTableRemoved = false;
+            
+            if (table.Players.Count == 0)
+            {
+                _allTables.Remove(table);
+                isTableRemoved = true;
+            }
 
             return (table, isPlayerRemoved, isTableRemoved);
         }

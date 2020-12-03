@@ -8,9 +8,12 @@ namespace PokerHand.Common.Entities
     {
         public Player()
         {
+            var random = new Random();
+            
             Id = Guid.NewGuid();
             //TODO: remove button
             Button = ButtonTypeNumber.None;
+            StackMoney = random.Next(1, 9) * 1000;
         }
         
         public Guid Id { get; set; }

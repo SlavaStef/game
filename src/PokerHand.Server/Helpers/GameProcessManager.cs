@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
@@ -63,6 +63,7 @@ namespace PokerHand.Server.Helpers
             
             await SetDealerAndBlinds(table);
             await DealPocketCards(table);
+            Thread.Sleep(1000); // wait for cards to be dealed
             await StartPreFlopWagering(table);
             await DealCommunityCards(table, 3);
             await StartWagering(table); // Deal 2-nd wagering
@@ -148,7 +149,7 @@ namespace PokerHand.Server.Helpers
             }
             _logger.LogInformation($"table {table.Id}: Method SetDealerAndBlinds. Dealer and Blinds are set");
             
-            await _hub.Clients.Group(table.Id.ToString()).SendAsync("SetDealerAndBlinds", JsonSerializer.Serialize(_mapper.Map<List<TableDto>>(table)));
+            await _hub.Clients.Group(table.Id.ToString()).SendAsync("SetDealerAndBlinds", JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
             _logger.LogInformation($"table {table.Id}: Method SetDealerAndBlinds. Dealer and Blinds are set. New table is sent to all players. Method ends");
         }
 
@@ -171,14 +172,14 @@ namespace PokerHand.Server.Helpers
             await MakeBigBlindBet(table, _hub);
             
             await _hub.Clients.Group(table.Id.ToString())
-                .SendAsync("ReceiveTable", JsonSerializer.Serialize(table));
+                .SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
             
             do
             {
                 SetCurrentPlayer(table);
                 
                 await _hub.Clients.Group(table.Id.ToString())
-                    .SendAsync("ReceiveCurrentPlayerId", JsonSerializer.Serialize(table.CurrentPlayer.Id));
+                    .SendAsync("ReceiveCurrentPlayerIdInWagering", JsonSerializer.Serialize(table.CurrentPlayer.Id));
                 _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering. Current player is set and sent to all players");
                 
                 _logger.LogInformation($"table {table.Id}: Method StartPreFlopWagering. Waiting for player's action");
@@ -226,7 +227,7 @@ namespace PokerHand.Server.Helpers
                 SetCurrentPlayer(table);
                 // player makes choice
                 await _hub.Clients.Group(table.Id.ToString())
-                    .SendAsync("ReceiveCurrentPlayerId", JsonSerializer.Serialize(table.CurrentPlayer.Id)); //receive player's choice
+                    .SendAsync("ReceiveCurrentPlayerIdInWagering", JsonSerializer.Serialize(table.CurrentPlayer.Id)); //receive player's choice
                 _logger.LogInformation($"table {table.Id}: Method StartWagering. Current player set and sent to all players");
                 
                 _logger.LogInformation($"table {table.Id}: Method StartWagering. Waiting for player's action");
@@ -315,7 +316,7 @@ namespace PokerHand.Server.Helpers
         
         private static void CollectBetsFromTable(Table table)
         {
-            foreach (var player in table.ActivePlayers.Where(player => player.CurrentAction.Amount != null))
+            foreach (var player in table.ActivePlayers.Where(player => player.CurrentBet == 0))
             {
                 table.Pot += player.CurrentBet;
             }

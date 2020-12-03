@@ -2,10 +2,10 @@
 {
     public enum SuitTypeNumber
     {
-        Club = 1,
-        Diamond = 2,
-        Heart = 3,
-        Spade = 4
+        Heart = 0,
+        Diamond = 1,
+        Club = 2,
+        Spade = 3
     }
 
     public class SuitTypeName

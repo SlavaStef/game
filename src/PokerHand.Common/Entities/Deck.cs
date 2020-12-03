@@ -59,6 +59,8 @@ namespace PokerHand.Common.Entities
                 }
             }
 
+            newDeck = newDeck.Where(card => card.Rank != CardRankNumber.Joker).ToList(); 
+
             return newDeck;
         }
     }

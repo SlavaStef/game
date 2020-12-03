@@ -1,5 +1,4 @@
-﻿using System;
-using PokerHand.Common.Helpers;
+﻿using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Entities
 {

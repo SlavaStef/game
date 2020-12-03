@@ -2,19 +2,20 @@
 {
     public enum CardRankNumber
     {
-        Deuce = 1,
-        Three = 2,
-        Four = 3,
-        Five = 4,
-        Six = 5,
-        Seven = 6,
-        Eight = 7,
-        Nine = 8,
-        Ten = 9,
-        Jack = 10,
-        Queen = 11,
-        King = 12,
-        Ace = 13
+        Deuce = 2,
+        Three = 3,
+        Four = 4,
+        Five = 5,
+        Six = 6,
+        Seven = 7,
+        Eight = 8,
+        Nine = 9,
+        Ten = 10,
+        Jack = 11,
+        Queen = 12,
+        King = 13,
+        Ace = 14,
+        Joker = 15
     }
 
     public class CardRankName
@@ -32,5 +33,6 @@
         public const string Queen = "Queen";
         public const string King = "King";
         public const string Ace = "Ace";
+        public const string Joker = "Joker";
     }
 }

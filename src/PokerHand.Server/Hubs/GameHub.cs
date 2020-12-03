@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -31,13 +32,19 @@ namespace PokerHand.Server.Hubs
             _gameService = gameService;
             _logger = logger;
         }
-        
+
+        public async override Task OnConnectedAsync()
+        {    
+            _logger.LogInformation($"Player {Context.ConnectionId} connected");
+        }
+
         // TODO:  Probably change to OnConnectedAsync
         public async Task ConnectToTable()
         {
-            _logger.LogInformation($"Player {Context.ConnectionId} tries to connect");
+            _logger.LogInformation($"Player {Context.ConnectionId} tries to connect to table");
             var (table, isNewTable, player) = _gameService.AddPlayerToTable(Context.ConnectionId, 5);
-                                                                                                                                
+            _logger.LogInformation($"Player {Context.ConnectionId} connected to table {table.Id}");
+            
             await Groups.AddToGroupAsync(Context.ConnectionId, table.Id.ToString());
             
             await Clients.GroupExcept(table.Id.ToString(), Context.ConnectionId) // To all except connected player
@@ -49,7 +56,8 @@ namespace PokerHand.Server.Hubs
             if (isNewTable)
             {
                 _logger.LogInformation($"Game started on a new table {table.Id}");
-                await _gameProcessManager.StartRound(table.Id);
+                var thread = new Thread(() => _gameProcessManager.StartRound(table.Id));
+                thread.Start();
             }
         }
         
@@ -63,7 +71,7 @@ namespace PokerHand.Server.Hubs
             
             _logger.LogInformation($"Action after deserialization: tableId: {tableId}, playerIndex: {action.PlayerIndexNumber}, action: {action.ActionType}");
             
-            await Clients.Others.SendAsync("ReceivePlayerActionFromServer", actionFromPlayer);
+            await Clients.Others.SendAsync("ReceivePlayerAction", actionFromPlayer);
             
             _logger.LogInformation("Action is sent to clients");
             
@@ -83,16 +91,29 @@ namespace PokerHand.Server.Hubs
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            _logger.LogInformation($"GameHub. Method OnDisconnectedAsync started");
-
-            var (table, isPlayerRemoved, isTableRemoved) = _gameService.RemovePlayerFromTable(Context.ConnectionId);
+            _logger.LogInformation($"GameHub. Method OnDisconnectedAsync started from player {Context.ConnectionId}");
             
-            _logger.LogInformation($"GameHub. Method OnDisconnectedAsync. player removed");
-            _logger.LogInformation($"GameHub. players: {table.Players.Count}");
+            var (table, isPlayerRemoved) = _gameService.RemovePlayerFromTable(Context.ConnectionId);
+            
+            if(isPlayerRemoved) 
+                _logger.LogInformation($"GameHub. Method OnDisconnectedAsync. Player {Context.ConnectionId} removed from table");
+            
 
-            if (!isTableRemoved && isPlayerRemoved)
+            if (table != null && isPlayerRemoved)
+            {
                 await Clients.Group(table.Id.ToString())
                     .SendAsync("PlayerDisconnected", JsonSerializer.Serialize(table));
+                _logger.LogInformation($"GameHub. Table: {table.Id}. Players: {table.Players.Count}");
+
+                foreach (var player in table.Players)
+                {
+                    _logger.LogInformation($"Player: {player.Id}, name {player.UserName}");
+                }
+            }
+            
+            if(table == null)
+                _logger.LogInformation($"GameHub. Table removed");
+                
         }
     }
 }

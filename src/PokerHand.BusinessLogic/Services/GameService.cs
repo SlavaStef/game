@@ -73,38 +73,23 @@ namespace PokerHand.BusinessLogic.Services
             table.Players.Remove(playerToRemove);
             table.ActivePlayers.Remove(playerToRemove);
             _logger.LogInformation($"Player was removed from table");
-            _logger.LogInformation($"Current tables in application:");
-            foreach (var _table in _allTables)
-            {
-                _logger.LogInformation($"Table {_table.Id}. Players: {_table.Players.Count}");
-                _logger.LogInformation("Players:");
-                foreach (var player in _table.Players)
-                {
-                    _logger.LogInformation($"Player {player.Id}, name: {player.UserName}");
-                }
-            }
             
             var isPlayerRemoved = !table.Players.Contains(playerToRemove);
             
+            // If one of two players leaves round -> stop round & the second player is the winner
+            if (table.Players.Count == 1)
+            {
+                
+            }
+
+            // if there is no player at a table -> delete this table
             if (table.Players.Count == 0)
             {
-                _logger.LogInformation($"No players in table {table.Id}");
                 _allTables.Remove(table);
                 _logger.LogInformation("Table deleted from all tables");
                 return (null, isPlayerRemoved);
             }
             
-            _logger.LogInformation($"Current tables in application:");
-            foreach (var _table in _allTables)
-            {
-                _logger.LogInformation($"Table {_table.Id}. Players: {_table.Players.Count}");
-                _logger.LogInformation("Players:");
-                foreach (var player in _table.Players)
-                {
-                    _logger.LogInformation($"Player {player.Id}, name: {player.UserName}");
-                }
-            }
-
             _logger.LogInformation($"Method RemovePlayerFromTable ends");
             return (table, isPlayerRemoved);
         }

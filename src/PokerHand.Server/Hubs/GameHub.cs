@@ -57,6 +57,7 @@ namespace PokerHand.Server.Hubs
             {
                 _logger.LogInformation($"Game started on a new table {table.Id}");
                 var thread = new Thread(() => _gameProcessManager.StartRound(table.Id));
+                thread.Name = table.Id.ToString();
                 thread.Start();
             }
         }

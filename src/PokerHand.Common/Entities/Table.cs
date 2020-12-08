@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Entities
 {
@@ -39,6 +40,7 @@ namespace PokerHand.Common.Entities
         public List<Player> Players { get; set; }
 
         //Current round
+        public RoundStageType CurrentStage { get; set; }
         public List<Player> ActivePlayers { get; set; }
         public List<Card> CommunityCards { get; set; }
         public Player CurrentPlayer { get; set; }

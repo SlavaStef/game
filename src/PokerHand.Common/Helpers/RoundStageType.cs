@@ -2,6 +2,7 @@
 {
     public enum RoundStageType
     {
+        None = 0,
         SetDealerAndBlinds = 1,
         DealPocketCards = 2,
         PreFlopWagering = 3,

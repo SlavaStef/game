@@ -1,34 +1,74 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
+using PokerHand.Server.Hubs;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace PokerHand.Server.Helpers
 {
     public static class CardsAnalyzer
     {
-        public static List<Player> DefineWinner(List<Card> communityCards, List<Player> players)
+        public static List<Player> DefineWinner(List<Card> communityCards, List<Player> players, ILogger<GameHub> logger)
         {
+            logger.LogInformation("            DefineWinner. Start");
             var maxHand = 0;
+            logger.LogInformation($"            DefineWinner. maxHand: {maxHand}");
             
+            logger.LogInformation("            DefineWinner. Foreach start");
             foreach (var player in players)
             {
+                logger.LogInformation($"            DefineWinner. Player at start of foreach: {JsonSerializer.Serialize(player)}");
                 var totalCards = new List<Card>();
-                totalCards.AddRange(communityCards);
-                totalCards.AddRange(player.PocketCards);
+                try
+                {
+                    totalCards.AddRange(communityCards);
+                }
+                catch (Exception e)
+                {
+                    logger.LogInformation($"Exception: {e.Message}, {e.StackTrace}");
+                }
+                
+                try
+                {
+                    totalCards.AddRange(player.PocketCards);
+                }
+                catch (Exception e)
+                {
+                    logger.LogInformation($"Exception: {e.Message}, {e.StackTrace}");
+                }
+                //totalCards.AddRange(communityCards);
+                //totalCards.AddRange(player.PocketCards);
 
-                player.Hand = AnalyzePlayerCards(totalCards);
+                try
+                {
+                    player.Hand = AnalyzePlayerCards(totalCards);
+                }
+                catch (Exception e)
+                {
+                    logger.LogInformation($"Exception: {e.Message}, {e.StackTrace}");
+                }
+                //player.Hand = AnalyzePlayerCards(totalCards);
+                logger.LogInformation($"            DefineWinner. Player at the end of foreach: {JsonSerializer.Serialize(player)}");
                 
                 if ((int) player.Hand > maxHand)
                     maxHand = (int) player.Hand;
+                logger.LogInformation($"            DefineWinner. maxHand: {maxHand}");
             }
 
+            logger.LogInformation("            DefineWinner. Foreach end");
+            
             var winners = players.FindAll(player => (int) player.Hand == maxHand);
 
+            logger.LogInformation($"            DefineWinner. Winners: {JsonSerializer.Serialize(winners)}");
+            logger.LogInformation("            DefineWinner. End");
             return winners;
         }
         
-        public static HandType AnalyzePlayerCards(List<Card> cards)
+        private static HandType AnalyzePlayerCards(List<Card> cards)
         {
             if (IsRoyalFlash(cards))
                 return HandType.RoyalFlush;

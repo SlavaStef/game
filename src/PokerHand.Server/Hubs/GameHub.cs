@@ -77,7 +77,7 @@ namespace PokerHand.Server.Hubs
             await Clients.Others.SendAsync("ReceivePlayerAction", actionFromPlayer);
             
             _logger.LogInformation("GameHub.ReceivePlayerActionFromClient. Action is resent to other players");
-            
+            _logger.LogInformation(JsonSerializer.Serialize(_allTables.First(table => table.Id == tableId)));
             //TODO: Optionally extract to a new method
             _allTables
                 .First(table => table.Id == tableId)
@@ -86,10 +86,11 @@ namespace PokerHand.Server.Hubs
                 .CurrentAction = action;
             
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Action is added to Current player");
-            
+            _logger.LogInformation(JsonSerializer.Serialize(_allTables.First(table => table.Id == tableId)));
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Player's action received, sent to all players and added to entity.");
             Waiter.WaitForPlayerBet.Set();
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. End");
+            _logger.LogInformation(JsonSerializer.Serialize(_allTables.First(table => table.Id == tableId)));
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)

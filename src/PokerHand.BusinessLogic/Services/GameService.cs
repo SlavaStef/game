@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
@@ -10,18 +11,15 @@ namespace PokerHand.BusinessLogic.Services
 {
     public class GameService : IGameService
     {
-        private List<Table> _allTables;
+        private readonly List<Table> _allTables;
         private readonly ILogger<GameService> _logger;
-        private readonly IMapper _mapper;
 
         public GameService(
             TablesCollection tablesCollection,
-            ILogger<GameService> logger,
-            IMapper mapper)
+            ILogger<GameService> logger)
         {
             _allTables = tablesCollection.Tables;
             _logger = logger;
-            _mapper = mapper;
         }
  
         public (Table, bool, Player) AddPlayerToTable(string userName, int maxPlayers)
@@ -76,7 +74,7 @@ namespace PokerHand.BusinessLogic.Services
             
             var isPlayerRemoved = !table.Players.Contains(playerToRemove);
             
-            // If one of two players leaves round -> stop round & the second player is the winner
+            //TODO: If one of two players leaves round -> stop round & the second player is the winner
             if (table.Players.Count == 1)
             {
                 
@@ -86,6 +84,8 @@ namespace PokerHand.BusinessLogic.Services
             if (table.Players.Count == 0)
             {
                 _allTables.Remove(table);
+                table.Dispose();
+                _logger.LogInformation($"{JsonSerializer.Serialize(_allTables)}");
                 _logger.LogInformation("Table deleted from all tables");
                 return (null, isPlayerRemoved);
             }

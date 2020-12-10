@@ -1,11 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Entities
 {
-    public class Table
+    public class Table : IDisposable
     {
+        private bool disposed = false;
+        private SafeHandle handle = new SafeFileHandle(IntPtr.Zero, true);
+        
+        //TODO: make smallBlind and bigBlind amounts const
         public Table()
         {
 
@@ -33,8 +39,8 @@ namespace PokerHand.Common.Entities
         public DateTime TimeCreated { get; set; }
         public bool IsInGame { get; set; }
         public int MaxPlayers { get; set; }
-        public int SmallBlind { get; set; }
-        public int BigBlind { get; set; }
+        public int SmallBlind { get; set; }   // small blind amount
+        public int BigBlind { get; set; }     // big blind amount
 
         public Deck Deck { get; set; }
         public List<Player> Players { get; set; }
@@ -50,5 +56,24 @@ namespace PokerHand.Common.Entities
         public int SmallBlindIndex { get; set; }
         public int BigBlindIndex { get; set; }
         public List<Player> Winners { get; set; }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+            {
+                handle.Dispose();
+            }
+
+            disposed = true;
+        }
     }
 }

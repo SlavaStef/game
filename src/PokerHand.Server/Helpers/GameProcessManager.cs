@@ -56,6 +56,9 @@ namespace PokerHand.Server.Helpers
             _logger.LogInformation("StartRound. Round started");
 
             table.ActivePlayers = table.Players.ToList();
+            
+            while (table.ActivePlayers.Any(p => p.IsReady != true))
+                Thread.Sleep(500);
 
             await SetDealerAndBlinds(table, _hub, _mapper, _logger);
             await DealPocketCards(table, _hub, _mapper, _logger);

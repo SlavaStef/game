@@ -16,7 +16,7 @@ namespace PokerHand.Server.Hubs
 {
     public class GameHub : Hub
     {
-        private List<Table> _allTables;
+        private readonly List<Table> _allTables;
         private readonly IGameService _gameService;
         private readonly IGameProcessManager _gameProcessManager;
         private readonly ILogger<GameHub> _logger;
@@ -38,7 +38,12 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"GameHub. Player {Context.ConnectionId} connected");
         }
 
-        // TODO:  Probably change to OnConnectedAsync
+        public async Task GetTableInfo(string tableName)
+        {
+            var tableInfo = _gameService.GetTableInfo(tableName);
+            await Clients.Caller.SendAsync("ReceiveTableInfo", JsonSerializer.Serialize(tableName));
+        }
+        
         public async Task ConnectToTable()
         {
             _logger.LogInformation($"GameHub. Player {Context.ConnectionId} tries to connect to table");
@@ -74,7 +79,7 @@ namespace PokerHand.Server.Hubs
             
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Action after deserialization: tableId: {tableId}, playerIndex: {action.PlayerIndexNumber}, action: {action.ActionType}");
             
-            await Clients.Others.SendAsync("ReceivePlayerAction", actionFromPlayer);
+            await Clients.GroupExcept(tableIdFromPlayer, Context.ConnectionId).SendAsync("ReceivePlayerAction", actionFromPlayer);
             
             _logger.LogInformation("GameHub.ReceivePlayerActionFromClient. Action is resent to other players");
             _logger.LogInformation(JsonSerializer.Serialize(_allTables.First(table => table.Id == tableId)));
@@ -91,6 +96,17 @@ namespace PokerHand.Server.Hubs
             Waiter.WaitForPlayerBet.Set();
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. End");
             _logger.LogInformation(JsonSerializer.Serialize(_allTables.First(table => table.Id == tableId)));
+        }
+
+        public void ReceiveActivePlayerStatus(string tableId, string playerId)
+        {
+            var tableGuidId = Guid.Parse(tableId);
+            var playerGuidId = Guid.Parse(playerId);
+
+            _allTables
+                .First(t => t.Id == tableGuidId)
+                .Players
+                .First(p => p.Id == playerGuidId).IsReady = true;
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)

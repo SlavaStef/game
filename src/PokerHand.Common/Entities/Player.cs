@@ -26,5 +26,6 @@ namespace PokerHand.Common.Entities
         public ButtonTypeNumber Button { get; set; }
         public int IndexNumber { get; set; } // Place at the table
         public HandType Hand;
+        public bool IsReady { get; set; }
     }
 }

@@ -5,6 +5,7 @@ using AutoMapper;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
+using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 
 namespace PokerHand.BusinessLogic.Services
@@ -21,7 +22,12 @@ namespace PokerHand.BusinessLogic.Services
             _allTables = tablesCollection.Tables;
             _logger = logger;
         }
- 
+
+        public TableInfoDto GetTableInfo(string tableName)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public (Table, bool, Player) AddPlayerToTable(string userName, int maxPlayers)
         {
             var table = GetFreeTable();

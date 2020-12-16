@@ -60,9 +60,7 @@ namespace PokerHand.Server.Hubs
             if (isNewTable)
             {
                 _logger.LogInformation($"GameHub. New game started on a new table {table.Id}");
-                Task.Run(() => _gameProcessManager.StartRound(table.Id));
-                // var thread = new Thread(() => _gameProcessManager.StartRound(table.Id));
-                // thread.Start();
+                new Thread (() => _gameProcessManager.StartRound(table.Id)).Start();
             }
         }
         
@@ -74,18 +72,20 @@ namespace PokerHand.Server.Hubs
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
             
             await Clients.OthersInGroup(tableId.ToString()).SendAsync("ReceivePlayerAction", actionFromPlayer);
-
-            //TODO: Optionally extract to a new method
-            _allTables
-                .First(table => table.Id == tableId)
-                .ActivePlayers
-                .First(player => player.IndexNumber == action.PlayerIndexNumber)
+            
+            var table = _allTables
+                .First(t => t.Id == tableId);
+            
+            table.ActivePlayers
+                .First(p => p.IndexNumber == action.PlayerIndexNumber)
                 .CurrentAction = action;
             
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Action is added to Current player");
             _logger.LogInformation(JsonSerializer.Serialize(_allTables.First(table => table.Id == tableId)));
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Player's action received, sent to all players and added to entity.");
-            Waiter.WaitForPlayerBet.Set();
+            //table.Mutex.ReleaseMutex();
+            table.WaitForPlayerBet.Set();
+            //WaitForPlayerBet.Set();
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. End");
             _logger.LogInformation($"THIS {JsonSerializer.Serialize(_allTables.First(table => table.Id == tableId))}");
         }

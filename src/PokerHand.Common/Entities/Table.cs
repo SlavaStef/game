@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Microsoft.Win32.SafeHandles;
 using PokerHand.Common.Helpers;
 
@@ -10,8 +11,9 @@ namespace PokerHand.Common.Entities
     {
         private bool _disposed = false;
         private readonly SafeHandle _handle = new SafeFileHandle(IntPtr.Zero, true);
+        //public Mutex Mutex { get; set; }
+        public AutoResetEvent WaitForPlayerBet { get; set; }
         
-        //TODO: make smallBlind and bigBlind amounts const
         public Table() { }
 
         public Table(TableTitle title)
@@ -29,6 +31,9 @@ namespace PokerHand.Common.Entities
             DealerIndex = -1;
             SmallBlindIndex = -1;
             BigBlindIndex = -1;
+
+            WaitForPlayerBet = new AutoResetEvent(false);
+            //Mutex = new Mutex(true);
         }
 
         public Guid Id { get; }

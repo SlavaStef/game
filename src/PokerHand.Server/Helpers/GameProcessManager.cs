@@ -226,7 +226,9 @@ namespace PokerHand.Server.Helpers
                 logger.LogInformation("StartPreFlopWagering. Current player is set and sent to all players");
                 logger.LogInformation(JsonSerializer.Serialize(table));
                 logger.LogInformation($"StartPreFlopWagering. Waiting for player {table.CurrentPlayer.Id} action");
-                Waiter.WaitForPlayerBet.WaitOne();
+                table.WaitForPlayerBet.WaitOne();
+                //table.Mutex.WaitOne();
+                //Waiter.WaitForPlayerBet.WaitOne();
                 logger.LogInformation("StartPreFlopWagering. Player's action received. Next - processing");
                 logger.LogInformation(JsonSerializer.Serialize(table));
                 ProcessPlayerAction(table, table.CurrentPlayer, logger);
@@ -238,7 +240,7 @@ namespace PokerHand.Server.Helpers
                 counter--;
                 logger.LogInformation("StartPreFlopWagering. New Table is sent to all players. End of cycle");
             }
-            while (counter > 0 || !CheckIfAllBetsAreEqual(table.ActivePlayers, logger));
+            while (counter > 0 || !CheckIfAllBetsAreEqual(table, logger));
             logger.LogInformation("StartPreFlopWagering. All Players made their choices");
             logger.LogInformation(JsonSerializer.Serialize(table));
             
@@ -302,7 +304,9 @@ namespace PokerHand.Server.Helpers
                 logger.LogInformation("StartWagering. Current player is set and sent to all players");
                 
                 logger.LogInformation("StartWagering. Waiting for player's action");
-                Waiter.WaitForPlayerBet.WaitOne();
+                //table.Mutex.WaitOne();
+                table.WaitForPlayerBet.WaitOne();
+                //Waiter.WaitForPlayerBet.WaitOne();
                 logger.LogInformation("StartWagering. Player's action received");
                 
                 ProcessPlayerAction(table, table.CurrentPlayer, logger);
@@ -314,7 +318,7 @@ namespace PokerHand.Server.Helpers
                 counter--;
                 logger.LogInformation($"StartWagering. New Table is sent to all players. End of cycle, counter: {counter}");
             } 
-            while (counter > 0 || !CheckIfAllBetsAreEqual(table.ActivePlayers, logger));
+            while (counter > 0 || !CheckIfAllBetsAreEqual(table, logger));
             
             logger.LogInformation("StartWagering. All players made their choices");
             
@@ -341,29 +345,48 @@ namespace PokerHand.Server.Helpers
 
             table.CurrentStage = RoundStageType.Showdown;
             
-            logger.LogInformation("Showdown. Community cards:");
-            foreach (var card in table.CommunityCards)
+            // logger.LogInformation("Showdown. Community cards:");
+            // foreach (var card in table.CommunityCards)
+            // {
+            //     
+            //         logger.LogInformation($"            Card: {card.Rank}, {card.Suit}");
+            //     
+            // }
+            //
+            // var winners = CardsAnalyzer.DefineWinner(table.CommunityCards, table.ActivePlayers, logger);
+            // logger.LogInformation("Showdown. Winner(s) defined");
+            //
+            //     table.Winners = winners.ToList();
+            //     logger.LogInformation("Showdown. Winner(s) added to table");
+            //
+            //
+            // if (winners.Count == 1)
+            //     winners[0].StackMoney += table.Pot;
+            // else
+            // {
+            //     var winningAmount = table.Pot / winners.Count;
+            //
+            //     foreach (var player in winners)
+            //         player.StackMoney += winningAmount;
+            // }
+
+            table.Winners = new List<Player>();
+            var random = new Random();
+
+            var randomNumber = random.Next(1, 3);
+
+            switch (randomNumber)
             {
-                
-                    logger.LogInformation($"            Card: {card.Rank}, {card.Suit}");
-                
-            }
-            
-            var winners = CardsAnalyzer.DefineWinner(table.CommunityCards, table.ActivePlayers, logger);
-            logger.LogInformation("Showdown. Winner(s) defined");
-
-                table.Winners = winners.ToList();
-                logger.LogInformation("Showdown. Winner(s) added to table");
-
-
-            if (winners.Count == 1)
-                winners[0].StackMoney += table.Pot;
-            else
-            {
-                var winningAmount = table.Pot / winners.Count;
-
-                foreach (var player in winners)
-                    player.StackMoney += winningAmount;
+                case 1:
+                    table.Winners.Add(table.ActivePlayers[0]);
+                    break;
+                case 2:
+                    table.Winners.Add(table.ActivePlayers[1]);
+                    break;
+                default:
+                    table.Winners.Add(table.ActivePlayers[0]);
+                    table.Winners.Add(table.ActivePlayers[1]);
+                    break;
             }
             
             await hub.Clients.Group(table.Id.ToString()).SendAsync("ReceiveWinners", JsonSerializer.Serialize(table.Winners));
@@ -374,19 +397,19 @@ namespace PokerHand.Server.Helpers
 
         #region PrivateHelpers
         
-        private static bool CheckIfAllBetsAreEqual(IReadOnlyCollection<Player> players, ILogger<GameHub> logger)
+        private static bool CheckIfAllBetsAreEqual(Table table, ILogger<GameHub> logger)
         {
             logger.LogInformation("CheckIfAllBetsAreEqual. Start");
-            logger.LogInformation(JsonSerializer.Serialize(players));
-            var amountToCompare = players
-                .First(player => player.CurrentAction.ActionType != PlayerActionType.Fold)
-                .CurrentBet;
+            logger.LogInformation(JsonSerializer.Serialize(table.ActivePlayers));
+            // var amountToCompare = players
+            //     .First(player => player.CurrentAction.ActionType != PlayerActionType.Fold)
+            //     .CurrentBet;
             
-            logger.LogInformation($"CheckIfAllBetsAreEqual. Amount to compare: {amountToCompare}");
+            logger.LogInformation($"CheckIfAllBetsAreEqual. Amount to compare: {table.CurrentMaxBet}");
 
-            var result = players.All(player => 
+            var result = table.ActivePlayers.All(player => 
                 player.CurrentAction.ActionType == PlayerActionType.Fold || 
-                player.CurrentBet == amountToCompare);
+                player.CurrentBet == table.CurrentMaxBet);
             
             logger.LogInformation($"CheckIfAllBetsAreEqual. Result: {result}");
             logger.LogInformation("CheckIfAllBetsAreEqual. End");

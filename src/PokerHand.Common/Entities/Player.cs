@@ -1,31 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Entities
 {
-    public class Player
+    public class Player : IdentityUser<Guid>
     {
         public Player()
         {
             var random = new Random();
             
-            Id = Guid.NewGuid();
             //TODO: remove button
             Button = ButtonTypeNumber.None;
             StackMoney = random.Next(1, 9) * 1000;
         }
         
-        public Guid Id { get; set; }
-        public string UserName { get; set; }
+        // Properties to store in db
+        public string Country { get; set; }
+        public DateTime RegistrationDate { get; set; }
+        public int Experience { get; set; }
+        public int ChipsAmount { get; set; }
+        public int CoinsAmount { get; set; }
+        public int GamesPlayed { get; set; }
+        public HandType BestHandType { get; set; }
+        public int GamesWon { get; set; }
+        public int BiggestWin { get; set; }
+        public int SitAndGoWins { get; set; }
+        
+        // Game properties
+        [NotMapped]
         public List<Card> PocketCards { get; set; }
+        
+        [NotMapped]
         public PlayerAction CurrentAction { get; set; }
+        
+        [NotMapped]
         public int CurrentBet { get; set; }
-        public int TotalMoney { get; set; }
+        
+        [NotMapped]
         public int StackMoney { get; set; } // The total chips and currency that a player has in play at a given moment
+        
+        [NotMapped]
         public ButtonTypeNumber Button { get; set; }
+        
+        [NotMapped]
         public int IndexNumber { get; set; } // Place at the table
+        
+        [NotMapped]
         public HandType Hand;
+        
+        [NotMapped]
         public bool IsReady { get; set; }
     }
 }

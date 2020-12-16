@@ -15,55 +15,22 @@ namespace PokerHand.Server.Helpers
         public static List<Player> DefineWinner(List<Card> communityCards, List<Player> players, ILogger<GameHub> logger)
         {
             logger.LogInformation("            DefineWinner. Start");
-            var maxHand = 0;
-            logger.LogInformation($"            DefineWinner. maxHand: {maxHand}");
             
-            logger.LogInformation("            DefineWinner. Foreach start");
+            var maxHand = 0;
+            
             foreach (var player in players)
             {
-                logger.LogInformation($"            DefineWinner. Player at start of foreach: {JsonSerializer.Serialize(player)}");
-                var totalCards = new List<Card>();
-                try
-                {
-                    totalCards.AddRange(communityCards);
-                }
-                catch (Exception e)
-                {
-                    logger.LogInformation($"Exception: {e.Message}, {e.StackTrace}");
-                }
+                var totalCards = communityCards.ToList();
+                totalCards.AddRange(player.PocketCards);
                 
-                try
-                {
-                    totalCards.AddRange(player.PocketCards);
-                }
-                catch (Exception e)
-                {
-                    logger.LogInformation($"Exception: {e.Message}, {e.StackTrace}");
-                }
-                //totalCards.AddRange(communityCards);
-                //totalCards.AddRange(player.PocketCards);
-
-                try
-                {
-                    player.Hand = AnalyzePlayerCards(totalCards);
-                }
-                catch (Exception e)
-                {
-                    logger.LogInformation($"Exception: {e.Message}, {e.StackTrace}");
-                }
-                //player.Hand = AnalyzePlayerCards(totalCards);
-                logger.LogInformation($"            DefineWinner. Player at the end of foreach: {JsonSerializer.Serialize(player)}");
+                player.Hand = AnalyzePlayerCards(totalCards);
                 
                 if ((int) player.Hand > maxHand)
                     maxHand = (int) player.Hand;
-                logger.LogInformation($"            DefineWinner. maxHand: {maxHand}");
             }
 
-            logger.LogInformation("            DefineWinner. Foreach end");
-            
             var winners = players.FindAll(player => (int) player.Hand == maxHand);
 
-            logger.LogInformation($"            DefineWinner. Winners: {JsonSerializer.Serialize(winners)}");
             logger.LogInformation("            DefineWinner. End");
             return winners;
         }
@@ -72,7 +39,7 @@ namespace PokerHand.Server.Helpers
         {
             if (IsRoyalFlash(cards))
                 return HandType.RoyalFlush;
-
+            
             if (IsStraightFlush(cards))
                 return HandType.StraightFlush;
 
@@ -102,13 +69,13 @@ namespace PokerHand.Server.Helpers
         
         public static Card GetHighCard(List<Card> cards) =>
             SortByRank(cards)[4];
+
+
+        private static bool IsRoyalFlash(List<Card> cards) => 
+            IsStraightFlush(cards) && (int) SortByRank(cards)[4].Rank != 13;
         
-        
-        private static bool IsRoyalFlash(List<Card> cards) =>
-            IsStraight(cards) && IsFlush(cards) && (int) SortByRank(cards)[4].Rank == 12;
-        
-        private static bool IsStraightFlush(List<Card> cards) =>
-                    IsStraight(cards) && IsFlush(cards);
+        private static bool IsStraightFlush(List<Card> cards) => 
+            IsStraight(cards) && IsFlush(cards);
         
         private static bool IsFourOfAKind(List<Card> cards)
         {
@@ -118,9 +85,9 @@ namespace PokerHand.Server.Helpers
                                        (int) cards[1].Rank == (int) cards[2].Rank &&
                                        (int) cards[2].Rank == (int) cards[3].Rank;
             
-            var isFourWithLowerCard = (int) cards[1].Rank == (int) cards[2].Rank &&
-                                      (int) cards[2].Rank == (int) cards[3].Rank &&
-                                      (int) cards[3].Rank == (int) cards[4].Rank;
+            var isFourWithLowerCard =  (int) cards[1].Rank == (int) cards[2].Rank &&
+                                       (int) cards[2].Rank == (int) cards[3].Rank &&
+                                       (int) cards[3].Rank == (int) cards[4].Rank;
 
             return isFourWithHigherCard || isFourWithLowerCard;
         }
@@ -147,12 +114,12 @@ namespace PokerHand.Server.Helpers
         {
             cards = SortByRank(cards);
 
-            if ((int) cards[4].Rank == 13)
+            if ((int) cards[4].Rank == 14)
             {
-                var isFiveHighStraight = (int) cards[0].Rank == 1 && (int) cards[1].Rank == 2 &&
-                         (int) cards[2].Rank == 3 && (int) cards[3].Rank == 4;
-                var isAceHighStraight = (int) cards[0].Rank == 9 && (int) cards[1].Rank == 10 && 
-                         (int) cards[2].Rank == 11 && (int) cards[3].Rank == 12;
+                var isFiveHighStraight = (int) cards[0].Rank == 2 && (int) cards[1].Rank == 3 &&
+                                         (int) cards[2].Rank == 4 && (int) cards[3].Rank == 5;
+                var isAceHighStraight = (int) cards[0].Rank == 10 && (int) cards[1].Rank == 11 && 
+                                        (int) cards[2].Rank == 12 && (int) cards[3].Rank == 13;
 
                 return isFiveHighStraight || isAceHighStraight;
             }
@@ -202,11 +169,11 @@ namespace PokerHand.Server.Helpers
             cards = SortByRank(cards);
 
             var isTwoPairsAtBeginning = (int) cards[0].Rank == (int) cards[1].Rank &&
-                                      (int) cards[1].Rank == (int) cards[3].Rank;
-            var isThoPairsOnSides = (int) cards[0].Rank == (int) cards[1].Rank &&
-                                      (int) cards[3].Rank == (int) cards[4].Rank;
-            var isTwoPairsInEnd = (int) cards[1].Rank == (int) cards[2].Rank &&
-                                      (int) cards[3].Rank == (int) cards[4].Rank;
+                                        (int) cards[1].Rank == (int) cards[3].Rank;
+            var isThoPairsOnSides =     (int) cards[0].Rank == (int) cards[1].Rank &&
+                                        (int) cards[3].Rank == (int) cards[4].Rank;
+            var isTwoPairsInEnd =       (int) cards[1].Rank == (int) cards[2].Rank &&
+                                        (int) cards[3].Rank == (int) cards[4].Rank;
 
             return isTwoPairsAtBeginning || isThoPairsOnSides || isTwoPairsInEnd;
         }
@@ -215,12 +182,13 @@ namespace PokerHand.Server.Helpers
         {
             cards = SortByRank(cards);
 
-            var isFirstEqualsSecond = (int) cards[0].Rank == (int) cards[1].Rank;
-            var isSecondEqualsThird = (int) cards[1].Rank == (int) cards[2].Rank;
-            var isThirdEqualsFourth = (int) cards[2].Rank == (int) cards[3].Rank;
-            var isFourthEqualsFifth = (int) cards[3].Rank == (int) cards[4].Rank;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if ((int) cards[i].Rank == (int) cards[i + 1].Rank)
+                    return true;
+            }
 
-            return isFirstEqualsSecond || isSecondEqualsThird || isThirdEqualsFourth || isFourthEqualsFifth;
+            return false;
         }
 
         private static List<Card> SortByRank(List<Card> cards)

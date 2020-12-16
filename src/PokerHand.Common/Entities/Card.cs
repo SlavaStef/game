@@ -4,7 +4,7 @@ namespace PokerHand.Common.Entities
 {
     public class Card
     {
-        public CardRankNumber Rank { get; set; }
-        public SuitTypeNumber Suit { get; set; }
+        public CardRankType Rank { get; set; }
+        public CardSuitType Suit { get; set; }
     }
 }

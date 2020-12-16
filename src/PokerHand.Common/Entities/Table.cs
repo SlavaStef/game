@@ -6,26 +6,22 @@ using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Entities
 {
-    public class Table : IDisposable
+    public sealed class Table : IDisposable
     {
-        private bool disposed = false;
-        private SafeHandle handle = new SafeFileHandle(IntPtr.Zero, true);
+        private bool _disposed = false;
+        private readonly SafeHandle _handle = new SafeFileHandle(IntPtr.Zero, true);
         
         //TODO: make smallBlind and bigBlind amounts const
-        public Table()
-        {
+        public Table() { }
 
-        }
-
-        public Table(int maxPlayers)
+        public Table(TableTitle title)
         {
             Id = Guid.NewGuid();
             TimeCreated = DateTime.Now;
-            IsInGame = false;
-            MaxPlayers = maxPlayers;
-            SmallBlind = 25;
-            BigBlind = 50;
-            Deck = new Deck();
+            Title = title;
+            SetOptions(title);
+
+            Deck = new Deck(Type);
             Players = new List<Player>();
             Pot = 0;
             CommunityCards = new List<Card>();
@@ -35,12 +31,13 @@ namespace PokerHand.Common.Entities
             BigBlindIndex = -1;
         }
 
-        public Guid Id { get; set; }
+        public Guid Id { get; }
         public DateTime TimeCreated { get; set; }
-        public bool IsInGame { get; set; }
+        public TableTitle Title { get; set; }
+        public TableType Type { get; set; }
         public int MaxPlayers { get; set; }
-        public int SmallBlind { get; set; }   // small blind amount
-        public int BigBlind { get; set; }     // big blind amount
+        public int SmallBlind { get; set; }
+        public int BigBlind { get; set; }
 
         public Deck Deck { get; set; }
         public List<Player> Players { get; set; }
@@ -57,23 +54,36 @@ namespace PokerHand.Common.Entities
         public int BigBlindIndex { get; set; }
         public List<Player> Winners { get; set; }
 
+        private void SetOptions(TableTitle title)
+        {
+            switch (title)
+            {
+                case TableTitle.TropicalHouse:
+                    Type = (TableType)TableOptions.TropicalHouseOptions["Type"];
+                    MaxPlayers = TableOptions.TropicalHouseOptions["MaxPlayers"];
+                    BigBlind = TableOptions.TropicalHouseOptions["BigBlind"];
+                    SmallBlind = TableOptions.TropicalHouseOptions["SmallBlind"];
+                    break;
+            }
+        }
+        
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        
-        protected virtual void Dispose(bool disposing)
+
+        private void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
                 return;
 
             if (disposing)
             {
-                handle.Dispose();
+                _handle.Dispose();
             }
 
-            disposed = true;
+            _disposed = true;
         }
     }
 }

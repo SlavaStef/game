@@ -7,6 +7,7 @@ using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers;
 
 namespace PokerHand.BusinessLogic.Services
 {
@@ -28,14 +29,14 @@ namespace PokerHand.BusinessLogic.Services
             throw new System.NotImplementedException();
         }
 
-        public (Table, bool, Player) AddPlayerToTable(string userName, int maxPlayers)
+        public (Table, bool, Player) AddPlayerToTable(string userName, TableTitle tableTitle, int buyIn)
         {
-            var table = GetFreeTable();
+            var table = GetFreeTable(tableTitle);
             var isNewTable = false;
 
-            if (table == null)
+            if (table == null) // Create new table if there are no free required tables
             {
-                table = CreateNewTable(maxPlayers);
+                table = CreateNewTable(tableTitle);
                 isNewTable = true;
             }
 
@@ -43,7 +44,8 @@ namespace PokerHand.BusinessLogic.Services
             var player = new Player
             {
                 UserName = userName,
-                IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table)
+                IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table),
+                StackMoney = buyIn
             };
             
             table.Players.Add(player);
@@ -102,12 +104,15 @@ namespace PokerHand.BusinessLogic.Services
 
         #region privateHelpers
 
-        private Table GetFreeTable() => 
-            _allTables?.FirstOrDefault(table => table.Players.Count < table.MaxPlayers);
+        // Get a required table with free seats
+        private Table GetFreeTable(TableTitle tableType) => 
+            _allTables?
+                .Where(t => t.Title == tableType)
+                .FirstOrDefault(table => table.Players.Count < table.MaxPlayers);
 
-        private Table CreateNewTable(int maxPlayers)
+        private Table CreateNewTable(TableTitle tableTitle)
         {
-            var newTable = new Table(maxPlayers);
+            var newTable = new Table(tableTitle);
             _allTables.Add(newTable);
             
             return newTable;

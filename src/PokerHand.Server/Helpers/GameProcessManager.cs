@@ -80,9 +80,11 @@ namespace PokerHand.Server.Helpers
                 _logger.LogInformation("StartRound. New round starts");
                 RefreshTable(table);
                 await StartRound(table.Id);
-                Thread thread = new Thread(() => StartRound(tableId));
-                thread.Start();
+                // Thread thread = new Thread(() => StartRound(tableId));
+                // thread.Start();
             }
+            
+            Thread.CurrentThread.Abort();
         }
 
         private static async Task SetDealerAndBlinds(Table table, IHubContext<GameHub> hub, IMapper mapper, ILogger<GameHub> logger)
@@ -171,10 +173,23 @@ namespace PokerHand.Server.Helpers
             logger.LogInformation("DealPocketCards. Start");
 
             table.CurrentStage = RoundStageType.DealPocketCards;
-            
+            logger.LogInformation("DealPocketCards. 1");
             foreach (var player in table.ActivePlayers)
-                player.PocketCards = table.Deck.GetRandomCardsFromDeck(2);
-            
+            {
+                logger.LogInformation($"DealPocketCards. {player.Id}");
+                logger.LogInformation($"DealPocketCards. {JsonSerializer.Serialize(player)}");
+                try
+                {
+                    player.PocketCards = table.Deck.GetRandomCardsFromDeck(2);
+                }
+                catch (Exception e)
+                {
+                    logger.LogInformation($"DealPocketCards. {e.Message}, {e.StackTrace}");;
+                    throw;
+                }
+                
+            }
+            logger.LogInformation("DealPocketCards. 2");    
             await hub.Clients.Group(table.Id.ToString())
                 .SendAsync("DealPocketCards", JsonSerializer.Serialize(mapper.Map<List<PlayerDto>>(table.ActivePlayers)));
             logger.LogInformation("DealPocketCards. Pocket cards ara sent to players");
@@ -258,7 +273,7 @@ namespace PokerHand.Server.Helpers
             logger.LogInformation($"DealCommunityCards. CardsToAdd: {JsonSerializer.Serialize(cardsToAdd)}");
             
             logger.LogInformation($"DealCommunityCards. Before adding cards: {JsonSerializer.Serialize(table)}");
-            table.CommunityCards = cardsToAdd.ToList();
+            table.CommunityCards.AddRange(cardsToAdd);
             logger.LogInformation($"DealCommunityCards. After adding stage: {JsonSerializer.Serialize(table)}");
             logger.LogInformation("DealCommunityCards. CommunityCards added to table");
             
@@ -325,6 +340,14 @@ namespace PokerHand.Server.Helpers
             logger.LogInformation("Showdown. Start");
 
             table.CurrentStage = RoundStageType.Showdown;
+            
+            logger.LogInformation("Showdown. Community cards:");
+            foreach (var card in table.CommunityCards)
+            {
+                
+                    logger.LogInformation($"            Card: {card.Rank}, {card.Suit}");
+                
+            }
             
             var winners = CardsAnalyzer.DefineWinner(table.CommunityCards, table.ActivePlayers, logger);
             logger.LogInformation("Showdown. Winner(s) defined");
@@ -490,15 +513,15 @@ namespace PokerHand.Server.Helpers
             table.Deck = new Deck();
 
             table.CurrentStage = RoundStageType.None;
-            table.ActivePlayers = null;
-            table.CommunityCards = null;
+            table.ActivePlayers = new List<Player>();
+            table.CommunityCards = new List<Card>();
             table.CurrentPlayer = null;
             table.CurrentMaxBet = 0;
             table.Pot = 0;
             table.DealerIndex = -1;
             table.SmallBlindIndex = -1;
             table.BigBlindIndex = -1;
-            table.Winners = null;
+            table.Winners = new List<Player>();
         }
         #endregion
     }

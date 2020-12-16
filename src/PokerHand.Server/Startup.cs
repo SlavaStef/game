@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.BusinessLogic.Services;
 using PokerHand.Common;
+using PokerHand.Common.Entities;
 using PokerHand.Server.Helpers;
 using PokerHand.Server.Hubs;
 

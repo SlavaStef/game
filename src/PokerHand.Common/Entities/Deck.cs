@@ -12,9 +12,10 @@ namespace PokerHand.Common.Entities
         private const int MaxSuitTypeNumber = 4;
         private List<Card> Cards;
 
-        public Deck()
+        public Deck() { }
+        public Deck(TableType tableType)
         {
-            Cards = GetShuffledDeck();
+            Cards = GetShuffledDeck(tableType);
         }
 
         public List<Card> GetRandomCardsFromDeck(int numberOfCards)
@@ -32,34 +33,75 @@ namespace PokerHand.Common.Entities
             return resultCards;
         }
         
-        private static List<Card> GetShuffledDeck()
+        private static List<Card> GetShuffledDeck(TableType tableType)
         {
-            var deck = CreateDeck();
+            var deck = CreateDeck(tableType);
 
             var shuffledDeck = deck.OrderBy(x => Guid.NewGuid()).ToList();
 
             return shuffledDeck;
         }
 
-        private static IEnumerable<Card> CreateDeck()
+        private static IEnumerable<Card> CreateDeck(TableType tableType)
         {
             var newDeck = new List<Card>();
 
-            foreach (int rank in Enum.GetValues(typeof(CardRankNumber)))
+            switch (tableType)
             {
-                foreach (int suit in Enum.GetValues(typeof(SuitTypeNumber)))
-                {
-                    var newCard = new Card
+                case TableType.TexasPoker:
+                case TableType.SitAndGo:
+                case TableType.DashPoker:
+                case TableType.LawballPoker:
+                    foreach (int rank in Enum.GetValues(typeof(CardRankType)))
                     {
-                        Rank = Enum.Parse<CardRankNumber>(rank.ToString()),
-                        Suit = Enum.Parse<SuitTypeNumber>(suit.ToString())
-                    };
+                        foreach (int suit in Enum.GetValues(typeof(CardSuitType)))
+                        {
+                            var newCard = new Card
+                            {
+                                Rank = Enum.Parse<CardRankType>(rank.ToString()),
+                                Suit = Enum.Parse<CardSuitType>(suit.ToString())
+                            };
                     
-                    newDeck.Add(newCard);
-                }
+                            newDeck.Add(newCard);
+                        }
+                    }
+                    break;
+                case TableType.RoyalPoker:
+                    foreach (int rank in Enum.GetValues(typeof(RoyalPokerCardRankType)))
+                    {
+                        foreach (int suit in Enum.GetValues(typeof(CardSuitType)))
+                        {
+                            var newCard = new Card
+                            {
+                                Rank = Enum.Parse<CardRankType>(rank.ToString()),
+                                Suit = Enum.Parse<CardSuitType>(suit.ToString())
+                            };
+                    
+                            newDeck.Add(newCard);
+                        }
+                    }
+                    break;
+                case TableType.JokerPoker:
+                    foreach (int rank in Enum.GetValues(typeof(JokerPokerCardRankType)))
+                    { 
+                        foreach (int suit in Enum.GetValues(typeof(CardSuitType)))
+                        {
+                            var newCard = new Card
+                            {
+                                Rank = Enum.Parse<CardRankType>(rank.ToString()),
+                                Suit = Enum.Parse<CardSuitType>(suit.ToString())
+                            };
+                    
+                            newDeck.Add(newCard);
+                        }
+                    }
+                    break;
+  
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(tableType), tableType, null);
             }
-
-            newDeck = newDeck.Where(card => card.Rank != CardRankNumber.Joker).ToList(); 
+            
+            newDeck = newDeck.Where(card => card.Rank != CardRankType.Joker).ToList(); 
 
             return newDeck;
         }

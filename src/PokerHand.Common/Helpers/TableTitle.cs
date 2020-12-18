@@ -33,7 +33,7 @@ namespace PokerHand.Common.Helpers
         public static readonly Dictionary<string, int> TropicalHouseOptions = new Dictionary<string, int>()
         {
             {"Type", 1},
-            {"MaxPlayers", 2},
+            {"MaxPlayers", 3},
             {"SmallBlind", 25},
             {"BigBlind", 50}
         };

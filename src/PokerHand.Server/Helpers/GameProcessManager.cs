@@ -56,10 +56,10 @@ namespace PokerHand.Server.Helpers
             _logger.LogInformation("StartRound. Round started");
 
             table.ActivePlayers = table.Players.ToList();
-            
+            _logger.LogInformation("StartRound. Active players are set");
             while (table.ActivePlayers.Any(p => p.IsReady != true))
                 Thread.Sleep(500);
-
+            _logger.LogInformation("StartRound. Start with two players");
             await SetDealerAndBlinds(table, _hub, _mapper, _logger);
             await DealPocketCards(table, _hub, _mapper, _logger);
             Thread.Sleep(1000); // wait for cards to be dealed
@@ -391,6 +391,8 @@ namespace PokerHand.Server.Helpers
             
             await hub.Clients.Group(table.Id.ToString()).SendAsync("ReceiveWinners", JsonSerializer.Serialize(table.Winners));
             logger.LogInformation("Showdown. Winners are sent to players");
+            
+            Thread.Sleep(2000 + (table.ActivePlayers.Count() * 200)); 
             
             logger.LogInformation("Showdown. End");
         }

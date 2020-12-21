@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PokerHand.DataAccess.Migrations
 {
-    public partial class InitialMigration : Migration
+    public partial class InitialMigration_WithIdentity : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -43,7 +43,7 @@ namespace PokerHand.DataAccess.Migrations
                     Country = table.Column<string>(maxLength: 20, nullable: false),
                     RegistrationDate = table.Column<DateTime>(nullable: false),
                     Experience = table.Column<int>(nullable: false),
-                    ChipsAmount = table.Column<int>(nullable: false),
+                    TotalMoney = table.Column<int>(nullable: false),
                     CoinsAmount = table.Column<int>(nullable: false),
                     GamesPlayed = table.Column<int>(nullable: false),
                     BestHandType = table.Column<int>(nullable: false),

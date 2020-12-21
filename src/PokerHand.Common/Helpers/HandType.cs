@@ -2,6 +2,7 @@
 {
     public enum HandType
     {
+        None = 0,
         HighCard = 1,
         OnePair = 2,
         TwoPairs = 3,

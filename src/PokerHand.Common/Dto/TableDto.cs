@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Dto
 {
     public class TableDto
     {
-        public Guid Id { get; set; }
-        public DateTime TimeCreated { get; set; }
-        public bool IsInGame { get; set; }
-        public int MaxPlayers { get; set; }
+        public Guid Id { get; }
         public int SmallBlind { get; set; }
         public int BigBlind { get; set; }
         
+        public RoundStageType CurrentStage { get; set; }
         public Deck Deck { get; set; }
         public List<Player> Players { get; set; }
-        
-        //Current round
         public List<Player> ActivePlayers { get; set; }
         public List<Card> CommunityCards { get; set; }
         public Player CurrentPlayer { get; set; }

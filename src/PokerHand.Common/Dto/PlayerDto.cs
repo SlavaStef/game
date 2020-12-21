@@ -5,16 +5,22 @@ using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Dto
 {
+    /*
+     * PlayerDto is sent to client during game process.
+     * It contains information, related only to game process
+     */
+    
     public class PlayerDto
     {
         public Guid Id { get; set; }
         public string UserName { get; set; }
         public List<Card> PocketCards { get; set; }
         public PlayerAction CurrentAction { get; set; }
-        public int TotalMoney { get; set; }
-        public int StackMoney { get; set; } // The total chips and currency that a player has in play at a given moment
+        public int CurrentBet { get; set; }
+        public int StackMoney { get; set; }
         public ButtonTypeNumber Button { get; set; }
-        public int IndexNumber { get; set; } // Place at the table
+        public int IndexNumber { get; set; }
         public HandType Hand;
+        public bool IsReady { get; set; }
     }
 }

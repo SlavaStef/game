@@ -22,4 +22,9 @@
       <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Interfaces" />
+      <Folder Include="Repositories" />
+    </ItemGroup>
+
 </Project>

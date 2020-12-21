@@ -41,7 +41,7 @@ namespace PokerHand.Server
             services.AddSignalR();
 
             services.AddScoped<IGameProcessManager, GameProcessManager>();
-            services.AddScoped<IGameService, GameService>();
+            services.AddScoped<ITableService, TableService>();
             
             services.AddSingleton<TablesCollection>();
             

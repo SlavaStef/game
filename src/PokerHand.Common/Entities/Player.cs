@@ -8,20 +8,11 @@ namespace PokerHand.Common.Entities
 {
     public class Player : IdentityUser<Guid>
     {
-        public Player()
-        {
-            var random = new Random();
-            
-            //TODO: remove button
-            Button = ButtonTypeNumber.None;
-            StackMoney = random.Next(1, 9) * 1000;
-        }
-        
         // Properties to store in db
         public string Country { get; set; }
         public DateTime RegistrationDate { get; set; }
         public int Experience { get; set; }
-        public int ChipsAmount { get; set; }
+        public int TotalMoney { get; set; }
         public int CoinsAmount { get; set; }
         public int GamesPlayed { get; set; }
         public HandType BestHandType { get; set; }

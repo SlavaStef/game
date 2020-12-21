@@ -11,7 +11,6 @@ namespace PokerHand.Common.Entities
     {
         private bool _disposed = false;
         private readonly SafeHandle _handle = new SafeFileHandle(IntPtr.Zero, true);
-        //public Mutex Mutex { get; set; }
         public AutoResetEvent WaitForPlayerBet { get; set; }
         
         public Table() { }
@@ -69,6 +68,50 @@ namespace PokerHand.Common.Entities
                     BigBlind = TableOptions.TropicalHouseOptions["BigBlind"];
                     SmallBlind = TableOptions.TropicalHouseOptions["SmallBlind"];
                     break;
+                case TableTitle.Dash:
+                    break;
+                case TableTitle.Lowball:
+                    break;
+                case TableTitle.Private:
+                    break;
+                case TableTitle.Tournament:
+                    break;
+                case TableTitle.WetDeskLounge:
+                    break;
+                case TableTitle.IbizaDisco:
+                    break;
+                case TableTitle.ShishaBar:
+                    break;
+                case TableTitle.BeachClub:
+                    break;
+                case TableTitle.RivieraHotel:
+                    break;
+                case TableTitle.SevenNightsClub:
+                    break;
+                case TableTitle.MirageCasino:
+                    break;
+                case TableTitle.CityDreamsResort:
+                    break;
+                case TableTitle.SunriseCafe:
+                    break;
+                case TableTitle.BlueMoonYacht:
+                    break;
+                case TableTitle.GoldMine:
+                    break;
+                case TableTitle.DesertCaveHotel:
+                    break;
+                case TableTitle.ImperialBunker:
+                    break;
+                case TableTitle.MillenniumHotel:
+                    break;
+                case TableTitle.TradesmanClub:
+                    break;
+                case TableTitle.FortuneHippodrome:
+                    break;
+                case TableTitle.HeritageBank:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(title), title, null);
             }
         }
         

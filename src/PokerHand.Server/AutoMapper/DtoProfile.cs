@@ -4,11 +4,12 @@ using PokerHand.Common.Entities;
 
 namespace PokerHand.Server.AutoMapper
 {
-    public class Profiles : Profile
+    public class DtoProfile : Profile
     {
-        public Profiles()
+        public DtoProfile()
         {
             CreateMap<Player, PlayerDto>();
+            CreateMap<Player, PlayerProfileDto>();
             CreateMap<Table, TableDto>();
         }
     }

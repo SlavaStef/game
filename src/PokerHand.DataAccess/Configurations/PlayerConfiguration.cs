@@ -22,7 +22,7 @@ namespace PokerHand.DataAccess.Configurations
                 .IsRequired();
             
             builder
-                .Property(p => p.ChipsAmount)
+                .Property(p => p.TotalMoney)
                 .IsRequired();
             
             builder

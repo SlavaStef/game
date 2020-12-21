@@ -10,8 +10,8 @@ using PokerHand.DataAccess.Context;
 namespace PokerHand.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20201216155047_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20201221093255_InitialMigration_WithIdentity")]
+    partial class InitialMigration_WithIdentity
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -165,9 +165,6 @@ namespace PokerHand.DataAccess.Migrations
                     b.Property<int>("BiggestWin")
                         .HasColumnType("int");
 
-                    b.Property<int>("ChipsAmount")
-                        .HasColumnType("int");
-
                     b.Property<int>("CoinsAmount")
                         .HasColumnType("int");
 
@@ -226,6 +223,9 @@ namespace PokerHand.DataAccess.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SitAndGoWins")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalMoney")
                         .HasColumnType("int");
 
                     b.Property<bool>("TwoFactorEnabled")

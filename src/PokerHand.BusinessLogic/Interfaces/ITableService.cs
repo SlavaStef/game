@@ -1,13 +1,15 @@
-﻿using PokerHand.Common.Dto;
+﻿using System;
+using System.Threading.Tasks;
+using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 
 namespace PokerHand.BusinessLogic.Interfaces
 {
-    public interface IGameService
+    public interface ITableService
     {
         public TableInfoDto GetTableInfo(string tableName);
-        public (Table, bool, Player) AddPlayerToTable(string userName, TableTitle tableTitle, int buyIn);
+        public Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, int buyIn);
         public (Table, bool) RemovePlayerFromTable(string userName);
     }
 }

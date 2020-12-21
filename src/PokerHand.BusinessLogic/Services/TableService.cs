@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
@@ -11,17 +15,23 @@ using PokerHand.Common.Helpers;
 
 namespace PokerHand.BusinessLogic.Services
 {
-    public class GameService : IGameService
+    public class TableService : ITableService
     {
         private readonly List<Table> _allTables;
-        private readonly ILogger<GameService> _logger;
+        private readonly UserManager<Player> _userManager;
+        private readonly ILogger<TableService> _logger;
+        private readonly IMapper _mapper;
 
-        public GameService(
+        public TableService(
             TablesCollection tablesCollection,
-            ILogger<GameService> logger)
+            UserManager<Player> userManager,
+            ILogger<TableService> logger, 
+            IMapper mapper)
         {
             _allTables = tablesCollection.Tables;
+            _userManager = userManager;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public TableInfoDto GetTableInfo(string tableName)
@@ -29,7 +39,7 @@ namespace PokerHand.BusinessLogic.Services
             throw new System.NotImplementedException();
         }
 
-        public (Table, bool, Player) AddPlayerToTable(string userName, TableTitle tableTitle, int buyIn)
+        public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, int buyInAmount)
         {
             var table = GetFreeTable(tableTitle);
             var isNewTable = false;
@@ -40,19 +50,17 @@ namespace PokerHand.BusinessLogic.Services
                 isNewTable = true;
             }
 
-            // Define player's position at the table (starts with 0)
-            var player = new Player
-            {
-                UserName = userName,
-                IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table),
-                StackMoney = buyIn
-            };
+            var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
+            player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
+            player.StackMoney = buyInAmount;
             
             table.Players.Add(player);
-
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
 
-            return (table, isNewTable, player);
+            var tableDto = _mapper.Map<TableDto>(table);
+            var playerDto = _mapper.Map<PlayerDto>(player);
+            
+            return (tableDto, isNewTable, playerDto);
         }
 
         public (Table, bool) RemovePlayerFromTable(string userName)

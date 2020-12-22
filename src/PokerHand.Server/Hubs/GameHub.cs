@@ -61,7 +61,7 @@ namespace PokerHand.Server.Hubs
         public async Task GetTableInfo(string tableTitle)
         {
             var tableInfo = _tableService.GetTableInfo(tableTitle);
-            await Clients.Caller.SendAsync("ReceiveTableInfo", JsonSerializer.Serialize(tableTitle));
+            await Clients.Caller.SendAsync("ReceiveTableInfo", JsonSerializer.Serialize(tableInfo));
         }
         
         public async Task ConnectToTable(string tableTitle, string playerId, string buyInAmount)
@@ -73,8 +73,6 @@ namespace PokerHand.Server.Hubs
             var (tableDto, isNewTable, playerDto) = await _tableService.AddPlayerToTable(title, playerIdGuid, buyIn);
             
             await Groups.AddToGroupAsync(Context.ConnectionId, tableDto.Id.ToString());
-            // TODO:Probably delete this
-            await Clients.GroupExcept(tableDto.Id.ToString(), Context.ConnectionId).SendAsync("AnotherPlayerConnected", Context.ConnectionId);
             await Clients.Caller.SendAsync("ReceivePlayerDto", playerDto);
             await Clients.Group(tableDto.Id.ToString()).SendAsync("ReceiveTableState", tableDto);
 

@@ -57,9 +57,11 @@ namespace PokerHand.Server.Helpers
 
             table.ActivePlayers = table.Players.ToList();
             _logger.LogInformation("StartRound. Active players are set");
+            
             while (table.ActivePlayers.Any(p => p.IsReady != true))
                 Thread.Sleep(500);
             _logger.LogInformation("StartRound. Start with two players");
+            
             await SetDealerAndBlinds(table, _hub, _mapper, _logger);
             await DealPocketCards(table, _hub, _mapper, _logger);
             Thread.Sleep(1000); // wait for cards to be dealed
@@ -74,14 +76,12 @@ namespace PokerHand.Server.Helpers
             
             _logger.LogInformation("StartRound. End");
 
-            // start new round is there are any players
+            // Start new round is there is any player
             if (table.Players.Count > 0)
             {
                 _logger.LogInformation("StartRound. New round starts");
                 RefreshTable(table);
                 await StartRound(table.Id);
-                // Thread thread = new Thread(() => StartRound(tableId));
-                // thread.Start();
             }
             
             Thread.CurrentThread.Abort();
@@ -535,7 +535,7 @@ namespace PokerHand.Server.Helpers
 
         private static void RefreshTable(Table table)
         {
-            table.Deck = new Deck();
+            table.Deck = new Deck(table.Type);
 
             table.CurrentStage = RoundStageType.None;
             table.ActivePlayers = new List<Player>();

@@ -13,8 +13,6 @@ namespace PokerHand.Common.Entities
         private readonly SafeHandle _handle = new SafeFileHandle(IntPtr.Zero, true);
         public AutoResetEvent WaitForPlayerBet { get; set; }
         
-        public Table() { }
-
         public Table(TableTitle title)
         {
             Id = Guid.NewGuid();
@@ -32,7 +30,6 @@ namespace PokerHand.Common.Entities
             BigBlindIndex = -1;
 
             WaitForPlayerBet = new AutoResetEvent(false);
-            //Mutex = new Mutex(true);
         }
 
         public Guid Id { get; }
@@ -58,61 +55,17 @@ namespace PokerHand.Common.Entities
         public int BigBlindIndex { get; set; }
         public List<Player> Winners { get; set; }
 
-        private void SetOptions(TableTitle title)
+        private void SetOptions(TableTitle tableTitle)
         {
-            switch (title)
-            {
-                case TableTitle.TropicalHouse:
-                    Type = (TableType)TableOptions.TropicalHouseOptions["Type"];
-                    MaxPlayers = TableOptions.TropicalHouseOptions["MaxPlayers"];
-                    BigBlind = TableOptions.TropicalHouseOptions["BigBlind"];
-                    SmallBlind = TableOptions.TropicalHouseOptions["SmallBlind"];
-                    break;
-                case TableTitle.Dash:
-                    break;
-                case TableTitle.Lowball:
-                    break;
-                case TableTitle.Private:
-                    break;
-                case TableTitle.Tournament:
-                    break;
-                case TableTitle.WetDeskLounge:
-                    break;
-                case TableTitle.IbizaDisco:
-                    break;
-                case TableTitle.ShishaBar:
-                    break;
-                case TableTitle.BeachClub:
-                    break;
-                case TableTitle.RivieraHotel:
-                    break;
-                case TableTitle.SevenNightsClub:
-                    break;
-                case TableTitle.MirageCasino:
-                    break;
-                case TableTitle.CityDreamsResort:
-                    break;
-                case TableTitle.SunriseCafe:
-                    break;
-                case TableTitle.BlueMoonYacht:
-                    break;
-                case TableTitle.GoldMine:
-                    break;
-                case TableTitle.DesertCaveHotel:
-                    break;
-                case TableTitle.ImperialBunker:
-                    break;
-                case TableTitle.MillenniumHotel:
-                    break;
-                case TableTitle.TradesmanClub:
-                    break;
-                case TableTitle.FortuneHippodrome:
-                    break;
-                case TableTitle.HeritageBank:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(title), title, null);
-            }
+            var tableName = Enum.GetName(typeof(TableTitle), (int) tableTitle);
+
+            if (tableName == null)
+                throw new Exception();
+            
+            Type = (TableType)TableOptions.Tables[tableName]["TableType"];
+            SmallBlind = TableOptions.Tables[tableName]["SmallBlind"];
+            BigBlind = TableOptions.Tables[tableName]["BigBlind"];
+            MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"];
         }
         
         public void Dispose()
@@ -127,9 +80,7 @@ namespace PokerHand.Common.Entities
                 return;
 
             if (disposing)
-            {
                 _handle.Dispose();
-            }
 
             _disposed = true;
         }

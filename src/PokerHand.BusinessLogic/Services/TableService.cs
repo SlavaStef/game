@@ -36,7 +36,15 @@ namespace PokerHand.BusinessLogic.Services
 
         public TableInfoDto GetTableInfo(string tableName)
         {
-            throw new System.NotImplementedException();
+            return new TableInfoDto
+            {
+                Experience = TableOptions.Tables[tableName]["Experience"],
+                SmallBlind = TableOptions.Tables[tableName]["SmallBlind"],
+                BigBlind = TableOptions.Tables[tableName]["BigBlind"],
+                MinBuyIn = TableOptions.Tables[tableName]["MinBuyIn"],
+                MaxBuyIn = TableOptions.Tables[tableName]["MaxBuyIn"],
+                MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"]
+            };
         }
 
         public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, int buyInAmount)

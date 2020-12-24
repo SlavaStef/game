@@ -15,7 +15,7 @@ namespace PokerHand.DataAccess.Context
         {
             Database.EnsureCreated();
         }
-        
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.ApplyConfiguration(new PlayerConfiguration());

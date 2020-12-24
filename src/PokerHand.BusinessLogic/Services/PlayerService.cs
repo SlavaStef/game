@@ -31,7 +31,7 @@ namespace PokerHand.BusinessLogic.Services
             var newPlayer = new Player
             {
                 UserName = playerName,
-                Country = null,
+                Country = "",
                 RegistrationDate = DateTime.Now,
                 Experience = 0,
                 TotalMoney = 10000,

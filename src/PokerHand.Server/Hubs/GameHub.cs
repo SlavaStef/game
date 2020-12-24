@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
-using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Server.Helpers;
@@ -47,7 +46,7 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation("RegisterNewPlayer. Start");
             var playerProfileDto = await _playerService.AddNewPlayer(userName, _logger);
             
-            await Clients.Caller.SendAsync("ReceivePlayerProfile", playerProfileDto);
+            await Clients.Caller.SendAsync("ReceivePlayerProfile", JsonSerializer.Serialize(playerProfileDto));
             _logger.LogInformation("RegisterNewPlayer. Start");
         }
 
@@ -57,7 +56,7 @@ namespace PokerHand.Server.Hubs
             
             var playerProfileDto = await _playerService.Authenticate(playerIdGuid);
 
-            await Clients.Caller.SendAsync("ReceivePlayerProfile", playerProfileDto);
+            await Clients.Caller.SendAsync("ReceivePlayerProfile", JsonSerializer.Serialize(playerProfileDto));
         }
 
         public async Task GetTableInfo(string tableTitle)

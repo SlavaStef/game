@@ -71,32 +71,22 @@ namespace PokerHand.BusinessLogic.Services
             return (tableDto, isNewTable, playerDto);
         }
 
-        public (Table, bool) RemovePlayerFromTable(string userName)
+        public async Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId)
         {
             _logger.LogInformation($"Method RemovePlayerFromTable starts");
             
-            _logger.LogInformation($"Current tables in application:");
-            foreach (var _table in _allTables)
-            {
-                _logger.LogInformation($"Table {_table.Id}. Players: {_table.Players.Count}");
-                _logger.LogInformation("Players:");
-                foreach (var player in _table.Players)
-                {
-                    _logger.LogInformation($"Player {player.Id}, name: {player.UserName}");
-                }
-            }
+            var table = _allTables.First(t => t.Id == tableId);
+            var player = _userManager.Users.First(p => p.Id == playerId);
             
-            var table = _allTables
-                .First(t => t.Players.FirstOrDefault(player => player.UserName == userName) != null);
-            //_logger.LogInformation($"Table to remove player from: {table.Id}");
-            var playerToRemove = table.Players.First(player => player.UserName == userName);
-            //_logger.LogInformation($"Player to remove: {playerToRemove.Id}");
-            
-            table.Players.Remove(playerToRemove);
-            table.ActivePlayers.Remove(playerToRemove);
+            table.Players.Remove(player);
+            table.ActivePlayers.Remove(player);
+            table.Pot += player.CurrentBet;
             _logger.LogInformation($"Player was removed from table");
             
-            var isPlayerRemoved = !table.Players.Contains(playerToRemove);
+            //TODO: add round to player's statistics
+            
+            
+            
             
             //TODO: If one of two players leaves round -> stop round & the second player is the winner
             if (table.Players.Count == 1)
@@ -104,18 +94,17 @@ namespace PokerHand.BusinessLogic.Services
                 
             }
 
-            // if there is no player at a table -> delete this table
+            // If there is no player at the table -> delete this table
             if (table.Players.Count == 0)
             {
                 _allTables.Remove(table);
                 table.Dispose();
-                _logger.LogInformation($"{JsonSerializer.Serialize(_allTables)}");
                 _logger.LogInformation("Table deleted from all tables");
-                return (null, isPlayerRemoved);
+                return null;
             }
             
             _logger.LogInformation($"Method RemovePlayerFromTable ends");
-            return (table, isPlayerRemoved);
+            return _mapper.Map<TableDto>(table);
         }
 
         #region privateHelpers

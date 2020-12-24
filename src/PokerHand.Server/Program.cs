@@ -33,6 +33,7 @@ namespace PokerHand.Server
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls("http://localhost:3000");
                 });
     }
 }

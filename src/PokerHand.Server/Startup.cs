@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,7 +33,11 @@ namespace PokerHand.Server
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
+                sqlServerOptionsAction: sqlOptions =>
+                {
+                    sqlOptions.EnableRetryOnFailure();
+                }));
 
             services.AddIdentity<Player, IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<ApplicationContext>()
@@ -41,6 +46,7 @@ namespace PokerHand.Server
             services.AddSignalR();
 
             services.AddScoped<IGameProcessManager, GameProcessManager>();
+            services.AddScoped<IPlayerService, PlayerService>();
             services.AddScoped<ITableService, TableService>();
             
             services.AddSingleton<TablesCollection>();
@@ -55,7 +61,13 @@ namespace PokerHand.Server
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            
+            // using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            // {
+            //     var context = serviceScope.ServiceProvider.GetRequiredService<ApplicationContext>();
+            //     context.Database.Migrate();
+            // }
+            
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>

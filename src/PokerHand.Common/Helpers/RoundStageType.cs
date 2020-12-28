@@ -7,7 +7,9 @@
         DealPocketCards = 2,
         PreFlopWagering = 3,
         DealCommunityCards = 4,
-        Wagering = 5,
-        Showdown = 6
+        WageringSecondRound = 5,
+        WageringThirdRound = 6,
+        WageringFourthRound = 7,
+        Showdown = 8
     }
 }

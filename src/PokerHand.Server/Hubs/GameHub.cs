@@ -103,9 +103,7 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Action is added to Current player");
             _logger.LogInformation(JsonSerializer.Serialize(_allTables.First(t => t.Id == tableId)));
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Player's action received, sent to all players and added to entity.");
-            //table.Mutex.ReleaseMutex();
             table.WaitForPlayerBet.Set();
-            //WaitForPlayerBet.Set();
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. End");
             _logger.LogInformation($"THIS {JsonSerializer.Serialize(_allTables.First(t => t.Id == tableId))}");
         }

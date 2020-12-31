@@ -7,7 +7,7 @@ namespace PokerHand.Common.Dto
 {
     public class TableDto
     {
-        public Guid Id { get; }
+        public Guid Id { get; set; }
         public int SmallBlind { get; set; }
         public int BigBlind { get; set; }
         

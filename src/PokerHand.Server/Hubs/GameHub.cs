@@ -21,7 +21,7 @@ namespace PokerHand.Server.Hubs
         private readonly IPlayerService _playerService;
         private readonly IGameProcessManager _gameProcessManager;
         private readonly ILogger<GameHub> _logger;
-        
+
         public GameHub(
             TablesCollection tablesCollection,
             ITableService tableService,
@@ -40,19 +40,22 @@ namespace PokerHand.Server.Hubs
         {
             _logger.LogInformation($"GameHub. Player {Context.ConnectionId} connected");
         }
-
+        
         public async Task RegisterNewPlayer(string userName)
         {
             _logger.LogInformation("RegisterNewPlayer. Start");
             var playerProfileDto = await _playerService.AddNewPlayer(userName, _logger);
             
             await Clients.Caller.SendAsync("ReceivePlayerProfile", JsonSerializer.Serialize(playerProfileDto));
-            _logger.LogInformation("RegisterNewPlayer. Start");
-        }
+            _logger.LogInformation("RegisterNewPlayer. End");
+        } 
 
         public async Task Authenticate(string playerId)
         {
+            _logger.LogInformation("Authenticate. Start");
             var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
+            
+            _logger.LogInformation($"Authenticate. playerId:{playerId}, GUID: {playerIdGuid}");
             
             var playerProfileDto = await _playerService.Authenticate(playerIdGuid);
 
@@ -64,6 +67,11 @@ namespace PokerHand.Server.Hubs
             var tableInfo = _tableService.GetTableInfo(tableTitle);
             await Clients.Caller.SendAsync("ReceiveTableInfo", JsonSerializer.Serialize(tableInfo));
         }
+        public async Task GetAllTablesInfo()
+        {
+            var allTablesInfo = _tableService.GetAllTablesInfo();
+            await Clients.Caller.SendAsync("ReceiveAllTablesInfo", JsonSerializer.Serialize(allTablesInfo));
+        }
         
         public async Task ConnectToTable(string tableTitle, string playerId, string buyInAmount)
         {
@@ -74,8 +82,8 @@ namespace PokerHand.Server.Hubs
             var (tableDto, isNewTable, playerDto) = await _tableService.AddPlayerToTable(title, playerIdGuid, buyIn);
             
             await Groups.AddToGroupAsync(Context.ConnectionId, tableDto.Id.ToString());
-            await Clients.Caller.SendAsync("ReceivePlayerDto", playerDto);
-            await Clients.Group(tableDto.Id.ToString()).SendAsync("ReceiveTableState", tableDto);
+            await Clients.Caller.SendAsync("ReceivePlayerDto", JsonSerializer.Serialize(playerDto));
+            await Clients.Group(tableDto.Id.ToString()).SendAsync("ReceiveTableState", JsonSerializer.Serialize(tableDto));
 
             if (isNewTable)
             {

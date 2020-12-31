@@ -5,7 +5,7 @@
         None = 0,
         SetDealerAndBlinds = 1,
         DealPocketCards = 2,
-        PreFlopWagering = 3,
+        WageringPreFlopRound = 3,
         DealCommunityCards = 4,
         WageringSecondRound = 5,
         WageringThirdRound = 6,

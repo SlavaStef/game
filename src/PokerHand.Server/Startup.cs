@@ -71,7 +71,7 @@ namespace PokerHand.Server
                 
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("hello");
+                    await context.Response.WriteAsync("Is working");
                 });
             });
         }

@@ -16,13 +16,15 @@ namespace PokerHand.BusinessLogic.Services
     public class PlayerService : IPlayerService
     {
         private readonly UserManager<Player> _userManager;
+        private readonly ILogger<TableService> _logger;
         private readonly IMapper _mapper;
         
 
-        public PlayerService(UserManager<Player> userManager, IMapper mapper)
+        public PlayerService(UserManager<Player> userManager, IMapper mapper, ILogger<TableService> logger)
         {
             _userManager = userManager;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<PlayerProfileDto> AddNewPlayer(string playerName, ILogger logger)
@@ -56,11 +58,15 @@ namespace PokerHand.BusinessLogic.Services
 
         public async Task<PlayerProfileDto> Authenticate(Guid playerId)
         {
+            _logger.LogInformation("PlayerService.Authenticate. Start");
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
 
+            _logger.LogInformation($"PlayerService.Authenticate. Player: {JsonSerializer.Serialize(player)}");
+            
             if (player == null)
                 throw new Exception();
             
+            _logger.LogInformation("PlayerService.Authenticate. End");
             return _mapper.Map<PlayerProfileDto>(player);
         }
         

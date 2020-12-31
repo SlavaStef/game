@@ -110,7 +110,7 @@ namespace PokerHand.Common.Helpers
                         {"MaxPlayers", 5}
                     }
                 },
-                {"SevenNightsClub", new Dictionary<string, int>
+                {"BlueMoonYacht", new Dictionary<string, int>
                     {
                         {"TableType", 3},
                         {"Experience", 30},

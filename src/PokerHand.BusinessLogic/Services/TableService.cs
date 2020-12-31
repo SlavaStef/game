@@ -38,6 +38,8 @@ namespace PokerHand.BusinessLogic.Services
         {
             return new TableInfoDto
             {
+                Title = tableName,
+                TableType = TableOptions.Tables[tableName]["TableType"],
                 Experience = TableOptions.Tables[tableName]["Experience"],
                 SmallBlind = TableOptions.Tables[tableName]["SmallBlind"],
                 BigBlind = TableOptions.Tables[tableName]["BigBlind"],
@@ -45,6 +47,30 @@ namespace PokerHand.BusinessLogic.Services
                 MaxBuyIn = TableOptions.Tables[tableName]["MaxBuyIn"],
                 MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"]
             };
+        }
+
+        public List<TableInfoDto> GetAllTablesInfo()
+        {
+            var allTablesInfo = new List<TableInfoDto>();
+
+            foreach (var table in TableOptions.Tables)
+            {
+                var tableInfoDto = new TableInfoDto
+                {
+                    Title = table.Key,
+                    TableType = table.Value["TableType"],
+                    Experience = table.Value["Experience"],
+                    SmallBlind = table.Value["SmallBlind"],
+                    BigBlind = table.Value["BigBlind"],
+                    MinBuyIn = table.Value["MinBuyIn"],
+                    MaxBuyIn = table.Value["MaxBuyIn"],
+                    MaxPlayers = table.Value["MaxPlayers"]
+                };
+                
+                allTablesInfo.Add(tableInfoDto);
+            }
+
+            return allTablesInfo;
         }
 
         public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, int buyInAmount)
@@ -58,14 +84,19 @@ namespace PokerHand.BusinessLogic.Services
                 isNewTable = true;
             }
 
+            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
+            
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
             player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
             player.StackMoney = buyInAmount;
             
             table.Players.Add(player);
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
-
+            
+            
+            
             var tableDto = _mapper.Map<TableDto>(table);
+            _logger.LogInformation($"tableDto: {JsonSerializer.Serialize(tableDto)}");
             var playerDto = _mapper.Map<PlayerDto>(player);
             
             return (tableDto, isNewTable, playerDto);
@@ -78,14 +109,12 @@ namespace PokerHand.BusinessLogic.Services
             var table = _allTables.First(t => t.Id == tableId);
             var player = _userManager.Users.First(p => p.Id == playerId);
             
+            table.Pot += player.CurrentBet;
             table.Players.Remove(player);
             table.ActivePlayers.Remove(player);
-            table.Pot += player.CurrentBet;
             _logger.LogInformation($"Player was removed from table");
             
             //TODO: add round to player's statistics
-            
-            
             
             
             //TODO: If one of two players leaves round -> stop round & the second player is the winner

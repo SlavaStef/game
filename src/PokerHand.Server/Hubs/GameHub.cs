@@ -4,36 +4,44 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
+using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Server.Helpers;
 
 namespace PokerHand.Server.Hubs
 {
-    public class GameHub : Hub
+    public class GameHub : Hub, IGameHub
     {
         private readonly List<Table> _allTables;
+        private readonly Dictionary<Guid, string> _allPlayers;
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
         private readonly IGameProcessManager _gameProcessManager;
         private readonly ILogger<GameHub> _logger;
+        private readonly IMapper _mapper;
 
         public GameHub(
             TablesCollection tablesCollection,
             ITableService tableService,
             IPlayerService playerService,
             IGameProcessManager gameProcessManager,
-            ILogger<GameHub> logger)
+            ILogger<GameHub> logger, 
+            IMapper mapper, 
+            PlayersOnline allPlayers)
         {
             _allTables = tablesCollection.Tables;
             _tableService = tableService;
             _playerService = playerService;
             _gameProcessManager = gameProcessManager;
             _logger = logger;
+            _mapper = mapper;
+            _allPlayers = allPlayers.Players;
         }
 
         public override async Task OnConnectedAsync()
@@ -47,6 +55,8 @@ namespace PokerHand.Server.Hubs
             var playerProfileDto = await _playerService.AddNewPlayer(userName, _logger);
             
             await Clients.Caller.SendAsync("ReceivePlayerProfile", JsonSerializer.Serialize(playerProfileDto));
+            
+            _allPlayers.Add(playerProfileDto.Id, Context.ConnectionId);
             _logger.LogInformation("RegisterNewPlayer. End");
         } 
 
@@ -58,8 +68,20 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"Authenticate. playerId:{playerId}, GUID: {playerIdGuid}");
             
             var playerProfileDto = await _playerService.Authenticate(playerIdGuid);
+            
+            try
+            { 
+                _allPlayers.Add(playerIdGuid, Context.ConnectionId);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation($"Authenticate. Exception: {e.Message}");
+            }
 
-            await Clients.Caller.SendAsync("ReceivePlayerProfile", JsonSerializer.Serialize(playerProfileDto));
+            if (playerProfileDto == null)
+                await Clients.Caller.SendAsync("ReceivePlayerNotFound");
+            else
+                await Clients.Caller.SendAsync("ReceivePlayerProfile", JsonSerializer.Serialize(playerProfileDto));
         }
 
         public async Task GetTableInfo(string tableTitle)
@@ -67,6 +89,7 @@ namespace PokerHand.Server.Hubs
             var tableInfo = _tableService.GetTableInfo(tableTitle);
             await Clients.Caller.SendAsync("ReceiveTableInfo", JsonSerializer.Serialize(tableInfo));
         }
+        
         public async Task GetAllTablesInfo()
         {
             var allTablesInfo = _tableService.GetAllTablesInfo();
@@ -79,7 +102,7 @@ namespace PokerHand.Server.Hubs
             var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
             var buyIn = JsonSerializer.Deserialize<int>(buyInAmount);
             
-            var (tableDto, isNewTable, playerDto) = await _tableService.AddPlayerToTable(title, playerIdGuid, buyIn);
+            var (tableDto, isNewTable, playerDto) = await _tableService.AddPlayerToTable(title, playerIdGuid, Context.ConnectionId, buyIn);
             
             await Groups.AddToGroupAsync(Context.ConnectionId, tableDto.Id.ToString());
             await Clients.Caller.SendAsync("ReceivePlayerDto", JsonSerializer.Serialize(playerDto));
@@ -129,39 +152,38 @@ namespace PokerHand.Server.Hubs
 
         public async void LeaveTable(string tableId, string playerId)
         {
-            var tableIdGuid = JsonSerializer.Deserialize<Guid>(tableId);
-            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
+            _logger.LogInformation($"GameHub.LeaveTable. Start");
+            var tableIdGuid = Guid.Parse(tableId);
+            var playerIdGuid = Guid.Parse(playerId);
+            
+            _logger.LogInformation($"GameHub.LeaveTable. tableIdGuid: {tableIdGuid}, playerIdGuid: {playerIdGuid}");
 
             var tableDto = await _tableService.RemovePlayerFromTable(tableIdGuid, playerIdGuid);
+            
+            _logger.LogInformation($"GameHub.LeaveTable. tableDto: {JsonSerializer.Serialize(tableDto)}");
 
             if (tableDto != null)
                 await Clients.Group(tableId).SendAsync("PlayerDisconnected", JsonSerializer.Serialize(tableDto));
+            
+            _logger.LogInformation($"GameHub.LeaveTable. End");
         }
 
-        // public override async Task OnDisconnectedAsync(Exception exception)
-        // {
-        //     _logger.LogInformation($"GameHub.OnDisconnectedAsync. Start from player {Context.ConnectionId}");
-        //     
-        //     var (table, isPlayerRemoved) = _tableService.RemovePlayerFromTable(Context.ConnectionId);
-        //     
-        //     if(isPlayerRemoved) 
-        //         _logger.LogInformation($"GameHub.OnDisconnectedAsync. Player {Context.ConnectionId} removed from table");
-        //     
-        //
-        //     if (table != null && isPlayerRemoved)
-        //     {
-        //         await Clients.Group(table.Id.ToString())
-        //             .SendAsync("PlayerDisconnected", JsonSerializer.Serialize<TableDto>(table));
-        //         _logger.LogInformation($"GameHub.OnDisconnectedAsync. Table: {table.Id}. Players: {table.Players.Count}");
-        //
-        //         foreach (var player in table.Players)
-        //         {
-        //             _logger.LogInformation($"Player: {player.Id}, name {player.UserName}");
-        //         }
-        //     }
-        //     
-        //     if(table == null)
-        //         _logger.LogInformation($"GameHub.OnDisconnectedAsync. Table removed");
-        // }
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            _logger.LogInformation($"GameHub.OnDisconnectedAsync. Start from player {Context.ConnectionId}");
+
+            var playerId = _allPlayers.First(p => p.Value == Context.ConnectionId).Key;
+            var tableId = _allTables.First(t => t.Players.First(p => p.Id == playerId) != null).Id;
+            
+            var newTableDto = await _tableService.RemovePlayerFromTable(tableId, playerId);
+
+            _allPlayers.Remove(playerId);
+            
+            _logger.LogInformation($"GameHub.OnDisconnectedAsync. Player {Context.ConnectionId} removed from table");
+            
+            await Clients.Group(tableId.ToString())
+                .SendAsync("PlayerDisconnected", JsonSerializer.Serialize(newTableDto));
+        
+        }
     }
 }

@@ -45,6 +45,7 @@ namespace PokerHand.Server
             services.AddScoped<ITableService, TableService>();
             
             services.AddSingleton<TablesCollection>();
+            services.AddSingleton<PlayersOnline>();
             
             services.AddAutoMapper(typeof(Startup));
         }

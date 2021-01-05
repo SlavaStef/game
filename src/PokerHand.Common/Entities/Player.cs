@@ -21,6 +21,9 @@ namespace PokerHand.Common.Entities
         public int SitAndGoWins { get; set; }
         
         // Game properties
+        [NotMapped] 
+        public string ConnectionId { get; set; }
+        
         [NotMapped]
         public List<Card> PocketCards { get; set; }
         

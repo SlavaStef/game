@@ -33,6 +33,28 @@ namespace PokerHand.Common.Helpers
         public static readonly Dictionary<string, Dictionary<string, int>> Tables =
             new Dictionary<string, Dictionary<string, int>>
             {
+                {"Dash", new Dictionary<string, int>
+                    {
+                        {"TableType", 5},
+                        {"Experience", 0},
+                        {"SmallBlind", 50},
+                        {"BigBlind", 100},
+                        {"MinBuyIn", 1000},
+                        {"MaxBuyIn", 10000},
+                        {"MaxPlayers", 5}
+                    }
+                },
+                {"Lowball", new Dictionary<string, int>
+                    {
+                        {"TableType", 6},
+                        {"Experience", 0},
+                        {"SmallBlind", 50},
+                        {"BigBlind", 100},
+                        {"MinBuyIn", 1000},
+                        {"MaxBuyIn", 10000},
+                        {"MaxPlayers", 8}
+                    }
+                },
                 {"BeachClub", new Dictionary<string, int>
                     {
                         {"TableType", 2},

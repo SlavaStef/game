@@ -73,7 +73,7 @@ namespace PokerHand.BusinessLogic.Services
             return allTablesInfo;
         }
 
-        public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, int buyInAmount)
+        public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, string playerConnectionId, int buyInAmount)
         {
             var table = GetFreeTable(tableTitle);
             var isNewTable = false;
@@ -87,13 +87,12 @@ namespace PokerHand.BusinessLogic.Services
             _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
+            player.ConnectionId = playerConnectionId;
             player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
             player.StackMoney = buyInAmount;
             
             table.Players.Add(player);
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
-            
-            
             
             var tableDto = _mapper.Map<TableDto>(table);
             _logger.LogInformation($"tableDto: {JsonSerializer.Serialize(tableDto)}");
@@ -107,11 +106,20 @@ namespace PokerHand.BusinessLogic.Services
             _logger.LogInformation($"Method RemovePlayerFromTable starts");
             
             var table = _allTables.First(t => t.Id == tableId);
-            var player = _userManager.Users.First(p => p.Id == playerId);
+            var player = table.Players.First(p => p.Id == playerId);
             
+            _logger.LogInformation($"Method RemovePlayerFromTable. Pot before deletion: {table.Pot}");
             table.Pot += player.CurrentBet;
+            _logger.LogInformation($"Method RemovePlayerFromTable. Pot after deletion: {table.Pot}");
+            
+            _logger.LogInformation($"Method RemovePlayerFromTable. Players before deletion: {JsonSerializer.Serialize(table.Players)}");
             table.Players.Remove(player);
+            _logger.LogInformation($"Method RemovePlayerFromTable. Players after deletion: {JsonSerializer.Serialize(table.Players)}");
+            
+            _logger.LogInformation($"Method RemovePlayerFromTable. ActivePlayers before deletion: {JsonSerializer.Serialize(table.ActivePlayers)}");
             table.ActivePlayers.Remove(player);
+            _logger.LogInformation($"Method RemovePlayerFromTable. ActivePlayers after deletion: {JsonSerializer.Serialize(table.ActivePlayers)}");
+            
             _logger.LogInformation($"Player was removed from table");
             
             //TODO: add round to player's statistics
@@ -132,8 +140,11 @@ namespace PokerHand.BusinessLogic.Services
                 return null;
             }
             
+            var resultTable = _mapper.Map<TableDto>(table);
+            _logger.LogInformation($"Method RemovePlayerFromTable. resultTableDto: {JsonSerializer.Serialize(resultTable)}");
+            
             _logger.LogInformation($"Method RemovePlayerFromTable ends");
-            return _mapper.Map<TableDto>(table);
+            return resultTable;
         }
 
         #region privateHelpers

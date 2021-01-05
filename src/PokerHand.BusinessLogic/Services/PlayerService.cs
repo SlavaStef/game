@@ -63,13 +63,10 @@ namespace PokerHand.BusinessLogic.Services
 
             _logger.LogInformation($"PlayerService.Authenticate. Player: {JsonSerializer.Serialize(player)}");
             
-            if (player == null)
-                throw new Exception();
-            
             _logger.LogInformation("PlayerService.Authenticate. End");
-            return _mapper.Map<PlayerProfileDto>(player);
+            return player == null 
+                ? null 
+                : _mapper.Map<PlayerProfileDto>(player);
         }
-        
-        
     }
 }

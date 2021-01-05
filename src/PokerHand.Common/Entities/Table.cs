@@ -21,10 +21,10 @@ namespace PokerHand.Common.Entities
             SetOptions(title);
 
             Deck = new Deck(Type);
-            Players = new List<Player>();
+            Players = new List<Player>(MaxPlayers);
             Pot = 0;
-            CommunityCards = new List<Card>();
-            Winners = null;
+            CommunityCards = new List<Card>(5);
+            Winners = new List<Player>(MaxPlayers);
             DealerIndex = -1;
             SmallBlindIndex = -1;
             BigBlindIndex = -1;

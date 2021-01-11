@@ -16,7 +16,7 @@ using PokerHand.Server.Helpers;
 
 namespace PokerHand.Server.Hubs
 {
-    public class GameHub : Hub, IGameHub
+    public class GameHub : Hub<IGameHubClient>, IGameHub
     {
         private readonly List<Table> _allTables;
         private readonly Dictionary<Guid, string> _allPlayers;
@@ -53,8 +53,8 @@ namespace PokerHand.Server.Hubs
         {
             _logger.LogInformation("RegisterNewPlayer. Start");
             var playerProfileDto = await _playerService.AddNewPlayer(userName, _logger);
-            
-            await Clients.Caller.SendAsync("ReceivePlayerProfile", JsonSerializer.Serialize(playerProfileDto));
+
+            await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
             
             _allPlayers.Add(playerProfileDto.Id, Context.ConnectionId);
             _logger.LogInformation("RegisterNewPlayer. End");
@@ -79,21 +79,21 @@ namespace PokerHand.Server.Hubs
             }
 
             if (playerProfileDto == null)
-                await Clients.Caller.SendAsync("ReceivePlayerNotFound");
+                await Clients.Caller.ReceivePlayerNotFound();
             else
-                await Clients.Caller.SendAsync("ReceivePlayerProfile", JsonSerializer.Serialize(playerProfileDto));
+                await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
         }
 
         public async Task GetTableInfo(string tableTitle)
         {
             var tableInfo = _tableService.GetTableInfo(tableTitle);
-            await Clients.Caller.SendAsync("ReceiveTableInfo", JsonSerializer.Serialize(tableInfo));
+            await Clients.Caller.ReceiveTableInfo(JsonSerializer.Serialize(tableInfo));
         }
         
         public async Task GetAllTablesInfo()
         {
             var allTablesInfo = _tableService.GetAllTablesInfo();
-            await Clients.Caller.SendAsync("ReceiveAllTablesInfo", JsonSerializer.Serialize(allTablesInfo));
+            await Clients.Caller.ReceiveAllTablesInfo(JsonSerializer.Serialize(allTablesInfo));
         }
         
         public async Task ConnectToTable(string tableTitle, string playerId, string buyInAmount)
@@ -105,8 +105,8 @@ namespace PokerHand.Server.Hubs
             var (tableDto, isNewTable, playerDto) = await _tableService.AddPlayerToTable(title, playerIdGuid, Context.ConnectionId, buyIn);
             
             await Groups.AddToGroupAsync(Context.ConnectionId, tableDto.Id.ToString());
-            await Clients.Caller.SendAsync("ReceivePlayerDto", JsonSerializer.Serialize(playerDto));
-            await Clients.Group(tableDto.Id.ToString()).SendAsync("ReceiveTableState", JsonSerializer.Serialize(tableDto));
+            await Clients.Caller.ReceivePlayerDto(JsonSerializer.Serialize(playerDto));
+            await Clients.Group(tableDto.Id.ToString()).ReceiveTableState(JsonSerializer.Serialize(tableDto));
 
             if (isNewTable)
             {
@@ -122,7 +122,7 @@ namespace PokerHand.Server.Hubs
             var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
             
-            await Clients.OthersInGroup(tableId.ToString()).SendAsync("ReceivePlayerAction", actionFromPlayer);
+            await Clients.OthersInGroup(tableId.ToString()).ReceivePlayerAction(actionFromPlayer);
             
             var table = _allTables
                 .First(t => t.Id == tableId);
@@ -163,7 +163,7 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"GameHub.LeaveTable. tableDto: {JsonSerializer.Serialize(tableDto)}");
 
             if (tableDto != null)
-                await Clients.Group(tableId).SendAsync("PlayerDisconnected", JsonSerializer.Serialize(tableDto));
+                await Clients.Group(tableId).PlayerDisconnected(JsonSerializer.Serialize(tableDto));
             
             _logger.LogInformation($"GameHub.LeaveTable. End");
         }
@@ -181,9 +181,7 @@ namespace PokerHand.Server.Hubs
             
             _logger.LogInformation($"GameHub.OnDisconnectedAsync. Player {Context.ConnectionId} removed from table");
             
-            await Clients.Group(tableId.ToString())
-                .SendAsync("PlayerDisconnected", JsonSerializer.Serialize(newTableDto));
-        
+            await Clients.Group(tableId.ToString()).PlayerDisconnected(JsonSerializer.Serialize(newTableDto));
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Win32.SafeHandles;
 using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.Common.Entities
 {

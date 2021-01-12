@@ -12,6 +12,7 @@ using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.Table;
 using PokerHand.Server.Hubs;
 
 namespace PokerHand.Server.Helpers

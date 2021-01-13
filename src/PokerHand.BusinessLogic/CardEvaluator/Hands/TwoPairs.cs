@@ -11,7 +11,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
     {
         private const int Rate = 17;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> totalCards)
+        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
         {
             var allCards = tableCards.Concat(playerHand).ToList();
             
@@ -22,45 +22,57 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                         card.Rank = (CardRankType)GetMaxCardValue(allCards);
             }
 
-            totalCards = new List<Card>(4);
+            finalCardsList = new List<Card>(5);
             value = 0;
             var lastValue = -1;
-            var counter = 0;
+            var numberOfPairs = 0;
 
             for (var i = 0; i < 2; i++)
             {
                 foreach (var card in allCards)
                 {
-                    if (allCards.FindAll(c => c.Rank == card.Rank).Count == 2)
+                    if (allCards.Count(c => c.Rank == card.Rank) == 2)
                     {
                         value += (int)card.Rank * 2;
                         lastValue = (int)card.Rank;
-                        counter++;
+                        numberOfPairs++;
                         
                         var cards = allCards.Where(c => c.Rank == card.Rank).ToArray();
-                        totalCards.AddRange(cards);
+                        finalCardsList.AddRange(cards);
                         
                         allCards.RemoveAll(c => (int)c.Rank == lastValue);
                         break;
                     }
                 }
+                CardEvaluator.SortByRankDescending(finalCardsList);
             }
 
             var isTwoPairs = false;
             
-            if (counter == 2)
+            if (numberOfPairs == 2)
             {
                 isTwoPairs = true;
                 value *= Rate;
                 handType = HandType.TwoPairs;
+                
+                // Add the fifth card
+                AddCardsSortedByValue(finalCardsList, allCards);
             }
             else
             {
                 value = 0;
                 handType = HandType.None;
+                finalCardsList = null;
             }
 
             return isTwoPairs;
+        }
+        
+        private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
+        {
+            CardEvaluator.SortByRankDescending(allCards);
+            
+            finalCardsList.Add(allCards[0]);
         }
         
         private int GetMaxCardValue(List<Card> cards)

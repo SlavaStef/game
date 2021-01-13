@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using PokerHand.BusinessLogic.HandEvaluator;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
@@ -14,6 +15,7 @@ using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Table;
 using PokerHand.Server.Hubs;
+using PokerHand.Server.Hubs.Interfaces;
 
 namespace PokerHand.Server.Helpers
 {
@@ -313,138 +315,30 @@ namespace PokerHand.Server.Helpers
             }
         }
         
-        // private async Task StartWagering(Table table)
-        // {
-        //     // Choose current stage based on the last one
-        //     switch (table.CurrentStage)
-        //     {
-        //         case RoundStageType.DealPocketCards:
-        //             table.CurrentStage = RoundStageType.WageringPreFlopRound;
-        //             break;
-        //         case RoundStageType.WageringPreFlopRound:
-        //             table.CurrentStage = RoundStageType.WageringSecondRound;
-        //             break;
-        //         case RoundStageType.WageringSecondRound:
-        //             table.CurrentStage = RoundStageType.WageringThirdRound;
-        //             break;
-        //         case RoundStageType.WageringThirdRound:
-        //             table.CurrentStage = RoundStageType.WageringFourthRound;
-        //             break;
-        //     }
-        //
-        //     if (table.CurrentStage == RoundStageType.WageringPreFlopRound)
-        //     {
-        //         await MakeSmallBlindBet(table, hub, logger, mapper, tableService);
-        //         await MakeBigBlindBet(table, hub, logger, mapper, tableService);
-        //     
-        //         await hub.Clients.Group(table.Id.ToString())
-        //             .SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
-        //     }
-        //     
-        //     var counter = table.ActivePlayers.Count;
-        //
-        //     do
-        //     {
-        //         // choose next player to make choice
-        //         SetCurrentPlayer(table, logger);
-        //
-        //         // player makes choice
-        //         await hub.Clients.Group(table.Id.ToString())
-        //             .SendAsync("ReceiveCurrentPlayerIdInWagering", JsonSerializer.Serialize(table.CurrentPlayer.Id));
-        //         
-        //         table.WaitForPlayerBet.WaitOne();
-        //         ProcessPlayerAction(table, table.CurrentPlayer, hub, logger, mapper, tableService);
-        //         
-        //         await hub.Clients.Group(table.Id.ToString())
-        //             .SendAsync("ReceiveTableState", JsonSerializer.Serialize(table));
-        //
-        //         counter--;
-        //     } 
-        //     while (table.ActivePlayers.Count > 1 && (counter > 0 || !CheckIfAllBetsAreEqual(table, logger)));
-        //
-        //     if (table.ActivePlayers.Count == 1)
-        //     {
-        //         await EndRoundIfFold(table, hub, mapper, logger);
-        //     }
-        //     else
-        //     {
-        //         CollectBetsFromTable(table, logger);
-        //         
-        //         table.CurrentPlayer = null;
-        //         table.CurrentMaxBet = 0;
-        //         foreach (var player in table.ActivePlayers)
-        //             player.CurrentBet = 0;
-        //     
-        //         await hub.Clients.Group(table.Id.ToString())
-        //             .SendAsync("ReceiveTableStateAtWageringEnd", JsonSerializer.Serialize(table));
-        //         
-        //         Thread.Sleep(2500);
-        //     
-        //         switch (table.CurrentStage)
-        //         {
-        //             case RoundStageType.WageringPreFlopRound:
-        //                 await DealCommunityCards(table, 3, hub, mapper, logger, tableService);
-        //                 break;
-        //             case RoundStageType.WageringFourthRound:
-        //                 await Showdown(table, hub, mapper, logger);
-        //                 break;
-        //             default:
-        //                 await DealCommunityCards(table, 1, hub, mapper, logger, tableService);
-        //                 break;
-        //         }
-        //     }
-        // }
-
         private async Task Showdown(Table table)
         {
             _logger.LogInformation("Showdown. Start");
 
             table.CurrentStage = RoundStageType.Showdown;
+
+            var isJokerGame = table.Type == TableType.JokerPoker;
+
+            var winners = CardEvaluator.DefineWinners(table.CommunityCards, table.ActivePlayers, isJokerGame);
+            _logger.LogInformation("Showdown. Winner(s) defined");
             
-            // logger.LogInformation("Showdown. Community cards:");
-            // foreach (var card in table.CommunityCards)
-            // {
-            //     
-            //         logger.LogInformation($"            Card: {card.Rank}, {card.Suit}");
-            //     
-            // }
-            //
-            // var winners = CardsAnalyzer.DefineWinner(table.CommunityCards, table.ActivePlayers, logger);
-            // logger.LogInformation("Showdown. Winner(s) defined");
-            //
-            //     table.Winners = winners.ToList();
-            //     logger.LogInformation("Showdown. Winner(s) added to table");
-            //
-            //
-            // if (winners.Count == 1)
-            //     winners[0].StackMoney += table.Pot;
-            // else
-            // {
-            //     var winningAmount = table.Pot / winners.Count;
-            //
-            //     foreach (var player in winners)
-            //         player.StackMoney += winningAmount;
-            // }
-
-            table.Winners = new List<Player>();
-            var random = new Random();
-
-            var randomNumber = random.Next(1, 3);
-
-            switch (randomNumber)
+            table.Winners = winners.ToList();
+            _logger.LogInformation("Showdown. Winner(s) added to table");
+            
+            if (winners.Count == 1)
+                winners[0].StackMoney += table.Pot;
+            else
             {
-                case 1:
-                    table.Winners.Add(table.ActivePlayers[0]);
-                    break;
-                case 2:
-                    table.Winners.Add(table.ActivePlayers[1]);
-                    break;
-                default:
-                    table.Winners.Add(table.ActivePlayers[0]);
-                    table.Winners.Add(table.ActivePlayers[1]);
-                    break;
-            }
+                var winningAmount = table.Pot / winners.Count;
             
+                foreach (var player in winners)
+                    player.StackMoney += winningAmount;
+            }
+
             await _hub.Clients.Group(table.Id.ToString())
                 .ReceiveWinners(JsonSerializer.Serialize(_mapper.Map<List<PlayerDto>>(table.Winners)));
             _logger.LogInformation("Showdown. Winners are sent to players");

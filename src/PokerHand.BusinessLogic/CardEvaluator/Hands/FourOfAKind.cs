@@ -11,22 +11,31 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
     {
         private const int Rate = 60000;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> totalCards)
+        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
         {
             var allCards = tableCards.Concat(playerHand).ToList();
             var isFourOfAKind = false;
             value = 0;
-            totalCards = new List<Card>();
+            finalCardsList = new List<Card>();
             
             JokerCheck(isJokerGame, allCards);
 
             handType = HandType.None;
+            CardEvaluator.SortByRank(allCards);
             
             foreach (var card in allCards)
             {
                 var tempCards = allCards.Where(c => c.Rank == card.Rank).ToList();
                 if (tempCards.Count == 4)
                 {
+                    var cardsToAdd = allCards.Where(c => c.Rank == card.Rank).ToList();
+                    finalCardsList.AddRange(cardsToAdd);
+
+                    foreach (var c in cardsToAdd)
+                        allCards.Remove(c);
+
+                    finalCardsList.Add(allCards[allCards.Count - 1]);
+                    
                     value += (int)card.Rank * 4;
                     isFourOfAKind = true;
                     value *= Rate;

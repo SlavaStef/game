@@ -11,7 +11,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
     {
         private const int Rate = 5;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> totalCards)
+        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
         {
             var allCards = tableCards.Concat(playerHand).ToList();
             
@@ -22,18 +22,26 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                         card.Rank = (CardRankType)GetMaxCardValue(allCards);
             }
 
-            totalCards = new List<Card>(2);
-            var currentHighestRank = 0;
+            finalCardsList = new List<Card>(5);
             var isOnePair = false;
-            var highestValue = 0;
+            value = 0;
             
+            // There may be only one pair
             foreach (var card in allCards)
             {
-                totalCards = allCards.Where(c => c.Rank == card.Rank).ToList();
-                if (totalCards.Count == 2 && currentHighestRank < (int)card.Rank)
+                if (allCards.Count(c => c.Rank == card.Rank) == 2)
                 {
-                    currentHighestRank = (int) card.Rank;
-                    highestValue += (int)card.Rank * 2;
+                    // Add the pair of cards from the list of all cards to the final list
+                    var cardsToAdd = allCards.Where(c => c.Rank == card.Rank).ToList();
+                    finalCardsList.AddRange(cardsToAdd);
+
+                    // Remove pair cards from the list of all cards
+                    foreach (var c in cardsToAdd)
+                        allCards.Remove(c);
+
+                    AddCardsSortedByValue(finalCardsList, allCards);
+                    
+                    value += (int)card.Rank * 2;
                     isOnePair = true;
                     break;
                 }
@@ -41,16 +49,25 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
 
             if (isOnePair)
             {
-                value = highestValue * Rate;
+                value *= Rate;
                 handType = HandType.OnePair;
             }
             else
             {
                 value = 0;
                 handType = HandType.None;
+                finalCardsList = null;
             }
 
             return isOnePair;
+        }
+
+        private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
+        {
+            CardEvaluator.SortByRankDescending(allCards);
+            
+            for(var i = 0; i < 3; i++)
+                finalCardsList.Add(allCards[i]);
         }
 
         private int GetMaxCardValue(List<Card> cards)

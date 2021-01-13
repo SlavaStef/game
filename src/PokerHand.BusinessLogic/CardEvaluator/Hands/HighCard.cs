@@ -10,7 +10,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
     {
         private const int Rate = 1;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> totalCards)
+        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
         {
             var allCards = playerHand.ToList();
             var highestValue = 0;
@@ -25,7 +25,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                 }
             }
 
-            totalCards = new List<Card>(1)
+            finalCardsList = new List<Card>(1)
             {
                 highestCard
             };

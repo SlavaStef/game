@@ -9,11 +9,10 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
-using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Table;
 using PokerHand.Server.Helpers;
+using PokerHand.Server.Hubs.Interfaces;
 
 namespace PokerHand.Server.Hubs
 {
@@ -164,7 +163,7 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"GameHub.LeaveTable. tableDto: {JsonSerializer.Serialize(tableDto)}");
 
             if (tableDto != null)
-                await Clients.Group(tableId).PlayerDisconnected(JsonSerializer.Serialize(tableDto));
+                await Clients.GroupExcept(tableId, Context.ConnectionId).PlayerDisconnected(JsonSerializer.Serialize(tableDto));
             
             _logger.LogInformation($"GameHub.LeaveTable. End");
         }

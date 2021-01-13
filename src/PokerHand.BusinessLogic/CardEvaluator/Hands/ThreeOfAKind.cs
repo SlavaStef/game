@@ -11,23 +11,30 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
     {
         private const int Rate = 170;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> totalCards)
+        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
         {
             var allCards = tableCards.Concat(playerHand).ToList();
             
-            JokerCheck(allCards, GetNumberOfJokers(isJokerGame, allCards));
+            if(isJokerGame)
+                JokerCheck(allCards);
             
-            totalCards = new List<Card>(3);
+            finalCardsList = new List<Card>(5);
             value = 0;
             var isThreeOfAKind = false;
             
             foreach (var card in allCards)
             {
-                totalCards = allCards.Where(c => c.Rank == card.Rank).ToList();
-                if (totalCards.Count == 3)
+                var possibleThreeOfAKind = allCards.Where(c => c.Rank == card.Rank).ToList();
+                if (possibleThreeOfAKind.Count == 3)
                 {
                     value += (int)card.Rank * 3;
                     isThreeOfAKind = true;
+
+                    finalCardsList = possibleThreeOfAKind.ToList();
+
+                    foreach (var cardToRemove in possibleThreeOfAKind) 
+                        allCards.Remove(cardToRemove);
+                    
                     break;
                 }
             }
@@ -36,29 +43,29 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             {
                 value *= Rate;
                 handType = HandType.ThreeOfAKind;
+                
+                AddCardsSortedByValue(finalCardsList, allCards);
             }
             else
             {
                 value = 0;
                 handType = HandType.None;
+                finalCardsList = null;
             }
             
             return isThreeOfAKind;
         }
-
-        private int GetNumberOfJokers(bool isJokerGame, List<Card> cards)
+        
+        private void JokerCheck(List<Card> cards)
         {
-            if (!isJokerGame)
-                return 0;
-
-            return cards.Where(c => c.Rank == CardRankType.Joker).Select(c => c).Count();
-        }
-
-        private void JokerCheck(List<Card> cards, int numberOfJokers)
-        {
+            var numberOfJokers = cards
+                .Where(c => c.Rank == CardRankType.Joker)
+                .Select(c => c)
+                .Count();
+            
             if (numberOfJokers == 1)
                 CheckOneJoker(cards);
-            else if (numberOfJokers == 2)
+            else
                 CheckTwoJokers(cards);
         }
         
@@ -103,5 +110,14 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
         
             return maxValue;
         }
+        
+        private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
+        {
+            CardEvaluator.SortByRankDescending(allCards);
+            
+            for(var i = 0; i < 2; i++)
+                finalCardsList.Add(allCards[i]);
+        }
+        
     }
 }

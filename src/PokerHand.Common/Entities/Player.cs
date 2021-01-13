@@ -45,6 +45,12 @@ namespace PokerHand.Common.Entities
         [NotMapped]
         public HandType Hand;
         
+        [NotMapped] 
+        public int HandValue { get; set; }
+        
+        [NotMapped] 
+        public List<Card> HandCombinationCards { get; set; }
+        
         [NotMapped]
         public bool IsReady { get; set; }
     }

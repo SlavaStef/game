@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace PokerHand.Server.Hubs
+namespace PokerHand.Server.Hubs.Interfaces
 {
     public interface IGameHub
     {

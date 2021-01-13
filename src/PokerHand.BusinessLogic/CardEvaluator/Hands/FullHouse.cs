@@ -11,7 +11,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
     {
         private const int Rate = 6700;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> totalCards)
+        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
         {
             var allCards = tableCards.Concat(playerHand).ToList();
            
@@ -20,14 +20,14 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             var lastValue = -1;
             var counter = 0;
             value = 0;
-            totalCards = new List<Card>(5);
+            finalCardsList = new List<Card>(5);
             
-            CheckOnThreeCard(ref value, allCards, ref lastValue, ref counter, ref totalCards);
+            CheckOnThreeCard(ref value, allCards, ref lastValue, ref counter, ref finalCardsList);
             
             if (lastValue != -1) 
                 allCards.RemoveAll(c => (int)c.Rank == lastValue);
             
-            CheckOnTwoCards(ref value, allCards, ref counter, ref totalCards);
+            CheckOnTwoCards(ref value, allCards, ref counter, ref finalCardsList);
 
             var isFullHouse = false;
             handType = HandType.None;
@@ -37,6 +37,12 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                 value *= Rate;
                 handType = HandType.FullHouse;
             }
+            else
+            {
+                value = 0;
+                finalCardsList = null;
+            }
+                
 
             return isFullHouse;
         }

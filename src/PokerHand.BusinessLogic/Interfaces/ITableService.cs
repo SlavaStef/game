@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using PokerHand.Common.Dto;
-using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.BusinessLogic.Interfaces

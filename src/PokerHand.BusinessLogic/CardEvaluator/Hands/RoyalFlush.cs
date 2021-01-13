@@ -11,13 +11,13 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
     {
         private const int Rate = 200000;
         
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> totalCards)
+        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
         {
             var allCards = tableCards.Concat(playerHand).ToList();
             
             var isRoyalFlush = false;
             value = 0;
-            totalCards = new List<Card>();
+            finalCardsList = new List<Card>();
 
             CheckCombination(isJokerGame, ref value, playerHand, tableCards, ref isRoyalFlush);
             value = isRoyalFlush 

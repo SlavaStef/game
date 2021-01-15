@@ -25,6 +25,9 @@ namespace PokerHand.Common.Entities
         public string ConnectionId { get; set; }
         
         [NotMapped]
+        public bool IsAutoTop { get; set; }
+        
+        [NotMapped]
         public List<Card> PocketCards { get; set; }
         
         [NotMapped]

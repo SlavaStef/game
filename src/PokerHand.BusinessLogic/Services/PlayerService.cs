@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -66,6 +67,15 @@ namespace PokerHand.BusinessLogic.Services
             return player == null 
                 ? null 
                 : _mapper.Map<PlayerProfileDto>(player);
+        }
+
+        public async Task<int> GetStackMoney(Player player, int requiredAmount)
+        {
+            if (player.TotalMoney < requiredAmount) 
+                return 0;
+            
+            player.TotalMoney -= requiredAmount;
+            return requiredAmount;
         }
     }
 }

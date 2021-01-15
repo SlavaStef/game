@@ -19,6 +19,7 @@ namespace PokerHand.BusinessLogic.Services
     {
         private readonly List<Table> _allTables;
         private readonly UserManager<Player> _userManager;
+        private readonly IPlayerService _playerService;
         private readonly ILogger<TableService> _logger;
         private readonly IMapper _mapper;
 
@@ -26,12 +27,14 @@ namespace PokerHand.BusinessLogic.Services
             TablesCollection tablesCollection,
             UserManager<Player> userManager,
             ILogger<TableService> logger, 
-            IMapper mapper)
+            IMapper mapper, 
+            IPlayerService playerService)
         {
             _allTables = tablesCollection.Tables;
             _userManager = userManager;
             _logger = logger;
             _mapper = mapper;
+            _playerService = playerService;
         }
 
         public TableInfoDto GetTableInfo(string tableName)
@@ -73,7 +76,7 @@ namespace PokerHand.BusinessLogic.Services
             return allTablesInfo;
         }
 
-        public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, string playerConnectionId, int buyInAmount)
+        public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, string playerConnectionId, int buyInAmount, bool isAutoTop)
         {
             var table = GetFreeTable(tableTitle);
             var isNewTable = false;
@@ -89,7 +92,8 @@ namespace PokerHand.BusinessLogic.Services
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
             player.ConnectionId = playerConnectionId;
             player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
-            player.StackMoney = buyInAmount;
+            player.StackMoney = await _playerService.GetStackMoney(player, buyInAmount);
+            player.IsAutoTop = isAutoTop;
             
             table.Players.Add(player);
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
@@ -128,7 +132,7 @@ namespace PokerHand.BusinessLogic.Services
             //TODO: If one of two players leaves round -> stop round & the second player is the winner
             if (table.Players.Count == 1)
             {
-                
+                table.WaitForPlayerBet.Set();
             }
 
             // If there is no player at the table -> delete this table

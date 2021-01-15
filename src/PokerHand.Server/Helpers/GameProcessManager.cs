@@ -195,7 +195,11 @@ namespace PokerHand.Server.Helpers
             _logger.LogInformation("DealPocketCards. End");
             
             Thread.Sleep(1000); // wait for cards to be dealed
-            await StartWagering(table);
+
+            if (table.ActivePlayers.Count > 1)
+                await StartWagering(table);
+            else
+                await EndRoundIfFold(table);
         }
         
         private async Task DealCommunityCards(Table table, int numberOfCards)
@@ -218,8 +222,11 @@ namespace PokerHand.Server.Helpers
             await _hub.Clients.Group(table.Id.ToString()).DealCommunityCards(JsonSerializer.Serialize(cardsToAdd));
             _logger.LogInformation($"DealCommunityCards. Community cards ({numberOfCards}) are sent to all users");
             _logger.LogInformation("DealCommunityCards. End");
-            
-            await StartWagering(table);
+
+            if (table.ActivePlayers.Count > 1)
+                await StartWagering(table);
+            else
+                await EndRoundIfFold(table);
         }
 
         private async Task StartWagering(Table table)
@@ -255,6 +262,8 @@ namespace PokerHand.Server.Helpers
         
             do
             {
+                if (table.ActivePlayers.Count < 1)
+                    await EndRoundIfFold(table);
                 // choose next player to make choice
                 SetCurrentPlayer(table);
         
@@ -267,6 +276,11 @@ namespace PokerHand.Server.Helpers
                 _logger.LogInformation("StartWagering. Player's action received");
                 
                 ProcessPlayerAction(table, table.CurrentPlayer);
+                if (table.ActivePlayers.Count == 1)
+                {
+                    EndRoundIfFold(table);
+                    return;
+                }
                 _logger.LogInformation("StartWagering. Player's action processed. Ready to sent table to players");
                 
                 await _hub.Clients.Group(table.Id.ToString()).ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
@@ -359,7 +373,7 @@ namespace PokerHand.Server.Helpers
                 .ReceiveWinners(JsonSerializer.Serialize(_mapper.Map<List<PlayerDto>>(table.Winners)));
             _logger.LogInformation($"EndRoundIfFold. Sent to client");
             
-            Thread.Sleep(6000 + (table.ActivePlayers.Count() * 200)); 
+            Thread.Sleep(6000 + (table.ActivePlayers.Count() * 200));
             
             _logger.LogInformation("EndRoundIfFold. End");
         }

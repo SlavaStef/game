@@ -10,7 +10,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task Authenticate(string playerId);
         Task GetTableInfo(string tableTitle);
         Task GetAllTablesInfo();
-        Task ConnectToTable(string tableTitle, string playerId, string buyInAmount);
+        Task ConnectToTable(string tableTitle, string playerId, string buyInAmount, string isAutoTop);
         void ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer);
         void ReceiveActivePlayerStatus(string tableId, string playerId);
         void LeaveTable(string tableId, string playerId);

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using PokerHand.Common.Dto;
+using PokerHand.Common.Entities;
 
 namespace PokerHand.BusinessLogic.Interfaces
 {
@@ -9,5 +10,7 @@ namespace PokerHand.BusinessLogic.Interfaces
     {
         Task<PlayerProfileDto> AddNewPlayer(string playerName, ILogger logger);
         Task<PlayerProfileDto> Authenticate(Guid playerId);
+
+        Task<int> GetStackMoney(Player player, int amount);
     }
 }

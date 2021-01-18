@@ -13,6 +13,8 @@ using PokerHand.BusinessLogic.Services;
 using PokerHand.Common;
 using PokerHand.Common.Entities;
 using PokerHand.DataAccess.Context;
+using PokerHand.DataAccess.Interfaces;
+using PokerHand.DataAccess.Repositories;
 using PokerHand.Server.Helpers;
 using PokerHand.Server.Hubs;
 
@@ -31,7 +33,7 @@ namespace PokerHand.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationContext>(options =>
+            services.AddDbContextPool<ApplicationContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("PostgreSQLConnection")));
 
             services.AddIdentity<Player, IdentityRole<Guid>>()
@@ -40,9 +42,11 @@ namespace PokerHand.Server
             
             services.AddSignalR();
 
-            services.AddScoped<IGameProcessManager, GameProcessManager>();
-            services.AddScoped<IPlayerService, PlayerService>();
-            services.AddScoped<ITableService, TableService>();
+            services.AddTransient<IGameProcessManager, GameProcessManager>();
+            services.AddTransient<IPlayerService, PlayerService>();
+            services.AddTransient<ITableService, TableService>();
+
+            services.AddScoped<IPlayerRepository, PlayerRepository>();
             
             services.AddSingleton<TablesCollection>();
             services.AddSingleton<PlayersOnline>();

@@ -69,16 +69,9 @@ namespace PokerHand.Server.Hubs
             
             var playerProfileDto = await _playerService.Authenticate(playerIdGuid);
             
-            try
-            { 
-                _allPlayers.Add(playerIdGuid, Context.ConnectionId);
-            }
-            catch (Exception e)
-            {
-                _logger.LogInformation($"Authenticate. Exception: {e.Message}");
-            }
+            _allPlayers.Add(playerIdGuid, Context.ConnectionId);
 
-            if (playerProfileDto == null)
+                if (playerProfileDto == null)
                 await Clients.Caller.ReceivePlayerNotFound();
             else
                 await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
@@ -174,15 +167,25 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"GameHub.OnDisconnectedAsync. Start from player {Context.ConnectionId}");
 
             var playerId = _allPlayers.First(p => p.Value == Context.ConnectionId).Key;
-            var tableId = _allTables.First(t => t.Players.First(p => p.Id == playerId) != null).Id;
-            
-            var newTableDto = await _tableService.RemovePlayerFromTable(tableId, playerId);
 
+            if (_allTables.FirstOrDefault(t => t.Players.First(p => p.Id == playerId) != null) != null)
+            {
+                var table = _allTables.First(t => t.Players.First(p => p.Id == playerId) != null);
+                
+                if (table.Players.Count == 1)
+                {
+                    await _tableService.RemovePlayerFromTable(table.Id, playerId);
+                }
+                else
+                {
+                    var newTableDto = await _tableService.RemovePlayerFromTable(table.Id, playerId);
+                    await Clients.Group(table.Id.ToString()).PlayerDisconnected(JsonSerializer.Serialize(newTableDto));
+                }
+            }
+            
             _allPlayers.Remove(playerId);
             
             _logger.LogInformation($"GameHub.OnDisconnectedAsync. Player {Context.ConnectionId} removed from table");
-            
-            await Clients.Group(tableId.ToString()).PlayerDisconnected(JsonSerializer.Serialize(newTableDto));
         }
     }
 }

@@ -92,8 +92,11 @@ namespace PokerHand.BusinessLogic.Services
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
             player.ConnectionId = playerConnectionId;
             player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
-            player.StackMoney = await _playerService.GetStackMoney(player, buyInAmount);
             player.IsAutoTop = isAutoTop;
+            
+            player.StackMoney = await _playerService.GetStackMoney(player.Id, buyInAmount);
+            if (player.StackMoney == 0)
+                return (null, false, _mapper.Map<PlayerDto>(player));
             
             table.Players.Add(player);
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
@@ -112,16 +115,14 @@ namespace PokerHand.BusinessLogic.Services
             var table = _allTables.First(t => t.Id == tableId);
             var player = table.Players.First(p => p.Id == playerId);
             
-            _logger.LogInformation($"Method RemovePlayerFromTable. Pot before deletion: {table.Pot}");
             table.Pot += player.CurrentBet;
-            _logger.LogInformation($"Method RemovePlayerFromTable. Pot after deletion: {table.Pot}");
             
-            _logger.LogInformation($"Method RemovePlayerFromTable. Players before deletion: {JsonSerializer.Serialize(table.Players)}");
+            _logger.LogInformation($"RemovePlayerFromTable. Before returning to total: {JsonSerializer.Serialize(player)}");
+            await _playerService.ReturnToTotalMoney(player.Id, player.StackMoney);
+            _logger.LogInformation($"RemovePlayerFromTable. Before returning to total: {JsonSerializer.Serialize(player)}");
             table.Players.Remove(player);
-            _logger.LogInformation($"Method RemovePlayerFromTable. Players after deletion: {JsonSerializer.Serialize(table.Players)}");
-            
-            _logger.LogInformation($"Method RemovePlayerFromTable. ActivePlayers before deletion: {JsonSerializer.Serialize(table.ActivePlayers)}");
-            table.ActivePlayers.Remove(player);
+            if(table.Players.Contains(player))
+                table.ActivePlayers.Remove(player);
             _logger.LogInformation($"Method RemovePlayerFromTable. ActivePlayers after deletion: {JsonSerializer.Serialize(table.ActivePlayers)}");
             
             _logger.LogInformation($"Player was removed from table");

@@ -33,7 +33,7 @@ namespace PokerHand.Server
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContextPool<ApplicationContext>(options =>
+            services.AddDbContext<ApplicationContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("PostgreSQLConnection")));
 
             services.AddIdentity<Player, IdentityRole<Guid>>()
@@ -45,8 +45,8 @@ namespace PokerHand.Server
             services.AddTransient<IGameProcessManager, GameProcessManager>();
             services.AddTransient<IPlayerService, PlayerService>();
             services.AddTransient<ITableService, TableService>();
-
-            services.AddScoped<IPlayerRepository, PlayerRepository>();
+            
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             services.AddSingleton<TablesCollection>();
             services.AddSingleton<PlayersOnline>();

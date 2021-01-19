@@ -12,6 +12,7 @@ using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Table;
+using PokerHand.DataAccess.Interfaces;
 
 namespace PokerHand.BusinessLogic.Services
 {
@@ -110,16 +111,16 @@ namespace PokerHand.BusinessLogic.Services
 
         public async Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId)
         {
-            _logger.LogInformation($"Method RemovePlayerFromTable starts");
+            _logger.LogInformation($"Method RemovePlayerFromTable. Start");
             
             var table = _allTables.First(t => t.Id == tableId);
             var player = table.Players.First(p => p.Id == playerId);
             
             table.Pot += player.CurrentBet;
+
+            await _playerService.ReturnToTotalMoney(playerId, player.StackMoney);
             
-            _logger.LogInformation($"RemovePlayerFromTable. Before returning to total: {JsonSerializer.Serialize(player)}");
-            await _playerService.ReturnToTotalMoney(player.Id, player.StackMoney);
-            _logger.LogInformation($"RemovePlayerFromTable. Before returning to total: {JsonSerializer.Serialize(player)}");
+            _logger.LogInformation($"RemovePlayerFromTable. After returning to total: {JsonSerializer.Serialize(player)}");
             table.Players.Remove(player);
             if(table.Players.Contains(player))
                 table.ActivePlayers.Remove(player);

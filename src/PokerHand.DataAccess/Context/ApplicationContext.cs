@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,11 @@ namespace PokerHand.DataAccess.Context
             builder.ApplyConfiguration(new PlayerConfiguration());
             
             base.OnModelCreating(builder);
+        }
+
+        public override ValueTask DisposeAsync()
+        {
+            return new ValueTask();
         }
     }
 }

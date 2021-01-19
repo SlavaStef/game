@@ -157,7 +157,8 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"GameHub.LeaveTable. tableDto: {JsonSerializer.Serialize(tableDto)}");
 
             if (tableDto != null)
-                await Clients.GroupExcept(tableId, Context.ConnectionId).PlayerDisconnected(JsonSerializer.Serialize(tableDto));
+                await Clients.GroupExcept(tableId, Context.ConnectionId)
+                    .PlayerDisconnected(JsonSerializer.Serialize(tableDto));
             
             _logger.LogInformation($"GameHub.LeaveTable. End");
         }

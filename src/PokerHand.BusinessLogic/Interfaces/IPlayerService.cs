@@ -12,6 +12,6 @@ namespace PokerHand.BusinessLogic.Interfaces
         Task<PlayerProfileDto> Authenticate(Guid playerId);
 
         Task<int> GetStackMoney(Guid playerId, int amount);
-        Task<bool> ReturnToTotalMoney(Guid playerId, int amountToAdd);
+        Task ReturnToTotalMoney(Guid playerId, int amountToAdd);
     }
 }

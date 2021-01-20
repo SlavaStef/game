@@ -29,6 +29,7 @@ namespace PokerHand.Server.Helpers
         private readonly List<Table> _allTables;
         private readonly IHubContext<GameHub, IGameHubClient> _hub;
         private readonly ITableService _tableService;
+        private readonly IPlayerService _playerService;
         private readonly IMapper _mapper;
         private readonly ILogger<GameHub> _logger;
 
@@ -37,13 +38,15 @@ namespace PokerHand.Server.Helpers
             IHubContext<GameHub, IGameHubClient> hubContext,
             IMapper mapper,
             ILogger<GameHub> logger, 
-            ITableService tableService)
+            ITableService tableService, 
+            IPlayerService playerService)
         {
             _allTables = tablesCollection.Tables;
             _hub = hubContext;
             _mapper = mapper;
             _logger = logger;
             _tableService = tableService;
+            _playerService = playerService;
         }
         
         public async Task StartRound(Guid tableId)
@@ -248,34 +251,26 @@ namespace PokerHand.Server.Helpers
                     table.CurrentStage = RoundStageType.WageringFourthRound;
                     break;
             }
-        
-            if (table.CurrentStage == RoundStageType.WageringPreFlopRound)
-            {
-                await MakeSmallBlindBet(table);
-                await MakeBigBlindBet(table);
-            
-                await _hub.Clients.Group(table.Id.ToString()).ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-            }
+
+            await MakeBlindBets(table);
             
             var counter = table.ActivePlayers.Count;
             _logger.LogInformation($"StartWagering. Counter: {counter}");
         
+            // Players make choices
             do
             {
                 if (table.ActivePlayers.Count < 1)
-                    await EndRoundIfFold(table);
-                // choose next player to make choice
-                SetCurrentPlayer(table);
-        
-                // player makes choice
-                await _hub.Clients.Group(table.Id.ToString()).ReceiveCurrentPlayerIdInWagering(JsonSerializer.Serialize(table.CurrentPlayer.Id));
-                _logger.LogInformation("StartWagering. Current player is set and sent to all players");
+                    EndRoundIfFold(table);
                 
+                // choose next player to make choice
+                await SetCurrentPlayer(table);
+        
                 _logger.LogInformation("StartWagering. Waiting for player's action");
                 table.WaitForPlayerBet.WaitOne();
                 _logger.LogInformation("StartWagering. Player's action received");
                 
-                ProcessPlayerAction(table, table.CurrentPlayer);
+                await ProcessPlayerAction(table, table.CurrentPlayer);
                 if (table.ActivePlayers.Count == 1)
                 {
                     EndRoundIfFold(table);
@@ -283,7 +278,8 @@ namespace PokerHand.Server.Helpers
                 }
                 _logger.LogInformation("StartWagering. Player's action processed. Ready to sent table to players");
                 
-                await _hub.Clients.Group(table.Id.ToString()).ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+                await _hub.Clients.Group(table.Id.ToString())
+                    .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
         
                 counter--;
                 _logger.LogInformation($"StartWagering. New Table is sent to all players. End of cycle, counter: {counter}");
@@ -295,37 +291,41 @@ namespace PokerHand.Server.Helpers
             if (table.ActivePlayers.Count == 1)
             {
                 _logger.LogInformation("StartWagering. There is one player. EdRoundIfFold");
-                await EndRoundIfFold(table);
+                EndRoundIfFold(table);
+                return;
             }
-            else
-            {
-                CollectBetsFromTable(table);
-                _logger.LogInformation($"StartWagering. Table pot after collecting: {table.Pot}");
             
-                table.CurrentPlayer = null;
-                table.CurrentMaxBet = 0;
-                foreach (var player in table.ActivePlayers)
-                    player.CurrentBet = 0;
+            CollectBetsFromTable(table);
+            _logger.LogInformation($"StartWagering. Table pot after collecting: {table.Pot}");
             
-                await _hub.Clients.Group(table.Id.ToString()).ReceiveTableStateAtWageringEnd(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-                _logger.LogInformation("StartWagering. Final table is sent to clients");
+            if (table.CurrentMaxBet > 0)
+                Thread.Sleep(500);
+
+            table.CurrentPlayer = null;
+            table.CurrentMaxBet = 0;
+            foreach (var player in table.ActivePlayers)
+                player.CurrentBet = 0;
+
+            await _hub.Clients.Group(table.Id.ToString())
+                .ReceiveTableStateAtWageringEnd(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+            _logger.LogInformation("StartWagering. Final table is sent to clients");
             
-                Thread.Sleep(2500);
+            Thread.Sleep(2500);
             
-                _logger.LogInformation("StartWagering. End");
+            _logger.LogInformation("StartWagering. End");
         
-                switch (table.CurrentStage)
-                {
-                    case RoundStageType.WageringPreFlopRound:
-                        await DealCommunityCards(table, 3);
-                        break;
-                    case RoundStageType.WageringFourthRound:
-                        await Showdown(table);
-                        break;
-                    default:
-                        await DealCommunityCards(table, 1);
-                        break;
-                }
+            // Run next stage
+            switch (table.CurrentStage)
+            {
+                case RoundStageType.WageringPreFlopRound:
+                    await DealCommunityCards(table, 3);
+                    break;
+                case RoundStageType.WageringFourthRound:
+                    await Showdown(table);
+                    break;
+                default:
+                    await DealCommunityCards(table, 1);
+                    break;
             }
         }
         
@@ -399,7 +399,7 @@ namespace PokerHand.Server.Helpers
             return result;
         }
 
-        private void SetCurrentPlayer(Table table)
+        private async Task SetCurrentPlayer(Table table)
         {
             _logger.LogInformation("SetCurrentPlayer. Start");
 
@@ -415,29 +415,31 @@ namespace PokerHand.Server.Helpers
                 table.CurrentPlayer = GetNextPlayer(table, table.CurrentPlayer.IndexNumber);
             }
             
+            await _hub.Clients.Group(table.Id.ToString())
+                .ReceiveCurrentPlayerIdInWagering(JsonSerializer.Serialize(table.CurrentPlayer.Id));
+            _logger.LogInformation("SetCurrentPlayer. Current player is set and sent to all players");
+            
             _logger.LogInformation("SetCurrentPlayer. End");
         }
         
         private void CollectBetsFromTable(Table table)
         {
-            _logger.LogInformation("CollectBetsFromTable. Start");
-            _logger.LogInformation($"CollectBetsFromTable. Start pot = {table.Pot}");
-            _logger.LogInformation(JsonSerializer.Serialize(table));
             foreach (var player in table.ActivePlayers.Where(player => player.CurrentBet != 0))
             {
                 table.Pot += player.CurrentBet;
+                player.CurrentBet = 0;
             }
-            _logger.LogInformation($"CollectBetsFromTable. Final pot = {table.Pot}");
-            _logger.LogInformation(JsonSerializer.Serialize(table));
-            _logger.LogInformation("CollectBetsFromTable. End");
         }
 
-        private async void ProcessPlayerAction(Table table, Player player)
+        private async Task ProcessPlayerAction(Table table, Player player)
         {
             _logger.LogInformation("ProcessPlayerAction. Start");
-            _logger.LogInformation(JsonSerializer.Serialize(table));
+            
             switch (player.CurrentAction.ActionType)
             {
+                // check if stackMoney >= Amount => is ok
+                // else GetFromTotalMoney()
+                //      if(isOk)
                 case PlayerActionType.Fold:
                     if (table.Type == TableType.DashPoker)
                     {
@@ -464,14 +466,62 @@ namespace PokerHand.Server.Helpers
                 case PlayerActionType.Check:
                     break;
                 case PlayerActionType.Bet:
+                    _logger.LogInformation("BET. Start");
+                    _logger.LogInformation($"BET. player.StackMoney: {player.StackMoney}");
+                    _logger.LogInformation($"BET. player.CurrentAction.Amount: {player.CurrentAction.Amount}");
+                    _logger.LogInformation($"BET. player.IsAutoTop: {player.IsAutoTop}");
+                    // AutoTop
+                    if (player.StackMoney < player.CurrentAction.Amount && player.IsAutoTop)
+                    {
+                        _logger.LogInformation($"AutoTop. Start. player.StackMoney: {player.StackMoney}");
+                        var moneyFromTotalMoney = await _playerService.GetStackMoney(player.Id, player.CurrentBuyIn);
+                        
+                        _logger.LogInformation($"moneyFromTotalMoney: {moneyFromTotalMoney}");
+                        if (moneyFromTotalMoney != 0)
+                        {
+                            _logger.LogInformation($"IF. Start");
+                            player.StackMoney += moneyFromTotalMoney;
+                            _logger.LogInformation($"IF. End. player.StackMoney: {player.StackMoney}");
+                            
+                            await _hub.Clients.Client(player.ConnectionId)
+                                .ReceivePlayerProfile(JsonSerializer.Serialize(_mapper.Map<PlayerProfileDto>(player)));
+                        }
+                            
+                        _logger.LogInformation("BET. Start");
+                    }
+                    
                     player.StackMoney -= (int) player.CurrentAction.Amount;
                     player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount;
+                    _logger.LogInformation("BET. End");
                     break;
                 case PlayerActionType.Call:
+                    // AutoTop
+                    if (player.StackMoney < player.CurrentAction.Amount && player.IsAutoTop)
+                    {
+                        var moneyFromTotalMoney = await _playerService.GetStackMoney(player.Id, player.CurrentBuyIn);
+
+                        if (moneyFromTotalMoney != 0)
+                            player.StackMoney += moneyFromTotalMoney;
+                        
+                        await _hub.Clients.Client(player.ConnectionId)
+                            .ReceivePlayerProfile(JsonSerializer.Serialize(_mapper.Map<PlayerProfileDto>(player)));
+                    }
+                    
                     player.StackMoney -= table.CurrentMaxBet - player.CurrentBet;
                     player.CurrentBet = table.CurrentMaxBet;
                     break;
                 case PlayerActionType.Raise:
+                    // AutoTop
+                    if (player.StackMoney < player.CurrentAction.Amount && player.IsAutoTop)
+                    {
+                        var moneyFromTotalMoney = await _playerService.GetStackMoney(player.Id, player.CurrentBuyIn);
+
+                        if (moneyFromTotalMoney != 0)
+                            player.StackMoney += moneyFromTotalMoney;
+                        
+                        await _hub.Clients.Client(player.ConnectionId)
+                            .ReceivePlayerProfile(JsonSerializer.Serialize(_mapper.Map<PlayerProfileDto>(player)));
+                    }
                     player.StackMoney -= (int) player.CurrentAction.Amount;
                     player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount + player.CurrentBet;
                     break;
@@ -479,12 +529,22 @@ namespace PokerHand.Server.Helpers
                     throw new ArgumentOutOfRangeException();
             }
             _logger.LogInformation("ProcessPlayerAction. End");
-            _logger.LogInformation(JsonSerializer.Serialize(table));
         }
 
+        private async Task MakeBlindBets(Table table)
+        {
+            if (table.CurrentStage == RoundStageType.WageringPreFlopRound)
+            {
+                await MakeSmallBlindBet(table);
+                await MakeBigBlindBet(table);
+            
+                await _hub.Clients.Group(table.Id.ToString())
+                    .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+            }
+        }
+        
         private async Task MakeSmallBlindBet(Table table)
         {
-            _logger.LogInformation("MakeSmallBlindBet. Start");
             var player = table.ActivePlayers.First(p => p.IndexNumber == table.SmallBlindIndex);
             
             var smallBlindAction = new PlayerAction
@@ -496,17 +556,15 @@ namespace PokerHand.Server.Helpers
 
             player.CurrentAction = smallBlindAction;
             
-            await _hub.Clients.Group(table.Id.ToString()).ReceivePlayerAction(JsonSerializer.Serialize(smallBlindAction));
+            await _hub.Clients.Group(table.Id.ToString())
+                .ReceivePlayerAction(JsonSerializer.Serialize(smallBlindAction));
             _logger.LogInformation("MakeSmallBlindBet. Action is sent to players");
             
             ProcessPlayerAction(table, player);
-            
-            _logger.LogInformation("MakeSmallBlindBet. End");
         }
         
         private async Task MakeBigBlindBet(Table table)
         {
-            _logger.LogInformation("MakeBigBlindBet. Start");
             var player = table.ActivePlayers.First(p => p.IndexNumber == table.BigBlindIndex);
             
             var bigBlindAction = new PlayerAction
@@ -518,12 +576,11 @@ namespace PokerHand.Server.Helpers
 
             player.CurrentAction = bigBlindAction;
             
-            await _hub.Clients.Group(table.Id.ToString()).ReceivePlayerAction(JsonSerializer.Serialize(bigBlindAction));
+            await _hub.Clients.Group(table.Id.ToString())
+                .ReceivePlayerAction(JsonSerializer.Serialize(bigBlindAction));
             _logger.LogInformation("MakeBigBlindBet. Action is sent to players");
             
             ProcessPlayerAction(table, player);
-            
-            _logger.LogInformation("MakeBigBlindBet. End");
         }
 
         private static Player GetNextPlayer(Table table, int currentPlayerIndex)

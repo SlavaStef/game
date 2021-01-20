@@ -23,7 +23,7 @@ namespace PokerHand.DataAccess.Context
             
             base.OnModelCreating(builder);
         }
-
+        
         public override ValueTask DisposeAsync()
         {
             return new ValueTask();

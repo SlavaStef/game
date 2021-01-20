@@ -23,6 +23,7 @@ namespace PokerHand.Common.Entities
 
             Deck = new Deck(Type);
             Players = new List<Player>(MaxPlayers);
+            ActivePlayers = new List<Player>(MaxPlayers);
             Pot = 0;
             CommunityCards = new List<Card>(5);
             Winners = new List<Player>(MaxPlayers);

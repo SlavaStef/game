@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
-using PokerHand.DataAccess.Context;
 using PokerHand.DataAccess.Interfaces;
 
 namespace PokerHand.BusinessLogic.Services
@@ -92,6 +89,15 @@ namespace PokerHand.BusinessLogic.Services
         public async Task ReturnToTotalMoney(Guid playerId, int amountToAdd)
         {
             await _unitOfWork.Players.AddTotalMoneyAsync(playerId, amountToAdd);
+        }
+
+        public async Task<PlayerProfileDto> GetPlayerProfile(Guid playerId)
+        {
+            var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
+
+            return player == null 
+                ? null 
+                : _mapper.Map<PlayerProfileDto>(player);
         }
     }
 }

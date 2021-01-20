@@ -109,20 +109,20 @@ namespace PokerHand.Server.Hubs
             }
         }
         
-        public async void ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer)
+        public async Task ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer)
         {
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Start");
             
             var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
             
-            await Clients.OthersInGroup(tableId.ToString()).ReceivePlayerAction(actionFromPlayer);
+            await Clients.OthersInGroup(tableId.ToString())
+                .ReceivePlayerAction(actionFromPlayer);
             
-            var table = _allTables
-                .First(t => t.Id == tableId);
+            var table = _allTables.First(t => t.Id == tableId);
             
             table.ActivePlayers
-                .First(p => p.IndexNumber == action.PlayerIndexNumber)
+                .First(p => p.IndexNumber == action?.PlayerIndexNumber)
                 .CurrentAction = action;
             
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Action is added to Current player");
@@ -131,6 +131,14 @@ namespace PokerHand.Server.Hubs
             table.WaitForPlayerBet.Set();
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. End");
             _logger.LogInformation($"THIS {JsonSerializer.Serialize(_allTables.First(t => t.Id == tableId))}");
+        }
+
+        public async Task SendPlayerProfile(string playerId)
+        {
+            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
+            var profileDto = await _playerService.GetPlayerProfile(playerIdGuid);
+            
+            await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(profileDto));
         }
 
         public void ReceiveActivePlayerStatus(string tableId, string playerId)
@@ -144,7 +152,7 @@ namespace PokerHand.Server.Hubs
                 .First(p => p.Id == playerGuidId).IsReady = true;
         }
 
-        public async void LeaveTable(string tableId, string playerId)
+        public async Task LeaveTable(string tableId, string playerId)
         {
             _logger.LogInformation($"GameHub.LeaveTable. Start");
             var tableIdGuid = Guid.Parse(tableId);

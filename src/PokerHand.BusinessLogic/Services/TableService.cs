@@ -12,7 +12,6 @@ using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Table;
-using PokerHand.DataAccess.Interfaces;
 
 namespace PokerHand.BusinessLogic.Services
 {
@@ -94,6 +93,7 @@ namespace PokerHand.BusinessLogic.Services
             player.ConnectionId = playerConnectionId;
             player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
             player.IsAutoTop = isAutoTop;
+            player.CurrentBuyIn = buyInAmount;
             
             player.StackMoney = await _playerService.GetStackMoney(player.Id, buyInAmount);
             if (player.StackMoney == 0)
@@ -114,22 +114,18 @@ namespace PokerHand.BusinessLogic.Services
             _logger.LogInformation($"Method RemovePlayerFromTable. Start");
             
             var table = _allTables.First(t => t.Id == tableId);
-            var player = table.Players.First(p => p.Id == playerId);
+            var playerFromTable = table.Players.First(p => p.Id == playerId);
             
-            table.Pot += player.CurrentBet;
+            table.Pot += playerFromTable.CurrentBet;
 
-            await _playerService.ReturnToTotalMoney(playerId, player.StackMoney);
+            await _playerService.ReturnToTotalMoney(playerId, playerFromTable.StackMoney);
             
-            _logger.LogInformation($"RemovePlayerFromTable. After returning to total: {JsonSerializer.Serialize(player)}");
-            table.Players.Remove(player);
-            if(table.Players.Contains(player))
-                table.ActivePlayers.Remove(player);
-            _logger.LogInformation($"Method RemovePlayerFromTable. ActivePlayers after deletion: {JsonSerializer.Serialize(table.ActivePlayers)}");
+            table.Players.Remove(playerFromTable);
+            
+            if(table.ActivePlayers.Contains(playerFromTable))
+                table.ActivePlayers.Remove(playerFromTable);
             
             _logger.LogInformation($"Player was removed from table");
-            
-            //TODO: add round to player's statistics
-            
             
             //TODO: If one of two players leaves round -> stop round & the second player is the winner
             if (table.Players.Count == 1)

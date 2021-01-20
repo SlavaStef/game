@@ -11,9 +11,9 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task GetTableInfo(string tableTitle);
         Task GetAllTablesInfo();
         Task ConnectToTable(string tableTitle, string playerId, string buyInAmount, string isAutoTop);
-        void ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer);
+        Task ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer);
         void ReceiveActivePlayerStatus(string tableId, string playerId);
-        void LeaveTable(string tableId, string playerId);
+        Task LeaveTable(string tableId, string playerId);
         Task OnDisconnectedAsync(Exception exception);
     }
 }

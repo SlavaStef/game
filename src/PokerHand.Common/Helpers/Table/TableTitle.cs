@@ -103,7 +103,7 @@ namespace PokerHand.Common.Helpers.Table
                     {
                         {"TableType", 1},
                         {"Experience", 25},
-                        {"SmallBlind", 100},
+                        {"SmallBlind", 50},
                         {"BigBlind", 100},
                         {"MinBuyIn", 2000},
                         {"MaxBuyIn", 10000},

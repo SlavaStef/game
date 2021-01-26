@@ -76,7 +76,8 @@ namespace PokerHand.BusinessLogic.Services
             return allTablesInfo;
         }
 
-        public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, string playerConnectionId, int buyInAmount, bool isAutoTop)
+        public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, 
+            string playerConnectionId, int buyInAmount, bool isAutoTop)
         {
             var table = GetFreeTable(tableTitle);
             var isNewTable = false;
@@ -94,13 +95,21 @@ namespace PokerHand.BusinessLogic.Services
             player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
             player.IsAutoTop = isAutoTop;
             player.CurrentBuyIn = buyInAmount;
-            
-            player.StackMoney = await _playerService.GetStackMoney(player.Id, buyInAmount);
+
+            if (player.TotalMoney >= buyInAmount)
+            {
+                await _playerService.GetStackMoney(player.Id, buyInAmount);
+                player.StackMoney = buyInAmount;
+            }
+                
             if (player.StackMoney == 0)
                 return (null, false, _mapper.Map<PlayerDto>(player));
             
+            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             table.Players.Add(player);
+            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
+            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             
             var tableDto = _mapper.Map<TableDto>(table);
             _logger.LogInformation($"tableDto: {JsonSerializer.Serialize(tableDto)}");

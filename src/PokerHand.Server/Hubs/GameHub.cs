@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,29 +53,34 @@ namespace PokerHand.Server.Hubs
         public async Task RegisterNewPlayer(string userName)
         {
             _logger.LogInformation("RegisterNewPlayer. Start");
+            WriteAllPlayersList();
             var playerProfileDto = await _playerService.AddNewPlayer(userName, _logger);
 
             await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
             
             _allPlayers.Add(playerProfileDto.Id, Context.ConnectionId);
+            WriteAllPlayersList();
             _logger.LogInformation("RegisterNewPlayer. End");
         } 
 
         public async Task Authenticate(string playerId)
         {
             _logger.LogInformation("Authenticate. Start");
+            WriteAllPlayersList();
             var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
             
             _logger.LogInformation($"Authenticate. playerId:{playerId}, GUID: {playerIdGuid}");
             
             var playerProfileDto = await _playerService.Authenticate(playerIdGuid);
-            
-            _allPlayers.Add(playerIdGuid, Context.ConnectionId);
 
-                if (playerProfileDto == null)
+            if (playerProfileDto == null)
                 await Clients.Caller.ReceivePlayerNotFound();
             else
+            {
+                _allPlayers.Add(playerIdGuid, Context.ConnectionId);
+                WriteAllPlayersList();
                 await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
+            }
         }
 
         public async Task GetTableInfo(string tableTitle)
@@ -91,12 +97,23 @@ namespace PokerHand.Server.Hubs
         
         public async Task ConnectToTable(string tableTitle, string playerId, string buyInAmount, string autoTop)
         {
+            WriteAllPlayersList();
+            
             var title = JsonSerializer.Deserialize<TableTitle>(tableTitle);
             var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
             var buyIn = JsonSerializer.Deserialize<int>(buyInAmount);
             var isAutoTop = JsonSerializer.Deserialize<bool>(autoTop);
             
+            _logger.LogInformation($"tableTitle: {JsonSerializer.Serialize(tableTitle)}");
+            _logger.LogInformation($"playerId: {JsonSerializer.Serialize(playerId)}");
+            _logger.LogInformation($"buyInAmount: {JsonSerializer.Serialize(buyInAmount)}");
+            _logger.LogInformation($"autoTop: {JsonSerializer.Serialize(autoTop)}");
+            _logger.LogInformation($"Context.ConnectionId: {JsonSerializer.Serialize(Context.ConnectionId)}");
+            
             var (tableDto, isNewTable, playerDto) = await _tableService.AddPlayerToTable(title, playerIdGuid, Context.ConnectionId, buyIn, isAutoTop);
+            
+            _logger.LogInformation($"TableDto: {tableDto}");
+            _logger.LogInformation($"TableDto: {tableDto.Id}");
             
             await Groups.AddToGroupAsync(Context.ConnectionId, tableDto.Id.ToString());
             await Clients.Caller.ReceivePlayerDto(JsonSerializer.Serialize(playerDto));
@@ -155,6 +172,7 @@ namespace PokerHand.Server.Hubs
         public async Task LeaveTable(string tableId, string playerId)
         {
             _logger.LogInformation($"GameHub.LeaveTable. Start");
+            WriteAllPlayersList();
             var tableIdGuid = Guid.Parse(tableId);
             var playerIdGuid = Guid.Parse(playerId);
             
@@ -175,9 +193,11 @@ namespace PokerHand.Server.Hubs
         {
             _logger.LogInformation($"GameHub.OnDisconnectedAsync. Start from player {Context.ConnectionId}");
 
+            WriteAllPlayersList();
+            
             var playerId = _allPlayers.First(p => p.Value == Context.ConnectionId).Key;
 
-            if (_allTables.FirstOrDefault(t => t.Players.First(p => p.Id == playerId) != null) != null)
+            if (_allTables.FirstOrDefault(t => t.Players.FirstOrDefault(p => p.Id == playerId) != null) != null)
             {
                 var table = _allTables.First(t => t.Players.First(p => p.Id == playerId) != null);
                 
@@ -193,8 +213,13 @@ namespace PokerHand.Server.Hubs
             }
             
             _allPlayers.Remove(playerId);
+            WriteAllPlayersList();
             
             _logger.LogInformation($"GameHub.OnDisconnectedAsync. Player {Context.ConnectionId} removed from table");
         }
+
+        private void WriteAllPlayersList() =>
+            _logger.LogInformation($"AllPlayers: {JsonSerializer.Serialize(_allPlayers)}");
+
     }
 }

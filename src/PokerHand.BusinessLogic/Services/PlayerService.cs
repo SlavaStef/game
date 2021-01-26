@@ -41,7 +41,7 @@ namespace PokerHand.BusinessLogic.Services
                 Country = "",
                 RegistrationDate = DateTime.Now,
                 Experience = 0,
-                TotalMoney = 10000,
+                TotalMoney = 100000,
                 CoinsAmount = 0,
                 GamesPlayed = 0,
                 BestHandType = HandType.None,
@@ -74,16 +74,16 @@ namespace PokerHand.BusinessLogic.Services
                 : _mapper.Map<PlayerProfileDto>(player);
         }
         
-        public async Task<int> GetStackMoney(Guid playerId, int requiredAmount)
+        public async Task<bool> GetStackMoney(Guid playerId, int requiredAmount)
         {
             var player = await _userManager.Users.FirstAsync(p => p.Id == playerId);
             
             if (player.TotalMoney < requiredAmount) 
-                return 0;
+                return false;
 
             await _unitOfWork.Players.SubtractTotalMoneyAsync(playerId, requiredAmount);
             
-            return requiredAmount;
+            return true;
         }
 
         public async Task ReturnToTotalMoney(Guid playerId, int amountToAdd)

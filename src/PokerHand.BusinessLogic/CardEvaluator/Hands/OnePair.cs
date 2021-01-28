@@ -17,9 +17,11 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             
             if (isJokerGame)
             {
-                foreach (var card in allCards)
-                    if (card.Rank == CardRankType.Joker)
-                        card.Rank = (CardRankType)GetMaxCardValue(allCards);
+                foreach (var card in allCards.Where(card => card.Rank == CardRankType.Joker))
+                {
+                    card.Rank = (CardRankType)GetMaxCardValue(allCards);
+                    card.WasJoker = true;
+                }
             }
 
             finalCardsList = new List<Card>(5);
@@ -33,9 +35,14 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                 {
                     // Add the pair of cards from the list of all cards to the final list
                     var cardsToAdd = allCards.Where(c => c.Rank == card.Rank).ToList();
+
+                    foreach (var cardToAdd in cardsToAdd.Where(cardToAdd => cardToAdd.WasJoker))
+                        cardToAdd.Rank = CardRankType.Joker;
+                    
                     finalCardsList.AddRange(cardsToAdd);
 
                     // Remove pair cards from the list of all cards
+                    
                     foreach (var c in cardsToAdd)
                         allCards.Remove(c);
 
@@ -65,8 +72,8 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
         private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
         {
             CardEvaluator.SortByRankDescending(allCards);
-            
-            for(var i = 0; i < 3; i++)
+
+            for (var i = 0; i < 3; i++)
                 finalCardsList.Add(allCards[i]);
         }
 
@@ -76,10 +83,9 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             
             foreach (var card in cards)
             {
-                if (maxValue < (int)card.Rank)
+                if (maxValue < (int)card.Rank && card.Rank != CardRankType.Joker)
                 {
-                    if (card.Rank != CardRankType.Joker)
-                        maxValue = (int)card.Rank;
+                    maxValue = (int)card.Rank;
                 }
             }
             

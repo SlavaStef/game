@@ -53,7 +53,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                         if (card.Suit == allCards[i].Suit)
                             finalCards.Add(card);
 
-                    CardEvaluator.SortByRank(finalCards);
+                    CardEvaluator.SortByRankAscending(finalCards);
 
                     // Delete redundant cards if there are more than 5 cards of the same suit
                     while (finalCards.Count > 5)

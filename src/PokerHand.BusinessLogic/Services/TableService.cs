@@ -76,7 +76,7 @@ namespace PokerHand.BusinessLogic.Services
             return allTablesInfo;
         }
 
-        public async Task<(TableDto, bool, PlayerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, 
+        public async Task<(TableDto tableDto, bool isNewTable, PlayerDto playerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, 
             string playerConnectionId, int buyInAmount, bool isAutoTop)
         {
             var table = GetFreeTable(tableTitle);

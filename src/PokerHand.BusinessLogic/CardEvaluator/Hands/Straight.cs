@@ -17,16 +17,19 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             finalCardsList = new List<Card>(5);
             var allCards = tableCards.Concat(playerHand).ToList();
 
-            SortByRank(allCards);
+            CardEvaluator.SortByRankAscending(allCards);
+
+            if (isJokerGame)
+                allCards = CheckJokers(allCards);
             
-            isStraight = MainStraightCheck(CheckOnJoker(allCards, isJokerGame), finalCardsList);
+            isStraight = MainStraightCheck(allCards, finalCardsList);
 
             if(!isStraight)
                 isStraight = CheckOnLowAceStraight(allCards, finalCardsList);
             
             if (isStraight)
             {
-                SortByRank(finalCardsList);
+                CardEvaluator.SortByRankAscending(finalCardsList);
                 value = GetScore(finalCardsList);
                 handType = HandType.Straight;
             }
@@ -65,33 +68,6 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             return false;        
         }
         
-        private List<Card> CheckOnJoker(List<Card> allCards, bool isJokerGame)
-        {
-            if (!isJokerGame) return allCards;
-
-            //Подсчитываем количество джокеров в колоде
-            int jokerCount = 0;
-            foreach (Card card in allCards)        
-                if (card.Rank == CardRankType.Joker)
-                    jokerCount++;
-
-            if (jokerCount == 2)
-            {
-                //Должно быть так
-                //temp = CountTwoJoker(temp);
-
-                //А это костыль
-                allCards = CountOneJoker(allCards);
-                allCards = CountOneJoker(allCards);
-            }
-            else if (jokerCount == 1)
-                allCards = CountOneJoker(allCards);
-            else
-                return allCards;
-
-            return allCards;
-        }
-        
         private bool CheckOnLowAceStraight(List<Card> allCards, List<Card> straightCards)
         {
             if (allCards.Count(c => c.Rank == CardRankType.Ace) > 0
@@ -111,54 +87,67 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
 
             return false;
         }
-
-        private static void SortByRank(List<Card> cards)
+        
+        private List<Card> CheckJokers(List<Card> allCards)
         {
-            for (var i = 0; i < cards.Count - 1; i++)
+            var numberOfJokers = allCards.Count(card => card.Rank == CardRankType.Joker);
+            
+            if (numberOfJokers == 1)
+                allCards = CheckWithOneJoker(allCards);
+            if (numberOfJokers == 2)
             {
-                for (var j = i + 1; j < cards.Count; j++)
-                {
-                    if (cards[i].Rank > cards[j].Rank)
-                    {
-                        var tempCard = cards[i];
-                        cards[i] = cards[j];
-                        cards[j] = tempCard;
-                    }
-                }
+                //Должно быть так
+                //temp = CheckWithTwoJokers(temp);
+
+                //А это костыль
+                allCards = CheckWithOneJoker(allCards);
+                allCards = CheckWithOneJoker(allCards);
             }
+            
+            return allCards;
         }
         
-        private List<Card> CountOneJoker(List<Card> allCards)
+        private List<Card> CheckWithOneJoker(List<Card> allCards)
         {
-            List<Card> result = new List<Card>(0);
-            //Выбрать неповторяющиеся значения карт
+            
+            // НА ВХОДЕ:
+            // var card1 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Heart};
+            // var card2 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Spade};
+            // var card3 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            // var card4 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Spade};
+            // var card5 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Diamond};
+            // var card6 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            // var card7 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Red};
+            
             var distinctRanks = allCards.Select(card => card.Rank).Distinct().ToList();
+            var resultCards = new List<Card>(5);
 
             // Если значений 5, 6 или 7
             if (distinctRanks.Count > 4)
             {
-                for (int i = distinctRanks.Count - 2; i > 2; i--)
+                for (var i = distinctRanks.Count - 2; i > 2; i--)
                 {
                     var subtraction = distinctRanks[i] - distinctRanks[i - 3];
                     if (subtraction == 4 || subtraction == 3)
                     {
                         var newDistinctTemp = distinctRanks.GetRange(i - 3, 4);
+                        // var card3 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+                        // var card4 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Spade};
+                        // var card5 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Diamond};
+                        // var card6 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
                         
                         // Добавляет в result объекты Card с неповторяющимися значениями карт
-                        foreach (CardRankType newValue in distinctRanks)
-                        {
-                            result.Add(new Card { Rank = newValue });
-                        }
-                        
-                        JokerChange(result, allCards);
+                        resultCards.AddRange(distinctRanks.Select(newValue => new Card {Rank = newValue}));
+
+                        TransformJokerIntoCard(resultCards, allCards);
                         break;
                     }
                 }
             }
-            return result;
+            return resultCards;
         }
 
-        private List<Card> CountTwoJoker(List<Card> temp)
+        private List<Card> CheckWithTwoJokers(List<Card> temp)
         {
             List<Card> result = new List<Card>(0);
             var distinctTemp = temp.Select(card => card.Rank).Distinct().ToList();
@@ -215,28 +204,30 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             }
         }
 
-        private void JokerChange(List<Card> result, List<Card> temp)
+        private void TransformJokerIntoCard(List<Card> resultCards, List<Card> allCards)
         {
-            //Если два джокера, то один из них может оказаться с таким же value как и второй
-            //но это не точно
-            foreach (Card card in temp)
+            // Get joker cards
+            foreach (var card in allCards.Where(card => card.Rank == CardRankType.Joker))
             {
-                if (card.Rank == CardRankType.Joker)
+                // Iterate through a list of cards with distinct ranks 
+                for (var i = 0; i < resultCards.Count - 1; i++)
                 {
-                    for (int j = 0; j < result.Count - 1; j++)
+                    if (resultCards[i].Rank + 1 == resultCards[i + 1].Rank) 
+                        continue;
+                    
+                    var newCard = new Card
                     {
-                        if (result[j].Rank + 1 == result[j + 1].Rank) continue;
-                        Card newCard = new Card { Rank = result[j].Rank + 1 };
+                        Rank = resultCards[i].Rank + 1
+                    };
 
-                        if (newCard.Rank > CardRankType.Ace)
-                        {
-                            newCard.Rank = result[0].Rank - 1;
-                            result.Add(newCard);
-                        }
-                        else
-                            result.Add(newCard);
-                        break;
+                    if (newCard.Rank > CardRankType.Ace)
+                    {
+                        newCard.Rank = resultCards[0].Rank - 1;
+                        resultCards.Add(newCard);
                     }
+                    else
+                        resultCards.Add(newCard);
+                    break;
                 }
             }
         }

@@ -14,14 +14,16 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
         public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
         {
             var allCards = tableCards.Concat(playerHand).ToList();
+            
             var isFourOfAKind = false;
             value = 0;
             finalCardsList = new List<Card>();
             
-            JokerCheck(isJokerGame, allCards);
+            if (isJokerGame)
+                CheckJokers(allCards);
 
             handType = HandType.None;
-            CardEvaluator.SortByRank(allCards);
+            CardEvaluator.SortByRankAscending(allCards);
             
             foreach (var card in allCards)
             {
@@ -47,55 +49,49 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             return isFourOfAKind;
         }
         
-        private void JokerCheck(bool isJokerGame, List<Card> allCards)
+        private void CheckJokers(List<Card> allCards)
         {
-            if (!isJokerGame) return;
+            var numberOfJokers = allCards.Count(card => card.Rank == CardRankType.Joker);
 
-            var numberOfJokers = 0;
-            
-            foreach (var card in allCards)
-                if (card.Rank == CardRankType.Joker)
-                    numberOfJokers++;
-
-            if (numberOfJokers == 1)
-                OneJokerCheck(allCards);
-            else if (numberOfJokers == 2)
-                TwoJokerCheck(allCards);
+            switch (numberOfJokers)
+            {
+                case 1:
+                    CheckOneJoker(allCards);
+                    break;
+                case 2:
+                    CheckTwoJokers(allCards);
+                    break;
+            }
         }
 
-        private void TwoJokerCheck(List<Card> allCards)
+        private void CheckOneJoker(List<Card> allCards)
+        {
+            foreach (var card in allCards.Where(card => allCards.FindAll(c => c.Rank == card.Rank).Count == 3))
+            {
+                foreach (var tempCard in allCards.Where(tempCard => tempCard.Rank == CardRankType.Joker))
+                {
+                    tempCard.Rank = card.Rank;
+                    tempCard.WasJoker = true;
+                    break;
+                }
+            }
+        }
+        
+        private void CheckTwoJokers(List<Card> allCards)
         {
             foreach (var card in allCards)
             {
                 if (allCards.FindAll(c => c.Rank == card.Rank).Count == 2)
                 {
                     if (card.Rank == CardRankType.Joker) continue;
-                    
-                    foreach (var tempCard in allCards)
-                    {
-                        if (tempCard.Rank == CardRankType.Joker)
-                            tempCard.Rank = card.Rank;
-                    }
-                }
-                OneJokerCheck(allCards);
-            }
-        }
 
-        private void OneJokerCheck(List<Card> allCards)
-        {
-            foreach (var card in allCards)
-            {
-                if (allCards.FindAll(c => c.Rank == card.Rank).Count == 3)
-                {
-                    foreach (var tempCard in allCards)
+                    foreach (var tempCard in allCards.Where(tempCard => tempCard.Rank == CardRankType.Joker))
                     {
-                        if (tempCard.Rank == CardRankType.Joker)
-                        {
-                            tempCard.Rank = card.Rank;
-                            break;
-                        }
+                        tempCard.Rank = card.Rank;
+                        tempCard.WasJoker = true;
                     }
                 }
+                CheckOneJoker(allCards);
             }
         }
     }

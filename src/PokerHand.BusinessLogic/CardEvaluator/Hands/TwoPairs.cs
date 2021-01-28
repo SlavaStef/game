@@ -17,9 +17,11 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             
             if (isJokerGame)
             {
-                foreach (var card in allCards)
-                    if (card.Rank == CardRankType.Joker)
-                        card.Rank = (CardRankType)GetMaxCardValue(allCards);
+                foreach (var card in allCards.Where(card => card.Rank == CardRankType.Joker))
+                {
+                    card.Rank = (CardRankType)GetMaxCardValue(allCards);
+                    card.WasJoker = true;
+                }
             }
 
             finalCardsList = new List<Card>(5);
@@ -37,10 +39,14 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                         lastValue = (int)card.Rank;
                         numberOfPairs++;
                         
-                        var cards = allCards.Where(c => c.Rank == card.Rank).ToArray();
-                        finalCardsList.AddRange(cards);
+                        var cardsToAdd = allCards.Where(c => c.Rank == card.Rank).ToArray();
                         
-                        allCards.RemoveAll(c => (int)c.Rank == lastValue);
+                        foreach (var cardToAdd in cardsToAdd.Where(cardToAdd => cardToAdd.WasJoker))
+                            cardToAdd.Rank = CardRankType.Joker;
+                        
+                        finalCardsList.AddRange(cardsToAdd);
+                        
+                        allCards.RemoveAll(c => cardsToAdd.Contains(c));
                         break;
                     }
                 }

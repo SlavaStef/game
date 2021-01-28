@@ -111,6 +111,38 @@ namespace PokerHand.BusinessLogic.Tests
             value.Should().Be(0);
             winnerCards.Should().BeNull();
         }
+        
+        [Fact]
+        public void OnePair_WithJoker_ReturnsTrue()
+        {
+            var onePair = new OnePair();
+            
+            var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Red};
+            var card2 = new Card {Rank = CardRankType.Six, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+            
+            var expectedResult = new List<Card> {card7, card1, card6, card5, card3};
+
+            var isJokerGame = true;
+            
+            // Act
+            var result = onePair.Check(playerHand, tableCards, isJokerGame, out int value, out HandType handType,
+                out List<Card> winnerCards);
+            
+            // Assert
+            result.Should().Be(true);
+            handType.Should().Be(HandType.OnePair);
+            value.Should().Be((int)CardRankType.Ace * 2 * 5);
+            winnerCards.Should().ContainInOrder(expectedResult);
+        }
 
         // TWO PAIRS
         // Two pair is a hand that contains two cards of one rank, two cards of another rank and one card of a third rank
@@ -179,6 +211,39 @@ namespace PokerHand.BusinessLogic.Tests
             winnerCards.Should().BeNull();
         }
         
+        [Fact]
+        public void TwoPairs_WithJoker_ReturnsTrue()
+        {
+            // Arrange
+            var twoPairs = new TwoPairs();
+
+            var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Red};
+            var card2 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Three, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Three, Suit = CardSuitType.Spade};
+            var card6 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+            
+            var expectedResult = new List<Card> {card1, card7, card4, card5, card6};
+
+            var isJokerGame = true;
+            
+            // Act
+            var result = twoPairs.Check(playerHand, tableCards, isJokerGame, out int value, out HandType handType,
+                out List<Card> winnerCards);
+            
+            // Assert
+            result.Should().Be(true);
+            handType.Should().Be(HandType.TwoPairs);
+            value.Should().Be(((int)CardRankType.Ace * 2 + (int)CardRankType.Three * 2) * 17);
+            winnerCards.Should().ContainInOrder(expectedResult);
+        }
+        
         // THREE OF A KIND
         // Three of a kind is a hand that contains three cards of one rank and two cards of two other ranks
         
@@ -244,6 +309,105 @@ namespace PokerHand.BusinessLogic.Tests
             handType.Should().Be(HandType.None);
             value.Should().Be(0);
             winnerCards.Should().BeNull();
+        }
+        
+        [Fact]
+        public void ThreeOfAKind_WithOneJoker_ReturnsTrue()
+        {
+            // Arrange
+            var threeOfAKind = new ThreeOfAKind();
+
+            var card1 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Diamond};
+            var card2 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Spade};
+            var card5 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+            
+            var expectedResult = new List<Card> {card4, card1, card2, card7, card6};
+            
+            var isJokerGame = true;
+
+            // Act
+            var result = threeOfAKind.Check(playerHand, tableCards, isJokerGame, out int value, out HandType handType,
+                out List<Card> winnerCards);
+            
+            // Assert
+            result.Should().Be(true);
+            handType.Should().Be(HandType.ThreeOfAKind);
+            value.Should().Be((int)CardRankType.Four * 3 * 170);
+            winnerCards.Should().ContainInOrder(expectedResult);
+        }
+        
+        [Fact]
+        public void ThreeOfAKind_WithOneJoker_AndNoPairs_ReturnsFalse()
+        {
+            // Arrange
+            var threeOfAKind = new ThreeOfAKind();
+
+            var card1 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Diamond};
+            var card2 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Spade};
+            var card5 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+            
+            var expectedResult = new List<Card> {card4, card1, card2, card7, card6};
+            
+            var isJokerGame = true;
+
+            // Act
+            var result = threeOfAKind.Check(playerHand, tableCards, isJokerGame, out int value, out HandType handType,
+                out List<Card> winnerCards);
+            
+            // Assert
+            result.Should().Be(false);
+            handType.Should().Be(HandType.None);
+            value.Should().Be(0);
+            winnerCards.Should().BeNull();
+        }
+        
+        [Fact]
+        public void ThreeOfAKind_WithTwoJokers_ReturnsTrue()
+        {
+            // Arrange
+            var threeOfAKind = new ThreeOfAKind();
+
+            var card1 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Diamond};
+            var card2 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Spade};
+            var card5 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+            
+            var expectedResult = new List<Card> {card4, card7, card2, card6, card5};
+            
+            var isJokerGame = true;
+
+            // Act
+            var result = threeOfAKind.Check(playerHand, tableCards, isJokerGame, out int value, out HandType handType,
+                out List<Card> winnerCards);
+            
+            // Assert
+            result.Should().Be(true);
+            handType.Should().Be(HandType.ThreeOfAKind);
+            value.Should().Be((int)CardRankType.Ace * 3 * 170);
+            winnerCards.Should().ContainInOrder(expectedResult);
         }
         
         // STRAIGHT
@@ -378,6 +542,40 @@ namespace PokerHand.BusinessLogic.Tests
             result.Should().Be(true);
             handType.Should().Be(HandType.Straight);
             //value.Should().Be(((int)CardRankType.Three + (int)CardRankType.Four + (int)CardRankType.Five + (int)CardRankType.Six + (int)CardRankType.Seven) * 400);
+            winnerCards.Should().ContainInOrder(expectedResult);
+        }
+        
+        [Fact]
+        public void Straight_WithJoker_ReturnsTrue_5StraightCards_AceIsMax()
+        {
+            // Arrange
+            var straight = new Straight();
+            
+            var card2 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Heart};
+            var card5 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Spade};
+            var card7 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Spade};
+            var card4 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Diamond};
+            var card1 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Red};
+            
+            
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+            
+            var expectedResult = new List<Card> {card7, card3, card4, card6, card1};
+            
+            var isJokerGame = false;
+
+            // Act
+            var result = straight.Check(playerHand, tableCards, isJokerGame, out int value, out HandType handType,
+                out List<Card> winnerCards);
+            
+            // Assert
+            result.Should().Be(true);
+            handType.Should().Be(HandType.Straight);
+            value.Should().Be(((int)CardRankType.Ten + (int)CardRankType.Jack + (int)CardRankType.Queen + (int)CardRankType.King + (int)CardRankType.Ace) * 400);
             winnerCards.Should().ContainInOrder(expectedResult);
         }
         
@@ -871,6 +1069,39 @@ namespace PokerHand.BusinessLogic.Tests
             handType.Should().Be(HandType.None);
             value.Should().Be(0);
             winnerCards.Should().BeEmpty();
+        }
+        
+        [Fact]
+        public void StraightFlush_WithJoker_ReturnsTrue()
+        {
+            // Arrange
+            var straightFlush = new StraightFlush();
+
+            var card1 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Diamond};
+            var card2 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Diamond};
+            var card7 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+            
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+            
+            var expectedResult = new List<Card> {card2, card3, card4, card5, card7};
+            
+            var isJokerGame = false;
+
+            // Act
+            var result = straightFlush.Check(playerHand, tableCards, isJokerGame, out int value, out HandType handType,
+                out List<Card> winnerCards);
+            
+            // Assert
+            result.Should().Be(true);
+            handType.Should().Be(HandType.StraightFlush);
+            value.Should().Be(((int)CardRankType.Seven + (int)CardRankType.Eight + (int)CardRankType.Nine + (int)CardRankType.Ten + (int)CardRankType.Jack) * 180000);
+            winnerCards.Should().ContainInOrder(expectedResult);
         }
         
         // TODO: Not tested yet

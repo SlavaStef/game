@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.Common.Dto
 {
@@ -10,6 +11,8 @@ namespace PokerHand.Common.Dto
         public Guid Id { get; set; }
         public int SmallBlind { get; set; }
         public int BigBlind { get; set; }
+        public TableTitle Title { get; set; }
+        public TableType Type { get; set; }
         
         public RoundStageType CurrentStage { get; set; }
         public Deck Deck { get; set; }

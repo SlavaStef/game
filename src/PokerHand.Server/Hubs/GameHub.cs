@@ -57,8 +57,18 @@ namespace PokerHand.Server.Hubs
             var playerProfileDto = await _playerService.AddNewPlayer(userName, _logger);
 
             await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
+
+            try
+            {
+                _allPlayers.Add(playerProfileDto.Id, Context.ConnectionId);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation($"{e.Message}");
+                _logger.LogInformation($"{e.StackTrace}");
+                throw;
+            }
             
-            _allPlayers.Add(playerProfileDto.Id, Context.ConnectionId);
             WriteAllPlayersList();
             _logger.LogInformation("RegisterNewPlayer. End");
         } 
@@ -77,9 +87,20 @@ namespace PokerHand.Server.Hubs
                 await Clients.Caller.ReceivePlayerNotFound();
             else
             {
-                _allPlayers.Add(playerIdGuid, Context.ConnectionId);
+                try
+                {
+                    _allPlayers.Add(playerIdGuid, Context.ConnectionId);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogInformation($"{e.Message}");
+                    _logger.LogInformation($"{e.StackTrace}");
+                    throw;
+                }
+                
                 WriteAllPlayersList();
-                await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
+                await Clients.Caller
+                    .ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
             }
         }
 
@@ -116,13 +137,17 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"TableDto: {tableDto.Id}");
             
             await Groups.AddToGroupAsync(Context.ConnectionId, tableDto.Id.ToString());
-            await Clients.Caller.ReceivePlayerDto(JsonSerializer.Serialize(playerDto));
-            await Clients.Group(tableDto.Id.ToString()).ReceiveTableState(JsonSerializer.Serialize(tableDto));
+            await Clients.Caller
+                .ReceivePlayerDto(JsonSerializer.Serialize(playerDto));
+            await Clients.Group(tableDto.Id.ToString())
+                .ReceiveTableState(JsonSerializer.Serialize(tableDto));
 
             if (isNewTable)
             {
-                _logger.LogInformation($"GameHub. New game started on a new table {tableDto.Id}");
-                new Thread (() => _gameProcessManager.StartRound(tableDto.Id)).Start();
+                if(tableDto.Type == TableType.SitAndGo)
+                    new Thread (() => _gameProcessManager.StartSitAndGoRound(tableDto.Id)).Start();
+                else
+                    new Thread (() => _gameProcessManager.StartRound(tableDto.Id)).Start();
             }
         }
         
@@ -169,12 +194,23 @@ namespace PokerHand.Server.Hubs
                 .First(p => p.Id == playerGuidId).IsReady = true;
         }
 
+        public async Task AddStackMoney(string tableId, string playerId, string amount)
+        {
+            var tableIdGuid = JsonSerializer.Deserialize<Guid>(tableId);
+            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
+            var amountInt = JsonSerializer.Deserialize<int>(amount);
+
+            if (await _playerService.GetStackMoney(playerIdGuid, amountInt))
+                _allTables.First(t => t.Id == tableIdGuid).Players.Find(p => p.Id == playerIdGuid).StackMoney =
+                    amountInt;
+        }
+
         public async Task LeaveTable(string tableId, string playerId)
         {
             _logger.LogInformation($"GameHub.LeaveTable. Start");
             WriteAllPlayersList();
-            var tableIdGuid = Guid.Parse(tableId);
-            var playerIdGuid = Guid.Parse(playerId);
+            var tableIdGuid = JsonSerializer.Deserialize<Guid>(tableId);
+            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
             
             _logger.LogInformation($"GameHub.LeaveTable. tableIdGuid: {tableIdGuid}, playerIdGuid: {playerIdGuid}");
 
@@ -213,6 +249,18 @@ namespace PokerHand.Server.Hubs
             }
             
             _allPlayers.Remove(playerId);
+            
+            try
+            {
+                _allPlayers.Remove(playerId);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation($"{e.Message}");
+                _logger.LogInformation($"{e.StackTrace}");
+                throw;
+            }
+            
             WriteAllPlayersList();
             
             _logger.LogInformation($"GameHub.OnDisconnectedAsync. Player {Context.ConnectionId} removed from table");

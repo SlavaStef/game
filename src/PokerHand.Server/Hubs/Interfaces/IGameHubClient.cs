@@ -22,6 +22,8 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task ReceiveCurrentPlayerIdInWagering(string id);
         Task ReceiveTableStateAtWageringEnd(string tableDto);
         Task ReceiveWinners(string playerDtoList);
-        
+        Task EndSitAndGoGame(string place);
+        Task OnLackOfStackMoney();
+
     }
 }

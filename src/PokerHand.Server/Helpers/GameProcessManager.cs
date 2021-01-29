@@ -16,12 +16,14 @@ using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Table;
 using PokerHand.Server.Hubs;
 using PokerHand.Server.Hubs.Interfaces;
+using Serilog;
 
 namespace PokerHand.Server.Helpers
 {
     public interface IGameProcessManager
     {
-        public Task StartRound(Guid tableId);
+        Task StartRound(Guid tableId);
+        Task StartSitAndGoRound(Guid tableId);
     }
     
     public class GameProcessManager : IGameProcessManager
@@ -57,17 +59,19 @@ namespace PokerHand.Server.Helpers
             if (table.Players.Count < 2)
             {
                 _logger.LogInformation($"StartRound. Table {table.Id}. Waiting for second player");
-                await _hub.Clients.Group(table.Id.ToString()).WaitForPlayers();
+                await _hub.Clients.Group(table.Id.ToString())
+                    .WaitForPlayers();
             }
 
-            while (table.Players.Count < 2)
+            while (table.Players.Count(p => p.StackMoney >= table.BigBlind) < 2)
                 Thread.Sleep(1000);
 
             _logger.LogInformation("StartRound. Round started");
 
-            table.ActivePlayers = table.Players.ToList();
-            _logger.LogInformation("StartRound. Active players are set");
-            
+            // Add players to Active Players
+            foreach (var player in table.Players.Where(p => p.StackMoney >= table.BigBlind))
+                table.ActivePlayers.Add(player);
+
             while (table.ActivePlayers.Any(p => p.IsReady != true))
                 Thread.Sleep(500);
             _logger.LogInformation("StartRound. Start with two players");
@@ -80,10 +84,43 @@ namespace PokerHand.Server.Helpers
             if (table.Players.Count > 0)
             {
                 _logger.LogInformation("StartRound. New round starts");
+                await RefreshTable(table);
+                await AutoTopStackMoney(table);
+                await StartRound(table.Id);
+            }
+        }
+        
+        public async Task StartSitAndGoRound(Guid tableId)
+        {
+            _logger.LogInformation("StartRound. Start");
+            var table = _allTables.First(t => t.Id == tableId);
+
+            while (table.Players.Count < table.MaxPlayers)
+                Thread.Sleep(1000);
+
+            _logger.LogInformation("StartRound. Round started");
+
+            table.ActivePlayers = table.Players.ToList();
+            
+            while (table.ActivePlayers.Any(p => p.IsReady != true))
+                Thread.Sleep(500);
+            
+            await PrepareForGame(table); // Start chain of game methods
+            
+            _logger.LogInformation("StartRound. End");
+
+            if (table.Players.Count > 1)
+            {
+                _logger.LogInformation("StartRound. New round starts");
                 RefreshTable(table);
                 await AutoTopStackMoney(table);
                 await StartRound(table.Id);
             }
+            else
+            {
+                _tableService.RemoveTable(table.Id);
+            }
+            
         }
 
 
@@ -235,9 +272,26 @@ namespace PokerHand.Server.Helpers
                 .ReceiveWinners(JsonSerializer.Serialize(_mapper.Map<List<PlayerDto>>(table.Winners)));
             _logger.LogInformation("Showdown. Winners are sent to players");
             
-            Thread.Sleep(10000 + (table.ActivePlayers.Count * 200)); 
+            Thread.Sleep(5000 + (table.ActivePlayers.Count * 200)); 
             
             _logger.LogInformation("Showdown. End");
+
+            // Remove players from SitAndGo
+            if (table.Type == TableType.SitAndGo)
+            {
+                TableDto newTableDto = null;
+
+                foreach (var player in table.ActivePlayers.Where(p => p.StackMoney == 0))
+                {
+                    newTableDto = await _tableService.RemovePlayerFromSitAndGoTable(table.Id, player.Id);
+                    await _hub.Groups.RemoveFromGroupAsync(player.ConnectionId, table.Id.ToString());
+                    await _hub.Clients.Client(player.ConnectionId).EndSitAndGoGame("1");
+                }
+
+                if (newTableDto != null)
+                    await _hub.Clients.Group(table.Id.ToString())
+                        .ReceiveTableState(JsonSerializer.Serialize(newTableDto));
+            }
         }
 
         private async Task EndRoundNow(Table table)
@@ -528,12 +582,11 @@ namespace PokerHand.Server.Helpers
             return table.ActivePlayers.FirstOrDefault(p => p.IndexNumber > currentPlayerIndex) ?? table.ActivePlayers[0];
         }
 
-        private static void RefreshTable(Table table)
+        private async Task RefreshTable(Table table)
         {
             table.Deck = new Deck(table.Type);
 
             table.CurrentStage = RoundStageType.None;
-            table.ActivePlayers = new List<Player>(table.MaxPlayers);
             table.CommunityCards = new List<Card>(5);
             table.CurrentPlayer = null;
             table.CurrentMaxBet = 0;
@@ -542,6 +595,22 @@ namespace PokerHand.Server.Helpers
             table.SmallBlindIndex = -1;
             table.BigBlindIndex = -1;
             table.Winners = new List<Player>(table.MaxPlayers);
+
+            if (table.Type == TableType.SitAndGo)
+            {
+                table.SmallBlind *= 2;
+                table.BigBlind *= 2;
+            }
+
+            foreach (var player in table.ActivePlayers.Where(p => p.StackMoney < table.BigBlind))
+            {
+                await _hub.Clients.Client(player.ConnectionId)
+                    .OnLackOfStackMoney();
+            }
+            
+            table.ActivePlayers = new List<Player>(table.MaxPlayers);
+            
+            Thread.Sleep(5000);
         }
         
         private async Task AutoTopStackMoney(Table table)

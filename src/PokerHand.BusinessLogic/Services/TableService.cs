@@ -11,6 +11,7 @@ using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.BusinessLogic.Services
@@ -76,8 +77,8 @@ namespace PokerHand.BusinessLogic.Services
             return allTablesInfo;
         }
 
-        public async Task<(TableDto tableDto, bool isNewTable, PlayerDto playerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, 
-            string playerConnectionId, int buyInAmount, bool isAutoTop)
+        public async Task<(TableDto tableDto, bool isNewTable, PlayerDto playerDto)> AddPlayerToTable(
+            TableTitle tableTitle, Guid playerId, string playerConnectionId, int buyInAmount, bool isAutoTop)
         {
             var table = GetFreeTable(tableTitle);
             var isNewTable = false;
@@ -93,18 +94,30 @@ namespace PokerHand.BusinessLogic.Services
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
             player.ConnectionId = playerConnectionId;
             player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
-            player.IsAutoTop = isAutoTop;
-            player.CurrentBuyIn = buyInAmount;
 
-            if (player.TotalMoney >= buyInAmount)
+            if (table.Type == TableType.SitAndGo)
             {
+                player.IsAutoTop = false;
+                player.CurrentBuyIn = buyInAmount;
+
                 await _playerService.GetStackMoney(player.Id, buyInAmount);
-                player.StackMoney = buyInAmount;
+                player.StackMoney = 3000;
             }
+            else
+            {
+                player.IsAutoTop = isAutoTop;
+                player.CurrentBuyIn = buyInAmount;
                 
-            if (player.StackMoney == 0)
-                return (null, false, _mapper.Map<PlayerDto>(player));
-            
+                if (player.TotalMoney >= buyInAmount)
+                {
+                    await _playerService.GetStackMoney(player.Id, buyInAmount);
+                    player.StackMoney = buyInAmount;
+                }
+                
+                if (player.StackMoney == 0)
+                    return (null, false, _mapper.Map<PlayerDto>(player));
+            }
+
             _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             table.Players.Add(player);
             _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
@@ -158,13 +171,45 @@ namespace PokerHand.BusinessLogic.Services
             return resultTable;
         }
 
+        public async Task<TableDto> RemovePlayerFromSitAndGoTable(Guid tableId, Guid playerId)
+        {
+            var table = _allTables.First(t => t.Id == tableId);
+            var playerFromTable = table.Players.First(p => p.Id == playerId);
+
+            table.ActivePlayers.Remove(playerFromTable);
+            table.Players.Remove(playerFromTable);
+
+            return _mapper.Map<TableDto>(table);
+        }
+
+        public void RemoveTable(Guid tableId)
+        {
+            var tableToRemove = _allTables.FirstOrDefault(t => t.Id == tableId);
+
+            if (tableToRemove != null)
+                _allTables.Remove(tableToRemove);
+        }
+
+        
+
         #region privateHelpers
 
         // Get a required table with free seats
-        private Table GetFreeTable(TableTitle tableType) => 
-            _allTables?
-                .Where(t => t.Title == tableType)
-                .FirstOrDefault(table => table.Players.Count < table.MaxPlayers);
+        private Table GetFreeTable(TableTitle tableTitle)
+        {
+            if (tableTitle == TableTitle.RivieraHotel ||
+                tableTitle == TableTitle.CityDreamsResort ||
+                tableTitle == TableTitle.HeritageBank)
+            {
+                return _allTables?
+                    .Where(t => t.Title == tableTitle)
+                    .FirstOrDefault(t => t.CurrentStage == RoundStageType.None);
+            }
+            
+            return _allTables?
+                .Where(t => t.Title == tableTitle)
+                .FirstOrDefault(t => t.Players.Count < t.MaxPlayers);
+        }
 
         private Table CreateNewTable(TableTitle tableTitle)
         {

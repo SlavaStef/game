@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Text.Json;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
+using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
@@ -15,26 +17,29 @@ namespace PokerHand.BusinessLogic.Services
 {
     public class PlayerService : IPlayerService
     {
+        private readonly List<Table> _allTables;
         private readonly UserManager<Player> _userManager;
         private readonly ILogger<TableService> _logger;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
         public PlayerService(
+            TablesCollection tablesCollection,
             UserManager<Player> userManager, 
             IMapper mapper, 
             ILogger<TableService> logger, 
             IUnitOfWork unitOfWork)
         {
+            _allTables = tablesCollection.Tables;
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
             _unitOfWork = unitOfWork;
+            
         }
 
-        public async Task<PlayerProfileDto> AddNewPlayer(string playerName, ILogger logger)
+        public async Task<PlayerProfileDto> AddNewPlayer(string playerName)
         {
-            logger.LogInformation("AddNewPlayer. Start");
             var newPlayer = new Player
             {
                 UserName = playerName,
@@ -50,27 +55,22 @@ namespace PokerHand.BusinessLogic.Services
                 SitAndGoWins = 0
             };
             
-            logger.LogInformation($"AddNewPlayer. Player: {JsonSerializer.Serialize(newPlayer)}");
+            var addPlayerResult = await _userManager.CreateAsync(newPlayer);
 
-            var identityResult = await _userManager.CreateAsync(newPlayer);
-            logger.LogInformation($"AddNewPlayer. Result: {JsonSerializer.Serialize(identityResult)}");
+            if (!addPlayerResult.Succeeded)
+                return null;
             
-            if (!identityResult.Succeeded)
-                throw new Exception();
-            logger.LogInformation($"AddNewPlayer. End");
+            _logger.LogInformation($"New player {newPlayer.UserName} registered");
             return _mapper.Map<PlayerProfileDto>(newPlayer);
         }
 
         public async Task<PlayerProfileDto> Authenticate(Guid playerId)
         {
-            _logger.LogInformation("PlayerService.Authenticate. Start");
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
 
-            _logger.LogInformation($"PlayerService.Authenticate. Player: {JsonSerializer.Serialize(player)}");
-            
-            _logger.LogInformation("PlayerService.Authenticate. End");
+            _logger.LogInformation($"Authenticate result: {player}");
             return player == null 
-                ? null 
+                ? null
                 : _mapper.Map<PlayerProfileDto>(player);
         }
         
@@ -91,6 +91,22 @@ namespace PokerHand.BusinessLogic.Services
             await _unitOfWork.Players.AddTotalMoneyAsync(playerId, amountToAdd);
         }
 
+        public async Task<bool> AddStackMoneyFromTotalMoney(Guid tableId, Guid playerId, int requiredAmount)
+        {
+            var player = await _userManager.Users.FirstAsync(p => p.Id == playerId);
+            
+            if (player.TotalMoney < requiredAmount) 
+                return false;
+
+            await _unitOfWork.Players.SubtractTotalMoneyAsync(playerId, requiredAmount);
+
+            _allTables.First(t => t.Id == tableId)
+                .Players.First(p => p.Id == playerId)
+                .StackMoney = requiredAmount;
+            
+            return true;
+        }
+
         public async Task<PlayerProfileDto> GetPlayerProfile(Guid playerId)
         {
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
@@ -98,6 +114,14 @@ namespace PokerHand.BusinessLogic.Services
             return player == null 
                 ? null 
                 : _mapper.Map<PlayerProfileDto>(player);
+        }
+        
+        public void SetPlayerReady(Guid tableId, Guid playerId)
+        {
+            _allTables
+                .First(t => t.Id == tableId)
+                .Players
+                .First(p => p.Id == playerId).IsReady = true;
         }
     }
 }

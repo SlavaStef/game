@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace PokerHand.Common.Helpers.Table
+﻿namespace PokerHand.Common.Helpers.Table
 {
     public enum TableTitle
     {

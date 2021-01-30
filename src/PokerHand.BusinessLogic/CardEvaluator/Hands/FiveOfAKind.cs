@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Microsoft.AspNetCore.Rewrite;
 using PokerHand.BusinessLogic.HandEvaluator.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;

@@ -13,6 +13,6 @@ namespace PokerHand.BusinessLogic.Interfaces
         Task<(TableDto tableDto, bool isNewTable, PlayerDto playerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, string playerConnectionId, int buyIn, bool isAutoTop);
         Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId);
         Task<TableDto> RemovePlayerFromSitAndGoTable(Guid tableId, Guid playerId);
-        void RemoveTable(Guid tableId);
+        void RemoveTableById(Guid tableId);
     }
 }

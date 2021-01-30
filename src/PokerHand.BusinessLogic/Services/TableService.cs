@@ -133,42 +133,42 @@ namespace PokerHand.BusinessLogic.Services
 
         public async Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId)
         {
-            _logger.LogInformation($"Method RemovePlayerFromTable. Start");
-            
             var table = _allTables.First(t => t.Id == tableId);
-            var playerFromTable = table.Players.First(p => p.Id == playerId);
+            var player = table.Players.First(p => p.Id == playerId);
             
-            table.Pot += playerFromTable.CurrentBet;
-
-            await _playerService.ReturnToTotalMoney(playerId, playerFromTable.StackMoney);
+            // Deal with player's state on table
+            table.Pot += player.CurrentBet;
             
-            table.Players.Remove(playerFromTable);
+            if (player.StackMoney > 0) 
+                await _playerService.ReturnToTotalMoney(playerId, player.StackMoney);
             
-            if(table.ActivePlayers.Contains(playerFromTable))
-                table.ActivePlayers.Remove(playerFromTable);
+            if (table.ActivePlayers.Contains(player))
+                table.ActivePlayers.Remove(player);
+            
+            table.Players.Remove(player);
             
             _logger.LogInformation($"Player was removed from table");
             
-            //TODO: If one of two players leaves round -> stop round & the second player is the winner
+            // Deal with state of table if player's removal effects it
+            // Two not ordinary situations:
+            // 1. One player left on table -> end game and wait for a new player to join
+            // 2. No players left on table -> delete this table
+            
+            //TODO: Implement this logics
             if (table.Players.Count == 1)
             {
                 table.WaitForPlayerBet.Set();
             }
 
-            // If there is no player at the table -> delete this table
             if (table.Players.Count == 0)
             {
                 _allTables.Remove(table);
                 table.Dispose();
-                _logger.LogInformation("Table deleted from all tables");
+                _logger.LogInformation("Table was removed from all tables list");
                 return null;
             }
             
-            var resultTable = _mapper.Map<TableDto>(table);
-            _logger.LogInformation($"Method RemovePlayerFromTable. resultTableDto: {JsonSerializer.Serialize(resultTable)}");
-            
-            _logger.LogInformation($"Method RemovePlayerFromTable ends");
-            return resultTable;
+            return _mapper.Map<TableDto>(table);
         }
 
         public async Task<TableDto> RemovePlayerFromSitAndGoTable(Guid tableId, Guid playerId)
@@ -182,15 +182,13 @@ namespace PokerHand.BusinessLogic.Services
             return _mapper.Map<TableDto>(table);
         }
 
-        public void RemoveTable(Guid tableId)
+        public void RemoveTableById(Guid tableId)
         {
             var tableToRemove = _allTables.FirstOrDefault(t => t.Id == tableId);
 
             if (tableToRemove != null)
                 _allTables.Remove(tableToRemove);
         }
-
-        
 
         #region privateHelpers
 

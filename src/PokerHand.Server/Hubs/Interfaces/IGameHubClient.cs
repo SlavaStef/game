@@ -19,6 +19,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task SetDealerAndBlinds(string tableDto);
         Task DealPocketCards(string playerDtoList);
         Task DealCommunityCards(string cardsList);
+        Task ReceiveUpdatedPot(string newPotAmount);
         Task ReceiveCurrentPlayerIdInWagering(string id);
         Task ReceiveTableStateAtWageringEnd(string tableDto);
         Task ReceiveWinners(string playerDtoList);

@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace PokerHand.Server.Tests
+﻿namespace PokerHand.Server.Tests
 {
     public class GameProcessManagerTests
     {

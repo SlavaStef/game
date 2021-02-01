@@ -40,7 +40,7 @@ namespace PokerHand.BusinessLogic.Services
 
         public TableInfoDto GetTableInfo(string tableName)
         {
-            return new TableInfoDto
+            var tableInfoDto = new TableInfoDto
             {
                 Title = tableName,
                 TableType = TableOptions.Tables[tableName]["TableType"],
@@ -51,6 +51,15 @@ namespace PokerHand.BusinessLogic.Services
                 MaxBuyIn = TableOptions.Tables[tableName]["MaxBuyIn"],
                 MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"]
             };
+            
+            if (TableOptions.Tables[tableName]["TableType"] == (int)TableType.SitAndGo)
+            {
+                tableInfoDto.InitialStack = TableOptions.Tables[tableName]["InitialStack"];
+                tableInfoDto.FirstPlacePrize = TableOptions.Tables[tableName]["FirstPlacePrize"];
+                tableInfoDto.SecondPlacePrize = TableOptions.Tables[tableName]["SecondPlacePrize"];
+            }
+
+            return tableInfoDto;
         }
 
         public List<TableInfoDto> GetAllTablesInfo()
@@ -70,6 +79,13 @@ namespace PokerHand.BusinessLogic.Services
                     MaxBuyIn = table.Value["MaxBuyIn"],
                     MaxPlayers = table.Value["MaxPlayers"]
                 };
+
+                if (table.Value["TableType"] == (int)TableType.SitAndGo)
+                {
+                    tableInfoDto.InitialStack = table.Value["InitialStack"];
+                    tableInfoDto.FirstPlacePrize = table.Value["FirstPlacePrize"];
+                    tableInfoDto.SecondPlacePrize = table.Value["SecondPlacePrize"];
+                }
                 
                 allTablesInfo.Add(tableInfoDto);
             }
@@ -77,58 +93,57 @@ namespace PokerHand.BusinessLogic.Services
             return allTablesInfo;
         }
 
-        public async Task<(TableDto tableDto, bool isNewTable, PlayerDto playerDto)> AddPlayerToTable(
-            TableTitle tableTitle, Guid playerId, string playerConnectionId, int buyInAmount, bool isAutoTop)
+        public async Task<(TableDto tableDto, PlayerDto playerDto,bool isNewTable)> AddPlayerToTable(TableConnectionOptions options)
         {
-            var table = GetFreeTable(tableTitle);
+            var table = GetFreeTable(options.TableTitle);
             var isNewTable = false;
 
             if (table == null) // Create new table if there are no free required tables
             {
-                table = CreateNewTable(tableTitle);
+                table = CreateNewTable(options.TableTitle);
                 isNewTable = true;
             }
 
             _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             
-            var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
-            player.ConnectionId = playerConnectionId;
+            var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == options.PlayerId);
+            player.ConnectionId = options.PlayerConnectionId;
             player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
 
             if (table.Type == TableType.SitAndGo)
-            {
-                player.IsAutoTop = false;
-                player.CurrentBuyIn = buyInAmount;
-
-                await _playerService.GetStackMoney(player.Id, buyInAmount);
-                player.StackMoney = 3000;
-            }
+                await ConfigureSitAndGo(options, player);
             else
             {
-                player.IsAutoTop = isAutoTop;
-                player.CurrentBuyIn = buyInAmount;
+                player.IsAutoTop = options.IsAutoTop;
+                player.CurrentBuyIn = options.BuyInAmount;
                 
-                if (player.TotalMoney >= buyInAmount)
+                if (player.TotalMoney >= options.BuyInAmount)
                 {
-                    await _playerService.GetStackMoney(player.Id, buyInAmount);
-                    player.StackMoney = buyInAmount;
+                    await _playerService.GetFromTotalMoney(player.Id, options.BuyInAmount);
+                    player.StackMoney = options.BuyInAmount;
                 }
                 
                 if (player.StackMoney == 0)
-                    return (null, false, _mapper.Map<PlayerDto>(player));
+                    return (null, _mapper.Map<PlayerDto>(player), false);
             }
 
-            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             table.Players.Add(player);
-            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
-            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
             
             var tableDto = _mapper.Map<TableDto>(table);
             _logger.LogInformation($"tableDto: {JsonSerializer.Serialize(tableDto)}");
             var playerDto = _mapper.Map<PlayerDto>(player);
             
-            return (tableDto, isNewTable, playerDto);
+            return (tableDto, playerDto, isNewTable);
+        }
+
+        private async Task ConfigureSitAndGo(TableConnectionOptions connectionOptions, Player player)
+        {
+            player.IsAutoTop = false;
+            player.CurrentBuyIn = TableOptions.Tables[connectionOptions.TableTitle.ToString()]["MinBuyIn"];
+
+            await _playerService.GetFromTotalMoney(player.Id, player.CurrentBuyIn);
+            player.StackMoney = TableOptions.Tables[connectionOptions.TableTitle.ToString()]["InitialStack"];
         }
 
         public async Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId)
@@ -137,10 +152,11 @@ namespace PokerHand.BusinessLogic.Services
             var player = table.Players.First(p => p.Id == playerId);
             
             // Deal with player's state on table
-            table.Pot += player.CurrentBet;
+            if (player.CurrentBet != 0)
+                table.Pot += player.CurrentBet;
             
             if (player.StackMoney > 0) 
-                await _playerService.ReturnToTotalMoney(playerId, player.StackMoney);
+                await _playerService.AddTotalMoney(playerId, player.StackMoney);
             
             if (table.ActivePlayers.Contains(player))
                 table.ActivePlayers.Remove(player);
@@ -149,10 +165,10 @@ namespace PokerHand.BusinessLogic.Services
             
             _logger.LogInformation($"Player was removed from table");
             
-            // Deal with state of table if player's removal effects it
+            // Dealing with the state of table if player's removal effects it
             // Two not ordinary situations:
-            // 1. One player left on table -> end game and wait for a new player to join
-            // 2. No players left on table -> delete this table
+            // 1. One player left at table -> end game and wait for a new player to join
+            // 2. No players left at table -> delete this table
             
             //TODO: Implement this logics
             if (table.Players.Count == 1)
@@ -170,18 +186,7 @@ namespace PokerHand.BusinessLogic.Services
             
             return _mapper.Map<TableDto>(table);
         }
-
-        public async Task<TableDto> RemovePlayerFromSitAndGoTable(Guid tableId, Guid playerId)
-        {
-            var table = _allTables.First(t => t.Id == tableId);
-            var playerFromTable = table.Players.First(p => p.Id == playerId);
-
-            table.ActivePlayers.Remove(playerFromTable);
-            table.Players.Remove(playerFromTable);
-
-            return _mapper.Map<TableDto>(table);
-        }
-
+        
         public void RemoveTableById(Guid tableId)
         {
             var tableToRemove = _allTables.FirstOrDefault(t => t.Id == tableId);

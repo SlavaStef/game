@@ -10,5 +10,8 @@
         public int MinBuyIn { get; set; }
         public int MaxBuyIn { get; set; }
         public int MaxPlayers { get; set; }
+        public int InitialStack { get; set; }
+        public int FirstPlacePrize { get; set; }
+        public int SecondPlacePrize { get; set; }
     }
 }

@@ -10,9 +10,8 @@ namespace PokerHand.BusinessLogic.Interfaces
     {
         TableInfoDto GetTableInfo(string tableName);
         List<TableInfoDto> GetAllTablesInfo();
-        Task<(TableDto tableDto, bool isNewTable, PlayerDto playerDto)> AddPlayerToTable(TableTitle tableTitle, Guid playerId, string playerConnectionId, int buyIn, bool isAutoTop);
+        Task<(TableDto tableDto, PlayerDto playerDto, bool isNewTable)> AddPlayerToTable(TableConnectionOptions options);
         Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId);
-        Task<TableDto> RemovePlayerFromSitAndGoTable(Guid tableId, Guid playerId);
         void RemoveTableById(Guid tableId);
     }
 }

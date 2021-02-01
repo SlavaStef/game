@@ -74,19 +74,19 @@ namespace PokerHand.BusinessLogic.Services
                 : _mapper.Map<PlayerProfileDto>(player);
         }
         
-        public async Task<bool> GetStackMoney(Guid playerId, int requiredAmount)
+        public async Task<bool> GetFromTotalMoney(Guid playerId, int amount)
         {
             var player = await _userManager.Users.FirstAsync(p => p.Id == playerId);
             
-            if (player.TotalMoney < requiredAmount) 
+            if (player.TotalMoney < amount) 
                 return false;
 
-            await _unitOfWork.Players.SubtractTotalMoneyAsync(playerId, requiredAmount);
+            await _unitOfWork.Players.SubtractTotalMoneyAsync(playerId, amount);
             
             return true;
         }
 
-        public async Task ReturnToTotalMoney(Guid playerId, int amountToAdd)
+        public async Task AddTotalMoney(Guid playerId, int amountToAdd)
         {
             await _unitOfWork.Players.AddTotalMoneyAsync(playerId, amountToAdd);
         }

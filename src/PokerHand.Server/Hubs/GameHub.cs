@@ -100,14 +100,17 @@ namespace PokerHand.Server.Hubs
         }
         
         public async Task ConnectToTable(string tableTitle, string playerId, string buyInAmount, string autoTop)
-        { 
-            var title = JsonSerializer.Deserialize<TableTitle>(tableTitle);
-            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
-            var buyIn = JsonSerializer.Deserialize<int>(buyInAmount);
-            var isAutoTop = JsonSerializer.Deserialize<bool>(autoTop);
+        {
+            var connectOptions = new TableConnectionOptions 
+            {
+                TableTitle = JsonSerializer.Deserialize<TableTitle>(tableTitle),
+                PlayerId = JsonSerializer.Deserialize<Guid>(playerId),
+                PlayerConnectionId = Context.ConnectionId,
+                BuyInAmount = JsonSerializer.Deserialize<int>(buyInAmount),
+                IsAutoTop = JsonSerializer.Deserialize<bool>(autoTop)
+            };
             
-            var (tableDto, isNewTable, playerDto) = 
-                await _tableService.AddPlayerToTable(title, playerIdGuid, Context.ConnectionId, buyIn, isAutoTop);
+            var (tableDto, playerDto, isNewTable) = await _tableService.AddPlayerToTable(connectOptions);
             
             await Groups.AddToGroupAsync(Context.ConnectionId, tableDto.Id.ToString());
             await Clients.Caller
@@ -177,6 +180,7 @@ namespace PokerHand.Server.Hubs
 
         public async Task LeaveTable(string tableId, string playerId)
         {
+            
             var tableIdGuid = JsonSerializer.Deserialize<Guid>(tableId);
             var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
 
@@ -193,8 +197,8 @@ namespace PokerHand.Server.Hubs
             WriteAllPlayersList();
             
             var playerId = _allPlayers.First(p => p.Value == Context.ConnectionId).Key;
-
-            var table = _allTables.FirstOrDefault(t => t.Players.FirstOrDefault(p => p.Id == playerId) != null);
+            var table = _allTables
+                .FirstOrDefault(t => t.Players.FirstOrDefault(p => p.Id == playerId) != null);
             
             if (table != null)
             {

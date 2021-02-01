@@ -2,11 +2,11 @@
 {
     public enum TableType
     {
-        TexasPoker = 1,
+        TexasPoker = 0,
+        LawballPoker = 1,
         RoyalPoker = 2,
         JokerPoker = 3,
-        SitAndGo = 4,
-        DashPoker = 5,
-        LawballPoker = 6
+        DashPoker = 4,
+        SitAndGo = 5
     }
 }

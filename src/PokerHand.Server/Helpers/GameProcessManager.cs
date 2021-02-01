@@ -91,50 +91,40 @@ namespace PokerHand.Server.Helpers
         
         public async Task StartSitAndGoRound(Guid tableId)
         {
-            _logger.LogInformation("StartRound. Start");
+            _logger.LogInformation("Start Sit&Go Round. Start");
             var table = _allTables.First(t => t.Id == tableId);
 
             while (table.Players.Count < table.MaxPlayers)
                 Thread.Sleep(1000);
 
-            _logger.LogInformation("StartRound. Round started");
-
             table.ActivePlayers = table.Players.ToList();
+            
+            _logger.LogInformation("StartRound. Round started");
             
             while (table.ActivePlayers.Any(p => p.IsReady != true))
                 Thread.Sleep(500);
-            
-            await PrepareForGame(table); // Start chain of game methods
-            
-            _logger.LogInformation("StartRound. End");
 
-            if (table.Players.Count > 1)
+            while (table.Players.Count > 1)
             {
-                _logger.LogInformation("StartRound. New round starts");
+                table.ActivePlayers = table.Players.ToList();
+                await PrepareForGame(table); // Start chain of game methods
                 await RefreshTable(table);
-                await AutoTopStackMoney(table);
-                await StartRound(table.Id);
             }
-            else
-            {
-                _tableService.RemoveTableById(table.Id);
-            }
-            
+
+            _logger.LogInformation("Start Sit&Go Round. End");
+            _tableService.RemoveTableById(table.Id);
+            _logger.LogInformation("Start Sit&Go Round. Table removed");
         }
-
-
+        
         // Preparation
         private async Task PrepareForGame(Table table)
         {
-            // TODO: Join SetDealerAndBlind and DealPocketCards on client into one method
             SetDealerAndBlinds(table);
-            await _hub.Clients.Group(table.Id.ToString())
-                .SetDealerAndBlinds(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-            
             DealPocketCards(table);
-            await _hub.Clients.Group(table.Id.ToString())
-                .DealPocketCards(JsonSerializer.Serialize(_mapper.Map<List<PlayerDto>>(table.ActivePlayers)));
             
+            await _hub.Clients.Group(table.Id.ToString())
+                .PrepareForGame(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+
             // Wait for the animation of dealing cards
             Thread.Sleep(1000);
             
@@ -170,7 +160,8 @@ namespace PokerHand.Server.Helpers
             _logger.LogInformation("StartWagering. Start");
 
             ChooseCurrentStage(table);
-            await MakeBlindBets(table);
+            if (table.CurrentStage == RoundStageType.WageringPreFlopRound) 
+                await MakeBlindBets(table);
             
             // Counter is used to make sure all players acted at least one time
             var actionCounter = table.ActivePlayers.Count;
@@ -184,23 +175,28 @@ namespace PokerHand.Server.Helpers
                     return;
                 }
 
-                // choose next player to make choice
-                await SetCurrentPlayer(table);
-        
-                _logger.LogInformation("StartWagering. Waiting for player's action");
-                table.WaitForPlayerBet.WaitOne(); //TODO: Handle player's leaving during WaitOne
-                _logger.LogInformation("StartWagering. Player's action received");
-                
+                // Choose next player to make choice
+                SetCurrentPlayer(table);
+                await _hub.Clients.Group(table.Id.ToString())
+                    .ReceiveCurrentPlayerIdInWagering(JsonSerializer.Serialize(table.CurrentPlayer.Id));
+
+                //TODO: Handle player's leaving during WaitOne
+                //TODO: Make timer
+                table.WaitForPlayerBet.WaitOne();
+
                 await ProcessPlayerAction(table, table.CurrentPlayer);
+
+                // Check if one of two players folded
                 if (table.ActivePlayers.Count == 1)
                 {
+                    CollectBetsFromTable(table);
                     await EndRoundNow(table);
                     return;
                 }
-                
+
                 await _hub.Clients.Group(table.Id.ToString())
                     .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-        
+
                 actionCounter--;
             } 
             while (table.ActivePlayers.Count > 1 &&
@@ -230,8 +226,8 @@ namespace PokerHand.Server.Helpers
             }
             
             //TODO: Check if this method is required. Maybe ReceiveUpdatedPot is enough?
-            await _hub.Clients.Group(table.Id.ToString())
-                .ReceiveTableStateAtWageringEnd(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+            // await _hub.Clients.Group(table.Id.ToString())
+            //     .ReceiveTableStateAtWageringEnd(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
             
             Thread.Sleep(2500);
 
@@ -270,23 +266,6 @@ namespace PokerHand.Server.Helpers
             Thread.Sleep(5000 + (table.ActivePlayers.Count * 200)); 
             
             _logger.LogInformation("Showdown. End");
-
-            // Remove players from SitAndGo
-            if (table.Type == TableType.SitAndGo)
-            {
-                TableDto newTableDto = null;
-
-                foreach (var player in table.ActivePlayers.Where(p => p.StackMoney == 0))
-                {
-                    newTableDto = await _tableService.RemovePlayerFromSitAndGoTable(table.Id, player.Id);
-                    await _hub.Groups.RemoveFromGroupAsync(player.ConnectionId, table.Id.ToString());
-                    await _hub.Clients.Client(player.ConnectionId).EndSitAndGoGame("1");
-                }
-
-                if (newTableDto != null)
-                    await _hub.Clients.Group(table.Id.ToString())
-                        .ReceiveTableState(JsonSerializer.Serialize(newTableDto));
-            }
         }
 
         private async Task EndRoundNow(Table table)
@@ -317,13 +296,36 @@ namespace PokerHand.Server.Helpers
             table.BigBlindIndex = -1;
             table.Winners = new List<Player>(table.MaxPlayers);
 
+            // Manage Sit&Go table state
             if (table.Type == TableType.SitAndGo)
             {
+                _logger.LogInformation("RefreshTable. Managing Sit&Go");
                 table.SmallBlind *= 2;
                 table.BigBlind *= 2;
+                
+                TableDto newTableDto = null;
+
+                foreach (var player in table.ActivePlayers.Where(p => p.StackMoney == 0))
+                {
+                    // Define player's place
+                    var playerPlace = table.Players.Count;
+                    
+                    newTableDto = await _tableService.RemovePlayerFromTable(table.Id, player.Id);
+                    await _hub.Groups
+                        .RemoveFromGroupAsync(player.ConnectionId, table.Id.ToString());
+                    await _hub.Clients.Client(player.ConnectionId)
+                        .EndSitAndGoGame(playerPlace.ToString());
+                }
+
+                _logger.LogInformation($"RefreshTable. newTableDto: {JsonSerializer.Serialize(newTableDto)}");
+                if (newTableDto != null)
+                    await _hub.Clients.Group(table.Id.ToString())
+                        .ReceiveTableState(JsonSerializer.Serialize(newTableDto));
+                _logger.LogInformation("RefreshTable. End managing Sit&Go");
             }
 
-            foreach (var player in table.ActivePlayers.Where(p => p.StackMoney < table.BigBlind))
+            // If autoTop is Off and stackMoney == 0
+            foreach (var player in table.ActivePlayers.Where(p => p.StackMoney == 0))
             {
                 await _hub.Clients.Client(player.ConnectionId)
                     .OnLackOfStackMoney();
@@ -342,7 +344,9 @@ namespace PokerHand.Server.Helpers
 
             table.CurrentStage = RoundStageType.SetDealerAndBlinds;
             
-            switch (table.ActivePlayers.Count)
+            try
+            {
+                switch (table.ActivePlayers.Count)
             {
                 case 2:
                     if (table.DealerIndex < 0 && table.SmallBlindIndex < 0 && table.BigBlindIndex < 0 ||
@@ -410,6 +414,13 @@ namespace PokerHand.Server.Helpers
 
                     break;
             }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
 
             _logger.LogInformation("SetDealerAndBlinds. End");
         }
@@ -435,10 +446,8 @@ namespace PokerHand.Server.Helpers
             return result;
         }
 
-        private async Task SetCurrentPlayer(Table table)
+        private void SetCurrentPlayer(Table table)
         {
-            _logger.LogInformation("SetCurrentPlayer. Start");
-
             if (table.CurrentPlayer == null) // if round starts and there is no current player
             {
                 table.CurrentPlayer = table.CurrentStage == RoundStageType.WageringPreFlopRound
@@ -450,11 +459,6 @@ namespace PokerHand.Server.Helpers
                 table.ActivePlayers = table.ActivePlayers.OrderBy(p => p.IndexNumber).ToList();
                 table.CurrentPlayer = GetNextPlayer(table, table.CurrentPlayer.IndexNumber);
             }
-            
-            await _hub.Clients.Group(table.Id.ToString())
-                .ReceiveCurrentPlayerIdInWagering(JsonSerializer.Serialize(table.CurrentPlayer.Id));
-
-            _logger.LogInformation("SetCurrentPlayer. End");
         }
         
         private static void ChooseCurrentStage(Table table)
@@ -480,34 +484,21 @@ namespace PokerHand.Server.Helpers
 
         private async Task ProcessPlayerAction(Table table, Player player)
         {
-            _logger.LogInformation("ProcessPlayerAction. Start");
-            
             switch (player.CurrentAction.ActionType)
             {
-                // check if stackMoney >= Amount => is ok
-                // else GetFromTotalMoney()
-                //      if(isOk)
                 case PlayerActionType.Fold:
                     if (table.Type == TableType.DashPoker)
                     {
                         await _tableService.RemovePlayerFromTable(table.Id, player.Id);
                         await _hub.Groups.RemoveFromGroupAsync(player.ConnectionId, table.Id.ToString());
-                        
+
                         await _hub.Clients.Group(table.Id.ToString())
                             .PlayerDisconnected(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
                     }
                     else
                     {
-                        if (table.ActivePlayers.Count == 2)
-                        {
-                            CollectBetsFromTable(table);
-                            table.ActivePlayers.Remove(player);
-                        }
-                        else
-                        {
-                            table.Pot += player.CurrentBet;
-                            table.ActivePlayers.Remove(player);
-                        }
+                        table.Pot += player.CurrentBet;
+                        table.ActivePlayers.Remove(player);
                     }
                     break;
                 case PlayerActionType.Check:
@@ -525,22 +516,16 @@ namespace PokerHand.Server.Helpers
                     player.StackMoney -= (int) player.CurrentAction.Amount;
                     player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount + player.CurrentBet;
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException();
             }
-            _logger.LogInformation("ProcessPlayerAction. End");
         }
 
         private async Task MakeBlindBets(Table table)
         {
-            if (table.CurrentStage == RoundStageType.WageringPreFlopRound)
-            {
-                await MakeSmallBlindBet(table);
-                await MakeBigBlindBet(table);
+            await MakeSmallBlindBet(table);
+            await MakeBigBlindBet(table);
             
-                await _hub.Clients.Group(table.Id.ToString())
-                    .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-            }
+            await _hub.Clients.Group(table.Id.ToString())
+                .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
         }
         
         private async Task MakeSmallBlindBet(Table table)
@@ -591,7 +576,7 @@ namespace PokerHand.Server.Helpers
             {
                 if (player.StackMoney == 0 && player.IsAutoTop && player.TotalMoney >= player.CurrentBuyIn)
                 {
-                    var isGotMoneyFromTotalMoney = await _playerService.GetStackMoney(player.Id, player.CurrentBuyIn);
+                    var isGotMoneyFromTotalMoney = await _playerService.GetFromTotalMoney(player.Id, player.CurrentBuyIn);
                     
                     if (isGotMoneyFromTotalMoney)
                     {

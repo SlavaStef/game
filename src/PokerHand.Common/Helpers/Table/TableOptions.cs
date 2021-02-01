@@ -9,7 +9,7 @@ namespace PokerHand.Common.Helpers.Table
             {
                 {"Dash", new Dictionary<string, int>
                     {
-                        {"TableType", 5},
+                        {"TableType", 4},
                         {"Experience", 0},
                         {"SmallBlind", 50},
                         {"BigBlind", 100},
@@ -20,7 +20,7 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"Lowball", new Dictionary<string, int>
                     {
-                        {"TableType", 6},
+                        {"TableType", 1},
                         {"Experience", 0},
                         {"SmallBlind", 50},
                         {"BigBlind", 100},
@@ -53,7 +53,7 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"WetDeskLounge", new Dictionary<string, int>
                     {
-                        {"TableType", 1},
+                        {"TableType", 0},
                         {"Experience", 25},
                         {"SmallBlind", 500},
                         {"BigBlind", 1000},
@@ -64,18 +64,21 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"RivieraHotel", new Dictionary<string, int>
                     {
-                        {"TableType", 4},
+                        {"TableType", 5},
                         {"Experience", 25},
                         {"SmallBlind", 10},
                         {"BigBlind", 20},
-                        {"MinBuyIn", 10000},
-                        {"MaxBuyIn", 10000},
-                        {"MaxPlayers", 5}
+                        {"MinBuyIn", 10_000},
+                        {"MaxBuyIn", 10_000},
+                        {"MaxPlayers", 5},
+                        {"InitialStack", 3000},
+                        {"FirstPlacePrize", 20_000},
+                        {"SecondPlacePrize", 10_000}
                     }
                 },
                 {"ShishaBar", new Dictionary<string, int>
                     {
-                        {"TableType", 1},
+                        {"TableType", 0},
                         {"Experience", 25},
                         {"SmallBlind", 50},
                         {"BigBlind", 100},
@@ -86,7 +89,7 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"TropicalHouse", new Dictionary<string, int>
                     {
-                        {"TableType", 1},
+                        {"TableType", 0},
                         {"Experience", 25},
                         {"SmallBlind", 25},
                         {"BigBlind", 50},
@@ -119,18 +122,21 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"CityDreamsResort", new Dictionary<string, int>
                     {
-                        {"TableType", 4},
+                        {"TableType", 5},
                         {"Experience", 30},
                         {"SmallBlind", 20},
                         {"BigBlind", 40},
-                        {"MinBuyIn", 50000},
-                        {"MaxBuyIn", 50000},
-                        {"MaxPlayers", 5}
+                        {"MinBuyIn", 50_000},
+                        {"MaxBuyIn", 50_000},
+                        {"MaxPlayers", 5},
+                        {"InitialStack", 3000},
+                        {"FirstPlacePrize", 170_000},
+                        {"SecondPlacePrize", 50_000}
                     }
                 },
                 {"MirageCasino", new Dictionary<string, int>
                     {
-                        {"TableType", 4},
+                        {"TableType", 0},
                         {"Experience", 30},
                         {"SmallBlind", 20},
                         {"BigBlind", 40},
@@ -141,7 +147,7 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"SunriseCafe", new Dictionary<string, int>
                     {
-                        {"TableType", 1},
+                        {"TableType", 0},
                         {"Experience", 30},
                         {"SmallBlind", 1000},
                         {"BigBlind", 2000},
@@ -163,7 +169,7 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"GoldMine", new Dictionary<string, int>
                     {
-                        {"TableType", 1},
+                        {"TableType", 0},
                         {"Experience", 40},
                         {"SmallBlind", 10000},
                         {"BigBlind", 20000},
@@ -174,7 +180,7 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"ImperialBunker", new Dictionary<string, int>
                     {
-                        {"TableType", 1},
+                        {"TableType", 0},
                         {"Experience", 40},
                         {"SmallBlind", 15000},
                         {"BigBlind", 30000},
@@ -196,18 +202,21 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"HeritageBank", new Dictionary<string, int>
                     {
-                        {"TableType", 4},
+                        {"TableType", 5},
                         {"Experience", 50},
                         {"SmallBlind", 25},
                         {"BigBlind", 50},
-                        {"MinBuyIn", 500000},
-                        {"MaxBuyIn", 500000},
-                        {"MaxPlayers", 5}
+                        {"MinBuyIn", 500_000},
+                        {"MaxBuyIn", 500_000},
+                        {"MaxPlayers", 5},
+                        {"InitialStack", 5000},
+                        {"FirstPlacePrize", 1_700_000},
+                        {"SecondPlacePrize", 500_000}
                     }
                 },
                 {"MillenniumHotel", new Dictionary<string, int>
                     {
-                        {"TableType", 1},
+                        {"TableType", 0},
                         {"Experience", 50},
                         {"SmallBlind", 25000},
                         {"BigBlind", 50000},
@@ -218,7 +227,7 @@ namespace PokerHand.Common.Helpers.Table
                 },
                 {"FortuneHippodrome", new Dictionary<string, int>
                     {
-                        {"TableType", 1},
+                        {"TableType", 0},
                         {"Experience", 50},
                         {"SmallBlind", 50000},
                         {"BigBlind", 100000},

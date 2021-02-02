@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using PokerHand.Common.Dto.Chat;
 
 namespace PokerHand.Server.Hubs.Interfaces
 {
@@ -25,6 +26,11 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task ReceiveWinners(string playerDtoList);
         Task EndSitAndGoGame(string place);
         Task OnLackOfStackMoney();
+        
+        // Chat
+        Task ReceivePrivateMessage(string privateMessageDto);
+        Task ReceivePublicMessage(string publicMessageDto);
+        Task ConfirmMessageWasSent();
 
     }
 }

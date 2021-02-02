@@ -11,14 +11,7 @@ namespace PokerHand.DataAccess.Repositories
 {
     public class PlayerRepository : Repository<Player>, IPlayerRepository
     {
-        private readonly ILogger<UnitOfWork> _logger;
-        
-        public PlayerRepository(
-            ApplicationContext context, 
-            ILogger<UnitOfWork> logger) : base(context)
-        {
-            _logger = logger;
-        }
+        public PlayerRepository(ApplicationContext context) : base(context) { }
 
         public async Task<Player> GetPlayerAsync(Guid playerId)
         {

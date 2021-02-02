@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
+using PokerHand.Common.Entities.Chat;
 using PokerHand.Common.Helpers;
 
 namespace PokerHand.Common.Entities
@@ -19,6 +20,13 @@ namespace PokerHand.Common.Entities
         public int GamesWon { get; set; }
         public int BiggestWin { get; set; }
         public int SitAndGoWins { get; set; }
+        public string PersonalCode { get; set; }
+        public string Friends { get; set; }
+
+        public List<Message> Messages { get; set; }
+        public virtual List<Conversation> ConversationsFirst { get; set; }
+        public virtual List<Conversation> ConversationsSecond { get; set; }
+        
         
         // Game properties
         [NotMapped] 

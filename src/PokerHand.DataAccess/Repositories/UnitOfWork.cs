@@ -10,21 +10,22 @@ namespace PokerHand.DataAccess.Repositories
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
-        private  ApplicationContext _context;
-        private readonly ILogger<UnitOfWork> _logger;
+        private ApplicationContext _context;
         private bool disposed = false;
         private SafeHandle handle = new SafeFileHandle(IntPtr.Zero, true);
         
         public IPlayerRepository Players { get; private set; }
+        public IConversationRepository Conversations { get; private set; }
+        public IMessageRepository Messages { get; private set; }
 
-        public UnitOfWork(
-            ApplicationContext context, 
-            ILogger<UnitOfWork> logger)
+        public UnitOfWork(ApplicationContext context)
         {
             _context = context;
-            _logger = logger;
-
-            Players = new PlayerRepository(_context, _logger);
+            
+            Players = new PlayerRepository(_context);
+            Conversations = new ConversationRepository(_context);
+            Messages = new MessageRepository(_context);
+            
         }
         
         public async Task<int> CompleteAsync()

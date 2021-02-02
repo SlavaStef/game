@@ -15,12 +15,13 @@ using PokerHand.Server.Hubs.Interfaces;
 
 namespace PokerHand.Server.Hubs
 {
-    public class GameHub : Hub<IGameHubClient>, IGameHub
+    public partial class GameHub : Hub<IGameHubClient>, IGameHub
     {
         private readonly List<Table> _allTables;
         private readonly Dictionary<Guid, string> _allPlayers;
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
+        private readonly IChatService _chatService;
         private readonly IGameProcessManager _gameProcessManager;
         private readonly ILogger<GameHub> _logger;
 
@@ -29,6 +30,7 @@ namespace PokerHand.Server.Hubs
             PlayersOnline allPlayers,
             ITableService tableService,
             IPlayerService playerService,
+            IChatService chatService,
             IGameProcessManager gameProcessManager,
             ILogger<GameHub> logger)
         {
@@ -36,6 +38,7 @@ namespace PokerHand.Server.Hubs
             _allPlayers = allPlayers.Players;
             _tableService = tableService;
             _playerService = playerService;
+            _chatService = chatService;
             _gameProcessManager = gameProcessManager;
             _logger = logger;
         }

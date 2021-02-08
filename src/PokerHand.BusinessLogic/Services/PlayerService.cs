@@ -46,7 +46,7 @@ namespace PokerHand.BusinessLogic.Services
                 Country = "",
                 RegistrationDate = DateTime.Now,
                 Experience = 0,
-                TotalMoney = 100000,
+                TotalMoney = 100000000,
                 CoinsAmount = 0,
                 GamesPlayed = 0,
                 BestHandType = HandType.None,

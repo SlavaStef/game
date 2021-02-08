@@ -206,7 +206,7 @@ namespace PokerHand.BusinessLogic.Services
             {
                 return _allTables?
                     .Where(t => t.Title == tableTitle)
-                    .FirstOrDefault(t => t.CurrentStage == RoundStageType.None);
+                    .FirstOrDefault(t => t.CurrentStage == RoundStageType.NotStarted);
             }
             
             return _allTables?

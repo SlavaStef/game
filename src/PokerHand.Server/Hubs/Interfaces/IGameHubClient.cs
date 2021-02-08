@@ -11,6 +11,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task ReceiveAllTablesInfo(string allTablesInfo);
         Task ReceivePlayerDto(string playerDto);
         Task ReceiveTableState(string tableDto);
+        Task OnGameEnd();
         Task ReceivePlayerAction(string actionFromPlayer);
         Task PlayerDisconnected(string tableDto);
 

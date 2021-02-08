@@ -6,6 +6,7 @@
         Check = 2,
         Bet = 3,
         Call = 4,
-        Raise = 5
+        Raise = 5,
+        AllIn = 6
     }
 }

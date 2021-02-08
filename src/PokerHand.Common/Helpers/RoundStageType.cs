@@ -2,14 +2,14 @@
 {
     public enum RoundStageType
     {
-        None = 0,
-        SetDealerAndBlinds = 1,
-        DealPocketCards = 2,
-        WageringPreFlopRound = 3,
-        DealCommunityCards = 4,
-        WageringSecondRound = 5,
-        WageringThirdRound = 6,
-        WageringFourthRound = 7,
-        Showdown = 8
+        NotStarted = 0,
+        PrepareTable = 1,
+        WageringPreFlopRound = 2,
+        DealCommunityCards = 3,
+        WageringSecondRound = 4,
+        WageringThirdRound = 5,
+        WageringFourthRound = 6,
+        Showdown = 7,
+        Refresh = 8
     }
 }

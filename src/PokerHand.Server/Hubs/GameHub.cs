@@ -120,10 +120,7 @@ namespace PokerHand.Server.Hubs
 
             if (isNewTable)
             {
-                if (tableDto.Type == TableType.SitAndGo)
-                    new Thread (() => _gameProcessManager.StartSitAndGoRound(tableDto.Id)).Start();
-                else
-                    new Thread (() => _gameProcessManager.StartRound(tableDto.Id)).Start();
+                new Thread (() => _gameProcessManager.StartRound(tableDto.Id)).Start();
             }
         }
         
@@ -133,10 +130,7 @@ namespace PokerHand.Server.Hubs
             
             var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
-            
-            await Clients.OthersInGroup(tableId.ToString())
-                .ReceivePlayerAction(actionFromPlayer);
-            
+
             var table = _allTables.First(t => t.Id == tableId);
             
             table.ActivePlayers
@@ -187,7 +181,7 @@ namespace PokerHand.Server.Hubs
             var tableDto = await _tableService.RemovePlayerFromTable(tableIdGuid, playerIdGuid);
 
             if (tableDto != null)
-                await Clients.GroupExcept(tableId, Context.ConnectionId)
+                await Clients.GroupExcept(JsonSerializer.Deserialize<string>(tableId), Context.ConnectionId)
                     .PlayerDisconnected(JsonSerializer.Serialize(tableDto));
         }
 

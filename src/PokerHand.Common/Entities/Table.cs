@@ -19,6 +19,7 @@ namespace PokerHand.Common.Entities
             Id = Guid.NewGuid();
             TimeCreated = DateTime.Now;
             Title = title;
+            CurrentStage = RoundStageType.NotStarted;
             SetOptions(title);
 
             Deck = new Deck(Type);
@@ -39,6 +40,7 @@ namespace PokerHand.Common.Entities
         public TableTitle Title { get; set; }
         public TableType Type { get; set; }
         public int MaxPlayers { get; set; }
+        public int MinPlayersToStart { get; set; }
         public int SmallBlind { get; set; }
         public int BigBlind { get; set; }
 
@@ -49,6 +51,7 @@ namespace PokerHand.Common.Entities
         public RoundStageType CurrentStage { get; set; }
         public List<Player> ActivePlayers { get; set; }
         public List<Card> CommunityCards { get; set; }
+        public bool IsEndDueToAllIn { get; set; }
         public Player CurrentPlayer { get; set; }
         public int CurrentMaxBet { get; set; }
         public int Pot { get; set; }
@@ -68,6 +71,10 @@ namespace PokerHand.Common.Entities
             SmallBlind = TableOptions.Tables[tableName]["SmallBlind"];
             BigBlind = TableOptions.Tables[tableName]["BigBlind"];
             MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"];
+            
+            MinPlayersToStart = Type == TableType.SitAndGo 
+                ? 5 
+                : 2;
         }
         
         public void Dispose()

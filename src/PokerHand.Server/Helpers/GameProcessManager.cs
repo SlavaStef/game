@@ -195,13 +195,18 @@ namespace PokerHand.Server.Helpers
             while (table.ActivePlayers.Count > 1 &&
                    (actionCounter > 0 || !CheckIfAllBetsAreEqual(table)));
 
-            /*// Check for end due to all in
-            if (table.ActivePlayers.Count(p => p.StackMoney == 0) <= 1)
+            // Check for end due to all in
+            if (table.ActivePlayers.Count(p => p.StackMoney != 0) <= 1) 
             {
+                CollectBetsFromTable(table);
+
+                await _hub.Clients.Group(table.Id.ToString())
+                    .ReceiveUpdatedPot(JsonSerializer.Serialize(table.Pot));
+                
                 table.IsEndDueToAllIn = true;
                 await DealCommunityCards(table, 5 - table.CommunityCards.Count);
                 return;
-            }*/
+            }
 
             // If at least one action was taken
             if (table.CurrentMaxBet > 0)
@@ -237,9 +242,6 @@ namespace PokerHand.Server.Helpers
 
             await RunNextStage(table);
         }
-
-        private bool CheckForEndRoundDueToAllIn(Table table) =>
-            table.ActivePlayers.Count(p => p.StackMoney == 0) <= 1;
 
         // End
         private async Task Showdown(Table table)
@@ -313,6 +315,7 @@ namespace PokerHand.Server.Helpers
             // table.SmallBlindIndex = -1;
             // table.BigBlindIndex = -1;
             table.Winners = new List<Player>(table.MaxPlayers);
+            table.IsEndDueToAllIn = false;
 
             // Manage Sit&Go table state
             if (table.Type == TableType.SitAndGo)
@@ -368,13 +371,6 @@ namespace PokerHand.Server.Helpers
         
         private void WaitForPlayers(Table table)
         {
-            // if (table.Players.Count < table.MinPlayersToStart)
-            // {
-            //     _logger.LogInformation($"StartRound. Table {table.Id}. Waiting for second player");
-            //     await _hub.Clients.Group(table.Id.ToString())
-            //         .WaitForPlayers();
-            // }
-
             _logger.LogInformation("StartRound. Waiting for players");
             while (table.Players.Count(p => p.StackMoney > 0) < table.MinPlayersToStart)
                 Thread.Sleep(1000);
@@ -558,25 +554,33 @@ namespace PokerHand.Server.Helpers
                         table.ActivePlayers.Remove(player);
                     }
                     break;
+                
                 // Check - If no one has yet opened the betting round (equivalent to betting zero)
                 case PlayerActionType.Check:
                     break;
+                
                 // Bet - The opening bet of a betting round
                 case PlayerActionType.Bet:
                     player.StackMoney -= (int) player.CurrentAction.Amount;
                     player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount;
-                    _logger.LogInformation("BET. End");
+                    _logger.LogInformation("Bet. End");
                     break;
+                
                 // Call - To match a bet or raise
                 case PlayerActionType.Call:
                     player.StackMoney -= table.CurrentMaxBet - player.CurrentBet;
                     player.CurrentBet = table.CurrentMaxBet;
                     break;
+                
                 // Raise - To increase the size of an existing bet in the same betting round
                 case PlayerActionType.Raise:
                     player.StackMoney -= (int) player.CurrentAction.Amount;
                     player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount + player.CurrentBet;
+                    _logger.LogInformation($"Raise. player: {JsonSerializer.Serialize(player)}");
+                    _logger.LogInformation($"Raise. table: {JsonSerializer.Serialize(table)}");
+                    _logger.LogInformation("Raise. End");
                     break;
+                
                 case PlayerActionType.AllIn:
                     player.CurrentBet = player.StackMoney;
                     player.StackMoney = 0;
@@ -625,6 +629,7 @@ namespace PokerHand.Server.Helpers
         
         private async Task MakeBigBlindBet(Table table)
         {
+            _logger.LogInformation("MakeBigBlindBet. Start");
             var player = table.ActivePlayers.First(p => p.IndexNumber == table.BigBlindIndex);
             
             var bigBlindAction = new PlayerAction
@@ -634,7 +639,13 @@ namespace PokerHand.Server.Helpers
                 Amount = table.BigBlind
             };
             
-            if (player.StackMoney < table.SmallBlind)
+            _logger.LogInformation($"MakeBigBlindBet. table: {JsonSerializer.Serialize(table)}");
+            _logger.LogInformation($"MakeBigBlindBet. player: {JsonSerializer.Serialize(player)}");
+            
+            _logger.LogInformation($"MakeBigBlindBet. player.StackMoney: {JsonSerializer.Serialize(player.StackMoney)}");
+            _logger.LogInformation($"MakeBigBlindBet. table.BigBlind: {JsonSerializer.Serialize(table.BigBlind)}");
+            _logger.LogInformation($"MakeBigBlindBet. player.StackMoney < table.BigBlind: {player.StackMoney < table.BigBlind}");
+            if (player.StackMoney < table.BigBlind)
             {
                 bigBlindAction.ActionType = PlayerActionType.AllIn;
                 bigBlindAction.Amount = player.StackMoney;
@@ -642,9 +653,12 @@ namespace PokerHand.Server.Helpers
 
             player.CurrentAction = bigBlindAction;
             
+            _logger.LogInformation($"MakeBigBlindBet. player.CurrentAction: {JsonSerializer.Serialize(player.CurrentAction)}");
+            
             await _hub.Clients.Group(table.Id.ToString())
                 .ReceivePlayerAction(JsonSerializer.Serialize(bigBlindAction));
             
+            _logger.LogInformation("MakeBigBlindBet. End");
             await ProcessPlayerAction(table, player);
         }
 

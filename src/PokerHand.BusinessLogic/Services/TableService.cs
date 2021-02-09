@@ -104,7 +104,7 @@ namespace PokerHand.BusinessLogic.Services
                 isNewTable = true;
             }
 
-            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
+            _logger.LogInformation($"AddPlayerToTable. table: {JsonSerializer.Serialize(table)}");
             
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == options.PlayerId);
             player.ConnectionId = options.PlayerConnectionId;
@@ -131,7 +131,7 @@ namespace PokerHand.BusinessLogic.Services
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
             
             var tableDto = _mapper.Map<TableDto>(table);
-            _logger.LogInformation($"tableDto: {JsonSerializer.Serialize(tableDto)}");
+            _logger.LogInformation($"AddPlayerToTable. tableDto: {JsonSerializer.Serialize(tableDto)}");
             var playerDto = _mapper.Map<PlayerDto>(player);
             
             return (tableDto, playerDto, isNewTable);

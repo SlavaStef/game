@@ -195,9 +195,20 @@ namespace PokerHand.Server.Helpers
             while (table.ActivePlayers.Count > 1 &&
                    (actionCounter > 0 || !CheckIfAllBetsAreEqual(table)));
 
+            /*// Check for end due to all in
+            if (table.ActivePlayers.Count(p => p.StackMoney == 0) <= 1)
+            {
+                table.IsEndDueToAllIn = true;
+                await DealCommunityCards(table, 5 - table.CommunityCards.Count);
+                return;
+            }*/
+
             // If at least one action was taken
             if (table.CurrentMaxBet > 0)
             {
+                // Wait for animation
+                Thread.Sleep(1000);
+                
                 CollectBetsFromTable(table);
 
                 await _hub.Clients.Group(table.Id.ToString())
@@ -298,9 +309,9 @@ namespace PokerHand.Server.Helpers
             table.CurrentPlayer = null;
             table.CurrentMaxBet = 0;
             table.Pot = 0;
-            table.DealerIndex = -1;
-            table.SmallBlindIndex = -1;
-            table.BigBlindIndex = -1;
+            // table.DealerIndex = -1;
+            // table.SmallBlindIndex = -1;
+            // table.BigBlindIndex = -1;
             table.Winners = new List<Player>(table.MaxPlayers);
 
             // Manage Sit&Go table state
@@ -369,9 +380,11 @@ namespace PokerHand.Server.Helpers
                 Thread.Sleep(1000);
 
             _logger.LogInformation("StartRound. Adding players to activePlayers");
+            _logger.LogInformation($"StartRound. table before adding: {JsonSerializer.Serialize(table)}");
             foreach (var player in table.Players.Where(p => p.StackMoney > 0))
                 table.ActivePlayers.Add(player);
 
+            _logger.LogInformation($"StartRound. table after adding: {JsonSerializer.Serialize(table)}");
             while (table.ActivePlayers.Any(p => p.IsReady != true))
                 Thread.Sleep(500);
             _logger.LogInformation("StartRound. Game starts");
@@ -380,75 +393,88 @@ namespace PokerHand.Server.Helpers
         private void SetDealerAndBlinds(Table table)
         {
             _logger.LogInformation("SetDealerAndBlinds. Start");
-            switch (table.ActivePlayers.Count)
-            {
-                case 2:
-                    if (table.DealerIndex < 0 && table.SmallBlindIndex < 0 && table.BigBlindIndex < 0 ||
-                        table.SmallBlindIndex == 1)
-                    {
-                        table.SmallBlindIndex = 0;
-                        table.ActivePlayers.First(player => player.IndexNumber == 0).Button =
-                            ButtonTypeNumber.SmallBlind;
-                        
-                        table.BigBlindIndex = 1;
-                        table.ActivePlayers.First(player => player.IndexNumber == 1).Button =
-                            ButtonTypeNumber.BigBlind;
-                    }
-                    else if (table.SmallBlindIndex == 0)
-                    {
-                        table.BigBlindIndex = 0;
-                        table.ActivePlayers.First(player => player.IndexNumber == 0).Button =
-                            ButtonTypeNumber.BigBlind;
-                        
-                        table.SmallBlindIndex = 1;
-                        table.ActivePlayers.First(player => player.IndexNumber == 1).Button =
-                            ButtonTypeNumber.SmallBlind;
-                    }
-
-                    table.DealerIndex = table.SmallBlindIndex;
-                    break;
-                
-                default:
-                    if (table.DealerIndex < 0 && table.SmallBlindIndex < 0 && table.BigBlindIndex < 0)
-                    {
-                        table.DealerIndex = 0;
-                        table.ActivePlayers[0].Button = ButtonTypeNumber.Dealer;
-                        
-                        table.SmallBlindIndex = 1;
-                        table.ActivePlayers[1].Button = ButtonTypeNumber.SmallBlind;
-                        
-                        table.BigBlindIndex = 2;
-                        table.ActivePlayers[2].Button = ButtonTypeNumber.BigBlind;
-                    }
-                    else
-                    {
-                       var dealer = table.ActivePlayers.First(player => player.Button == ButtonTypeNumber.Dealer);
-                       var nextDealer = dealer.IndexNumber == table.MaxPlayers - 1 ? 
-                                              table.ActivePlayers[0] :
-                                              table.ActivePlayers[table.ActivePlayers.IndexOf(dealer) + 1];
-                       
-                       var smallBlind = table.ActivePlayers.First(player => player.Button == ButtonTypeNumber.SmallBlind);
-                       var nextSmallBlind = smallBlind.IndexNumber == table.MaxPlayers ? 
-                                                  table.ActivePlayers[0] : 
-                                                  table.ActivePlayers[table.ActivePlayers.IndexOf(smallBlind) + 1];
-                       
-                       var bigBlind = table.ActivePlayers.First(player => player.Button == ButtonTypeNumber.BigBlind);
-                       var nextBigBlind = bigBlind.IndexNumber == table.MaxPlayers ? 
-                                                table.ActivePlayers[0] : 
-                                                table.ActivePlayers[table.ActivePlayers.IndexOf(bigBlind) + 1];
-                       
-                       nextDealer.Button = ButtonTypeNumber.Dealer;
-                       nextSmallBlind.Button = ButtonTypeNumber.SmallBlind;
-                       nextBigBlind.Button = ButtonTypeNumber.BigBlind;
-                       
-                       table.DealerIndex = nextDealer.IndexNumber;
-                       table.SmallBlindIndex = nextSmallBlind.IndexNumber;
-                       table.BigBlindIndex = nextBigBlind.IndexNumber;
-                    }
-
-                    break;
             
-            }
+            switch (table.ActivePlayers.Count)
+                {
+                    // If 2 players -> Dealer == SmallBlind
+                    case 2:
+                        if (table.DealerIndex < 0 && table.SmallBlindIndex < 0 && table.BigBlindIndex < 0)
+                        {
+                            table.SmallBlindIndex = table.ActivePlayers
+                                .First(p => p.StackMoney > 0).IndexNumber;
+                        
+                            table.BigBlindIndex = table.ActivePlayers
+                                .First(p => p.IndexNumber > table.SmallBlindIndex && p.StackMoney > 0).IndexNumber;
+                        }
+                        else
+                        {
+                            // Set SmallBlind
+                            var possibleSmallBlind = table.ActivePlayers
+                                .FirstOrDefault(p => p.IndexNumber > table.SmallBlindIndex && p.StackMoney > 0);
+
+                            if (possibleSmallBlind == null)
+                                table.SmallBlindIndex = table.ActivePlayers
+                                    .First(p => p.StackMoney > 0).IndexNumber;
+                            else
+                                table.SmallBlindIndex = possibleSmallBlind.IndexNumber;
+                        
+                            // Set BigBlind
+                            var possibleBigBlind = table.ActivePlayers
+                                .FirstOrDefault(p => p.IndexNumber > table.SmallBlindIndex && p.StackMoney > 0);
+
+                            if (possibleBigBlind == null)
+                                table.BigBlindIndex = table.ActivePlayers
+                                    .First(p => p.StackMoney > 0).IndexNumber;
+                            else
+                                table.BigBlindIndex = possibleBigBlind.IndexNumber;
+                        }
+                        
+                        table.DealerIndex = table.SmallBlindIndex;
+                        
+                        break;
+                    default:
+                        // Possible case for Sit and go
+                        if (table.DealerIndex < 0 && table.SmallBlindIndex < 0 && table.BigBlindIndex < 0)
+                        {
+                            table.DealerIndex = 0;
+                            table.SmallBlindIndex = 1;
+                            table.BigBlindIndex = 2;
+                        }
+                        else
+                        {
+                            // Set dealer
+                            var possibleDealer = table.ActivePlayers
+                                .FirstOrDefault(p => p.IndexNumber > table.DealerIndex && p.StackMoney > 0);
+
+                            if (possibleDealer == null)
+                                table.SmallBlindIndex = table.ActivePlayers
+                                    .First(p => p.StackMoney > 0).IndexNumber;
+                            else
+                                table.DealerIndex = possibleDealer.IndexNumber;
+                            
+                            // Set SmallBlind
+                            var possibleSmallBlind = table.ActivePlayers
+                                .FirstOrDefault(p => p.IndexNumber > table.DealerIndex && p.StackMoney > 0);
+
+                            if (possibleSmallBlind == null)
+                                table.SmallBlindIndex = table.ActivePlayers
+                                    .First(p => p.StackMoney > 0).IndexNumber;
+                            else
+                                table.SmallBlindIndex = possibleSmallBlind.IndexNumber;
+                            
+                            // Set BigBlind
+                            var possibleBigBlind = table.ActivePlayers
+                                .FirstOrDefault(p => p.IndexNumber > table.SmallBlindIndex && p.StackMoney > 0);
+
+                            if (possibleBigBlind == null)
+                                table.BigBlindIndex = table.ActivePlayers
+                                    .First(p => p.StackMoney > 0).IndexNumber;
+                            else
+                                table.BigBlindIndex = possibleBigBlind.IndexNumber;
+                        }
+                        break;
+                }
+            
             _logger.LogInformation("SetDealerAndBlinds. End");
         }
 
@@ -532,17 +558,21 @@ namespace PokerHand.Server.Helpers
                         table.ActivePlayers.Remove(player);
                     }
                     break;
+                // Check - If no one has yet opened the betting round (equivalent to betting zero)
                 case PlayerActionType.Check:
                     break;
+                // Bet - The opening bet of a betting round
                 case PlayerActionType.Bet:
                     player.StackMoney -= (int) player.CurrentAction.Amount;
                     player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount;
                     _logger.LogInformation("BET. End");
                     break;
+                // Call - To match a bet or raise
                 case PlayerActionType.Call:
                     player.StackMoney -= table.CurrentMaxBet - player.CurrentBet;
                     player.CurrentBet = table.CurrentMaxBet;
                     break;
+                // Raise - To increase the size of an existing bet in the same betting round
                 case PlayerActionType.Raise:
                     player.StackMoney -= (int) player.CurrentAction.Amount;
                     player.CurrentBet = table.CurrentMaxBet = (int) player.CurrentAction.Amount + player.CurrentBet;
@@ -579,6 +609,12 @@ namespace PokerHand.Server.Helpers
                 Amount = table.SmallBlind
             };
 
+            if (player.StackMoney < table.SmallBlind)
+            {
+                smallBlindAction.ActionType = PlayerActionType.AllIn;
+                smallBlindAction.Amount = player.StackMoney;
+            }  
+
             player.CurrentAction = smallBlindAction;
             
             await _hub.Clients.Group(table.Id.ToString())
@@ -597,6 +633,12 @@ namespace PokerHand.Server.Helpers
                 ActionType = PlayerActionType.Raise,
                 Amount = table.BigBlind
             };
+            
+            if (player.StackMoney < table.SmallBlind)
+            {
+                bigBlindAction.ActionType = PlayerActionType.AllIn;
+                bigBlindAction.Amount = player.StackMoney;
+            }  
 
             player.CurrentAction = bigBlindAction;
             
@@ -606,10 +648,6 @@ namespace PokerHand.Server.Helpers
             await ProcessPlayerAction(table, player);
         }
 
-        private static Player GetNextPlayer(Table table, int currentPlayerIndex) =>
-            table.ActivePlayers
-                .FirstOrDefault(p => p.IndexNumber > currentPlayerIndex) ?? table.ActivePlayers[0];
-        
         private async Task AutoTopStackMoney(Table table)
         {
             foreach (var player in table.Players)
@@ -628,23 +666,6 @@ namespace PokerHand.Server.Helpers
                 }
             }
         }
-        
-        private async Task RunNextStage(Table table)
-        {
-            switch (table.CurrentStage)
-            {
-                case RoundStageType.WageringPreFlopRound:
-                    await DealCommunityCards(table, 3);
-                    break;
-                case RoundStageType.WageringFourthRound:
-                    await Showdown(table);
-                    break;
-                default:
-                    await DealCommunityCards(table, 1);
-                    break;
-            }
-        }
-        
         #endregion
     }
 }

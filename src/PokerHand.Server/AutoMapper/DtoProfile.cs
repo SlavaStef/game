@@ -11,6 +11,7 @@ namespace PokerHand.Server.AutoMapper
             CreateMap<Player, PlayerDto>();
             CreateMap<Player, PlayerProfileDto>();
             CreateMap<Table, TableDto>();
+            CreateMap<SidePot, SidePotDto>();
         }
     }
 }

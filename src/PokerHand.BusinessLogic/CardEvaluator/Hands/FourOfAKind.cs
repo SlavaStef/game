@@ -23,7 +23,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                 CheckJokers(allCards);
 
             handType = HandType.None;
-            CardEvaluator.SortByRankAscending(allCards);
+            CardEvaluator.CardEvaluator.SortByRankAscending(allCards);
             
             foreach (var card in allCards)
             {

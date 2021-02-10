@@ -50,7 +50,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                         break;
                     }
                 }
-                CardEvaluator.SortByRankDescending(finalCardsList);
+                CardEvaluator.CardEvaluator.SortByRankDescending(finalCardsList);
             }
 
             var isTwoPairs = false;
@@ -76,7 +76,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
         
         private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
         {
-            CardEvaluator.SortByRankDescending(allCards);
+            CardEvaluator.CardEvaluator.SortByRankDescending(allCards);
             
             finalCardsList.Add(allCards[0]);
         }

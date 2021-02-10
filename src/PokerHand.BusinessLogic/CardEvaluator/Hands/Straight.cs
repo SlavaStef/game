@@ -17,7 +17,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             finalCardsList = new List<Card>(5);
             var allCards = tableCards.Concat(playerHand).ToList();
 
-            CardEvaluator.SortByRankAscending(allCards);
+            CardEvaluator.CardEvaluator.SortByRankAscending(allCards);
 
             if (isJokerGame)
                 allCards = CheckJokers(allCards);
@@ -29,7 +29,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             
             if (isStraight)
             {
-                CardEvaluator.SortByRankAscending(finalCardsList);
+                CardEvaluator.CardEvaluator.SortByRankAscending(finalCardsList);
                 value = GetScore(finalCardsList);
                 handType = HandType.Straight;
             }

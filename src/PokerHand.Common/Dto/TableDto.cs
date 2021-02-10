@@ -21,7 +21,7 @@ namespace PokerHand.Common.Dto
         public List<Card> CommunityCards { get; set; }
         public Player CurrentPlayer { get; set; }
         public int CurrentMaxBet { get; set; }
-        public int Pot { get; set; }
+        public Pot Pot { get; set; }
         public int DealerIndex { get; set; }
         public int SmallBlindIndex { get; set; }
         public int BigBlindIndex { get; set; }

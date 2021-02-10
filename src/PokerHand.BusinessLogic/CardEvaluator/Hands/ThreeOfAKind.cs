@@ -115,7 +115,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
         
         private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
         {
-            CardEvaluator.SortByRankDescending(allCards);
+            CardEvaluator.CardEvaluator.SortByRankDescending(allCards);
             
             for(var i = 0; i < 2; i++)
                 finalCardsList.Add(allCards[i]);

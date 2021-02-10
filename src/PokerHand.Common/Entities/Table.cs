@@ -25,7 +25,7 @@ namespace PokerHand.Common.Entities
             Deck = new Deck(Type);
             Players = new List<Player>(MaxPlayers);
             ActivePlayers = new List<Player>(MaxPlayers);
-            Pot = 0;
+            Pot = new Pot(this);
             CommunityCards = new List<Card>(5);
             Winners = new List<Player>(MaxPlayers);
             DealerIndex = -1;
@@ -54,7 +54,7 @@ namespace PokerHand.Common.Entities
         public bool IsEndDueToAllIn { get; set; }
         public Player CurrentPlayer { get; set; }
         public int CurrentMaxBet { get; set; }
-        public int Pot { get; set; }
+        public Pot Pot { get; set; } // Has to be initialized when ActivePlayers have been already set
         public int DealerIndex { get; set; }
         public int SmallBlindIndex { get; set; }
         public int BigBlindIndex { get; set; }

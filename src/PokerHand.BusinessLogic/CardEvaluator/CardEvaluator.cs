@@ -5,32 +5,34 @@ using PokerHand.BusinessLogic.HandEvaluator.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 
-namespace PokerHand.BusinessLogic.HandEvaluator
+namespace PokerHand.BusinessLogic.CardEvaluator
 {
     public static class CardEvaluator
     {
-        public static List<Player> DefineWinners(List<Card> communityCards, List<Player> players, bool isJokerGame)
+        public static List<Player> EvaluatePlayersHands(List<Card> communityCards, List<Player> players, bool isJokerGame)
         {
-            var currentMaxValue = 0;
+            //var currentMaxValue = 0;
             
             foreach (var player in players)
             {
-                Check(player.PocketCards, communityCards, isJokerGame, out int handValue, out HandType handType, out List<Card> resultCards);
+                var (handValue, handType, bestCombination) = FindCombination(player.PocketCards, communityCards, isJokerGame);
 
                 player.Hand = handType;
                 player.HandValue = handValue;
-                player.HandCombinationCards = resultCards;
+                player.HandCombinationCards = bestCombination;
 
-                if (player.HandValue > currentMaxValue)
-                    currentMaxValue = player.HandValue;
+                // if (player.HandValue > currentMaxValue)
+                //     currentMaxValue = player.HandValue;
             }
 
-            var winners = players.Where(p => p.HandValue == currentMaxValue).ToList();
+            // var winners = players.Where(p => p.HandValue == currentMaxValue).ToList();
+            //
+            // return winners;
 
-            return winners;
+            return players;
         }
         
-        private static bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int handValue, out HandType handType, out List<Card> resultCards)
+        private static (int handValue, HandType handType, List<Card> bestCombination) FindCombination(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
         {
             var listRules = new List<IRules>
             {
@@ -46,18 +48,17 @@ namespace PokerHand.BusinessLogic.HandEvaluator
                 new HighCard()
             };
             
-            handValue = 0;
-            handType = HandType.None;
-            resultCards = new List<Card>(7);
-            var result = false;
-
+            var handValue = 0;
+            var handType = HandType.None;
+            var bestCombination = new List<Card>(7);
+            
             foreach (var rule in listRules)
             {
-                result = rule.Check(playerHand, tableCards, isJokerGame, out handValue, out handType, out resultCards);
-                if (result) break;
+                if (rule.Check(playerHand, tableCards, isJokerGame, out handValue, out handType, out bestCombination)) 
+                    break;
             }
 
-            return result;
+            return (handValue, handType, bestCombination);
         }
         
         public static void SortByRankAscending(List<Card> cards)

@@ -153,13 +153,13 @@ namespace PokerHand.BusinessLogic.Services
             
             // Deal with player's state on table
             if (player.CurrentBet != 0)
-                table.Pot += player.CurrentBet;
+                table.Pot.TotalAmount += player.CurrentBet;
             
             if (player.StackMoney > 0) 
                 await _playerService.AddTotalMoney(playerId, player.StackMoney);
             
             if (table.ActivePlayers.Contains(player))
-                table.ActivePlayers.Remove(player);
+                table.ActivePlayers.Remove(player); 
             
             table.Players.Remove(player);
             

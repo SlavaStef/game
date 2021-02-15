@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using PokerHand.BusinessLogic.HandEvaluator.Hands;
 using PokerHand.BusinessLogic.HandEvaluator.Interfaces;
 using PokerHand.Common.Entities;

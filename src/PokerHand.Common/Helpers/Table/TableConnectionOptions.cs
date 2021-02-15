@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace PokerHand.Common.Helpers.Table
 {

@@ -1,18 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using PokerHand.BusinessLogic.HandEvaluator.Interfaces;
+using PokerHand.BusinessLogic.CardEvaluator.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
 
-namespace PokerHand.BusinessLogic.HandEvaluator.Hands
+namespace PokerHand.BusinessLogic.CardEvaluator.Hands
 {
     public class OnePair : IRules
     {
         private const int Rate = 5;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
+        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
         {
+            var result = new EvaluationResult();
+            
             var allCards = tableCards.Concat(playerHand).ToList();
             
             if (isJokerGame)
@@ -24,54 +26,43 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                 }
             }
 
-            finalCardsList = new List<Card>(5);
-            var isOnePair = false;
-            value = 0;
-            
-            // There may be only one pair
+            // There can be only one pair
             foreach (var card in allCards)
             {
-                if (allCards.Count(c => c.Rank == card.Rank) == 2)
+                if (allCards.Count(c => c.Rank == card.Rank) is 2)
                 {
-                    // Add the pair of cards from the list of all cards to the final list
-                    var cardsToAdd = allCards.Where(c => c.Rank == card.Rank).ToList();
+                    var cardsToAdd = allCards
+                        .Where(c => c.Rank == card.Rank)
+                        .ToList();
 
-                    foreach (var cardToAdd in cardsToAdd.Where(cardToAdd => cardToAdd.WasJoker))
-                        cardToAdd.Rank = CardRankType.Joker;
-                    
-                    finalCardsList.AddRange(cardsToAdd);
+                    if (isJokerGame)
+                    {
+                        foreach (var cardToAdd in cardsToAdd.Where(cardToAdd => cardToAdd.WasJoker))
+                            cardToAdd.Rank = CardRankType.Joker;
+                    }
 
-                    // Remove pair cards from the list of all cards
-                    
+                    result.EvaluatedHand.Cards = new List<Card>(5);
+                    result.EvaluatedHand.Cards.AddRange(cardsToAdd);
+
                     foreach (var c in cardsToAdd)
                         allCards.Remove(c);
 
-                    AddCardsSortedByValue(finalCardsList, allCards);
+                    AddSideCards(result.EvaluatedHand.Cards, allCards);
                     
-                    value += (int)card.Rank * 2;
-                    isOnePair = true;
+                    result.IsWinningHand = true;
+                    result.EvaluatedHand.Value = (int)card.Rank * 2 * Rate;
+                    result.EvaluatedHand.HandType = HandType.OnePair;
+                    
                     break;
                 }
             }
 
-            if (isOnePair)
-            {
-                value *= Rate;
-                handType = HandType.OnePair;
-            }
-            else
-            {
-                value = 0;
-                handType = HandType.None;
-                finalCardsList = null;
-            }
-
-            return isOnePair;
+            return result;
         }
 
-        private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
+        private void AddSideCards(List<Card> finalCardsList, List<Card> allCards)
         {
-            CardEvaluator.CardEvaluator.SortByRankDescending(allCards);
+            CardEvaluator.SortByRankDescending(allCards);
 
             for (var i = 0; i < 3; i++)
                 finalCardsList.Add(allCards[i]);
@@ -83,7 +74,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             
             foreach (var card in cards)
             {
-                if (maxValue < (int)card.Rank && card.Rank != CardRankType.Joker)
+                if (maxValue < (int)card.Rank && card.Rank is not CardRankType.Joker)
                 {
                     maxValue = (int)card.Rank;
                 }

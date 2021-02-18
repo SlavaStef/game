@@ -1,73 +1,62 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using PokerHand.BusinessLogic.HandEvaluator.Interfaces;
+using PokerHand.BusinessLogic.CardEvaluator.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
 
-namespace PokerHand.BusinessLogic.HandEvaluator.Hands
+namespace PokerHand.BusinessLogic.CardEvaluator.Hands
 {
     public class ThreeOfAKind : IRules
     {
         private const int Rate = 170;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
+        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
         {
+            var result = new EvaluationResult();
+            
             var allCards = tableCards.Concat(playerHand).ToList();
 
             if (isJokerGame) 
                 CheckJokers(allCards);
 
-            finalCardsList = new List<Card>(5);
-            value = 0;
-            var isThreeOfAKind = false;
-            
             foreach (var card in allCards)
             {
-                var possibleThreeOfAKind = allCards.Where(c => c.Rank == card.Rank).ToList();
-                if (possibleThreeOfAKind.Count == 3)
+                var possibleThreeOfAKind = allCards
+                    .Where(c => c.Rank == card.Rank)
+                    .ToList();
+                
+                if (possibleThreeOfAKind.Count is 3)
                 {
-                    isThreeOfAKind = true;
-                    value += (int)card.Rank * 3;
-                    
-                    finalCardsList = possibleThreeOfAKind.ToList();
+                    result.IsWinningHand = true;
+                    result.EvaluatedHand.HandType = HandType.ThreeOfAKind;
+                    result.EvaluatedHand.Value = (int) card.Rank * 3 * Rate;
+                    result.EvaluatedHand.Cards = possibleThreeOfAKind.ToList();
 
                     // Reset jokers
-                    foreach (var cardToAdd in possibleThreeOfAKind.Where(cardToAdd => cardToAdd.WasJoker))
+                    foreach (var cardToAdd in result.EvaluatedHand.Cards.Where(cardToAdd => cardToAdd.WasJoker))
                         cardToAdd.Rank = CardRankType.Joker;
                     
                     foreach (var cardToRemove in possibleThreeOfAKind) 
                         allCards.Remove(cardToRemove);
                     
+                    AddSideCards(result.EvaluatedHand.Cards, allCards);
+                    
                     break;
                 }
             }
 
-            if (isThreeOfAKind)
-            {
-                value *= Rate;
-                handType = HandType.ThreeOfAKind;
-                
-                AddCardsSortedByValue(finalCardsList, allCards);
-            }
-            else
-            {
-                value = 0;
-                handType = HandType.None;
-                finalCardsList = null;
-            }
-            
-            return isThreeOfAKind;
+            return result;
         }
-        
+
         private void CheckJokers(List<Card> cards)
         {
             // If there is 1 joker -> check if there is a pair
             // If there are 2 jokers -> find a card with the highest value
             
-            var numberOfJokers = cards.Count(c => c.Rank == CardRankType.Joker);
+            var numberOfJokers = cards.Count(c => c.Rank is CardRankType.Joker);
         
-            if (numberOfJokers == 1)
+            if (numberOfJokers is 1)
                 CheckWithOneJoker(cards);
             else
                 CheckWithTwoJokers(cards);
@@ -77,9 +66,9 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
         {
             foreach (var card in cards)
             {
-                if (cards.FindAll(c => c.Rank == card.Rank).Count == 2)
+                if (cards.FindAll(c => c.Rank == card.Rank).Count is 2)
                 {
-                    var joker = cards.First(c => c.Rank == CardRankType.Joker);
+                    var joker = cards.First(c => c.Rank is CardRankType.Joker);
                     
                     joker.Rank = card.Rank;
                     joker.WasJoker = true;
@@ -90,7 +79,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
         
         private void CheckWithTwoJokers(List<Card> cards)
         {
-            foreach (var card in cards.Where(c => c.Rank == CardRankType.Joker))
+            foreach (var card in cards.Where(c => c.Rank is CardRankType.Joker))
             {
                 card.Rank = (CardRankType)GetMaxValue(cards);
                 card.WasJoker = true;
@@ -105,7 +94,7 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             {
                 if (maxValue < (int)card.Rank)
                 {
-                    if (card.Rank != CardRankType.Joker)
+                    if (card.Rank is not CardRankType.Joker)
                         maxValue = (int)card.Rank;
                 }
             }
@@ -113,12 +102,12 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
             return maxValue;
         }
         
-        private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
+        private void AddSideCards(List<Card> finalCardsList, List<Card> allCards)
         {
-            CardEvaluator.CardEvaluator.SortByRankDescending(allCards);
+            CardEvaluator.SortByRankDescending(allCards);
             
-            for(var i = 0; i < 2; i++)
-                finalCardsList.Add(allCards[i]);
+            for (var index = 0; index < 2; index++)
+                finalCardsList.Add(allCards[index]);
         }
         
     }

@@ -1,20 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using PokerHand.BusinessLogic.HandEvaluator.Interfaces;
+using PokerHand.BusinessLogic.CardEvaluator.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
 
-namespace PokerHand.BusinessLogic.HandEvaluator.Hands
+namespace PokerHand.BusinessLogic.CardEvaluator.Hands
 {
     public class TwoPairs : IRules
     {
         private const int Rate = 17;
 
-        public bool Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame, out int value, out HandType handType, out List<Card> finalCardsList)
+        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
         {
+            var result = new EvaluationResult {EvaluatedHand = {Cards = new List<Card>(5)}};
+
             var allCards = tableCards.Concat(playerHand).ToList();
             
+            // Substitute Joker with a card of max value 
             if (isJokerGame)
             {
                 foreach (var card in allCards.Where(card => card.Rank == CardRankType.Joker))
@@ -23,60 +26,61 @@ namespace PokerHand.BusinessLogic.HandEvaluator.Hands
                     card.WasJoker = true;
                 }
             }
-
-            finalCardsList = new List<Card>(5);
-            value = 0;
-            var lastValue = -1;
+            
             var numberOfPairs = 0;
 
-            for (var i = 0; i < 2; i++)
+            for (var counter = 0; counter < 2; counter++)
             {
                 foreach (var card in allCards)
                 {
-                    if (allCards.Count(c => c.Rank == card.Rank) == 2)
+                    if (allCards.Count(c => c.Rank == card.Rank) is 2)
                     {
-                        value += (int)card.Rank * 2;
-                        lastValue = (int)card.Rank;
                         numberOfPairs++;
                         
-                        var cardsToAdd = allCards.Where(c => c.Rank == card.Rank).ToArray();
+                        result.EvaluatedHand.Value += (int)card.Rank * 2 * Rate;
                         
-                        foreach (var cardToAdd in cardsToAdd.Where(cardToAdd => cardToAdd.WasJoker))
-                            cardToAdd.Rank = CardRankType.Joker;
+                        var cardsToAdd = allCards
+                            .Where(c => c.Rank == card.Rank)
+                            .ToArray();
+
+                        if (isJokerGame)
+                        {
+                            foreach (var cardToAdd in cardsToAdd.Where(cardToAdd => cardToAdd.WasJoker))
+                                cardToAdd.Rank = CardRankType.Joker;
+                        }
                         
-                        finalCardsList.AddRange(cardsToAdd);
+                        result.EvaluatedHand.Cards.AddRange(cardsToAdd);
                         
                         allCards.RemoveAll(c => cardsToAdd.Contains(c));
                         break;
                     }
                 }
-                CardEvaluator.CardEvaluator.SortByRankDescending(finalCardsList);
+                
+                CardEvaluator.SortByRankDescending(result.EvaluatedHand.Cards);
+                
+                if (numberOfPairs is 0)
+                    break;
             }
 
-            var isTwoPairs = false;
-            
-            if (numberOfPairs == 2)
+            if (numberOfPairs is 2)
             {
-                isTwoPairs = true;
-                value *= Rate;
-                handType = HandType.TwoPairs;
-                
-                // Add the fifth card
-                AddCardsSortedByValue(finalCardsList, allCards);
+                result.IsWinningHand = true;
+                result.EvaluatedHand.HandType = HandType.TwoPairs;
+
+                AddSideCards(result.EvaluatedHand.Cards, allCards);
             }
             else
             {
-                value = 0;
-                handType = HandType.None;
-                finalCardsList = null;
+                result.EvaluatedHand.Value = 0;
+                result.EvaluatedHand.Cards = null;
             }
 
-            return isTwoPairs;
+            return result;
         }
         
-        private void AddCardsSortedByValue(List<Card> finalCardsList, List<Card> allCards)
+        private void AddSideCards(List<Card> finalCardsList, List<Card> allCards)
         {
-            CardEvaluator.CardEvaluator.SortByRankDescending(allCards);
+            CardEvaluator.SortByRankDescending(allCards);
             
             finalCardsList.Add(allCards[0]);
         }

@@ -62,7 +62,9 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
 
         private void AddSideCards(List<Card> finalCardsList, List<Card> allCards)
         {
-            CardEvaluator.SortByRankDescending(allCards);
+            allCards = allCards
+                .OrderByDescending(c => c.Rank)
+                .ToList();
 
             for (var i = 0; i < 3; i++)
                 finalCardsList.Add(allCards[i]);

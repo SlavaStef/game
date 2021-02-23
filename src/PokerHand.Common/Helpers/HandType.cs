@@ -12,6 +12,7 @@
         FullHouse = 7,
         FourOfAKind = 8,
         StraightFlush = 9,
-        RoyalFlush = 10
+        RoyalFlush = 10,
+        FiveOfAKind = 11
     }
 }

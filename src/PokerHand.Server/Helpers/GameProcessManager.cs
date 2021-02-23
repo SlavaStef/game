@@ -780,7 +780,6 @@ namespace PokerHand.Server.Helpers
                         WinningAmountPerPlayer = table.Pot.TotalAmount,
                         Winners = new List<Player>() {table.ActivePlayers.First()}
                     });
-
                     break;
                 default:
                     _logger.LogInformation("Showdown. Getting playersWithEvaluatedHands");

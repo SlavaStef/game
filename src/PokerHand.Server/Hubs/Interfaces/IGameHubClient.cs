@@ -18,7 +18,6 @@ namespace PokerHand.Server.Hubs.Interfaces
         // Methods, used in game process manager
         Task WaitForPlayers();
         Task SetDealerAndBlinds(string tableDto);
-        Task DealPocketCards(string playerDtoList);
         Task PrepareForGame(string tableDto);
         Task DealCommunityCards(string cardsList);
         Task ReceiveUpdatedPot(string newPotAmount);

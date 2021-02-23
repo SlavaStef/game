@@ -31,56 +31,6 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
             return result;
         }
 
-        private EvaluationResult CheckWithTwoJokers(List<Card> allCards)
-        {
-            var checkResultTwoJokers = new EvaluationResult();
-
-            // ThreeOfAKind + (Joker + Joker)
-            var (isThreeOfAKind, newCards, threeCard) = CheckForThreeOfAKind(allCards);
-
-            if (isThreeOfAKind is false)
-            {
-                // OnePair + (Joker + Joker + MaxCard)
-
-                var (isOnePair, newCardList, onePair) = CheckForOnePair(allCards);
-
-                if (isOnePair is false)
-                {
-                    checkResultTwoJokers.IsWinningHand = false;
-                    return checkResultTwoJokers;
-                }
-
-                var maxCardFromPair = newCardList
-                    .First(c => (int) c.Rank == newCardList.Where(card => card.Rank != CardRankType.Joker)
-                        .Select(card => (int) card.Rank).Max());
-
-                var jokersFromList = allCards.Where(c => c.Rank == CardRankType.Joker).ToList();
-
-                checkResultTwoJokers.IsWinningHand = true;
-                checkResultTwoJokers.EvaluatedHand.HandType = HandType.FullHouse;
-                checkResultTwoJokers.EvaluatedHand.Cards =
-                    onePair.Concat(jokersFromList).Concat(new List<Card>() {maxCardFromPair}).ToList();
-                checkResultTwoJokers.EvaluatedHand.Value =
-                    ((int) onePair[0].Rank * 2 + (int) maxCardFromPair.Rank * 3) * Rate;
-
-                return checkResultTwoJokers;
-            }
-
-            var maxCard = newCards
-                .First(c => (int) c.Rank == newCards.Where(card => card.Rank != CardRankType.Joker)
-                    .Select(card => (int) card.Rank).Max());
-
-            var jokers = newCards.Where(c => c.Rank == CardRankType.Joker).ToList();
-
-            checkResultTwoJokers.IsWinningHand = true;
-            checkResultTwoJokers.EvaluatedHand.HandType = HandType.FullHouse;
-            checkResultTwoJokers.EvaluatedHand.Cards = threeCard.Concat(jokers).ToList();
-            checkResultTwoJokers.EvaluatedHand.Value =
-                ((int) threeCard[0].Rank * 3 + (int) maxCard.Rank * 2) * Rate;
-
-            return checkResultTwoJokers;
-        }
-
         private EvaluationResult CheckWithZeroJokers(List<Card> allCards)
         {
             var checkResultZeroJokers = new EvaluationResult();
@@ -101,7 +51,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
 
             return checkResultZeroJokers;
         }
-
+        
         private EvaluationResult CheckWithOneJoker(List<Card> allCards)
         {
             var checkResultOneJoker = new EvaluationResult();
@@ -151,6 +101,56 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
                 ((int) threeCard[0].Rank * 3 + (int) maxCard.Rank * 2) * Rate;
 
             return checkResultOneJoker;
+        }
+        
+        private EvaluationResult CheckWithTwoJokers(List<Card> allCards)
+        {
+            var checkResultTwoJokers = new EvaluationResult();
+
+            // ThreeOfAKind + (Joker + Joker)
+            var (isThreeOfAKind, newCards, threeCard) = CheckForThreeOfAKind(allCards);
+
+            if (isThreeOfAKind is false)
+            {
+                // OnePair + (Joker + Joker + MaxCard)
+
+                var (isOnePair, newCardList, onePair) = CheckForOnePair(allCards);
+
+                if (isOnePair is false)
+                {
+                    checkResultTwoJokers.IsWinningHand = false;
+                    return checkResultTwoJokers;
+                }
+
+                var maxCardFromPair = newCardList
+                    .First(c => (int) c.Rank == newCardList.Where(card => card.Rank != CardRankType.Joker)
+                        .Select(card => (int) card.Rank).Max());
+
+                var jokersFromList = allCards.Where(c => c.Rank == CardRankType.Joker).ToList();
+
+                checkResultTwoJokers.IsWinningHand = true;
+                checkResultTwoJokers.EvaluatedHand.HandType = HandType.FullHouse;
+                checkResultTwoJokers.EvaluatedHand.Cards =
+                    onePair.Concat(jokersFromList).Concat(new List<Card>() {maxCardFromPair}).ToList();
+                checkResultTwoJokers.EvaluatedHand.Value =
+                    ((int) onePair[0].Rank * 2 + (int) maxCardFromPair.Rank * 3) * Rate;
+
+                return checkResultTwoJokers;
+            }
+
+            var maxCard = newCards
+                .First(c => (int) c.Rank == newCards.Where(card => card.Rank != CardRankType.Joker)
+                    .Select(card => (int) card.Rank).Max());
+
+            var jokers = newCards.Where(c => c.Rank == CardRankType.Joker).ToList();
+
+            checkResultTwoJokers.IsWinningHand = true;
+            checkResultTwoJokers.EvaluatedHand.HandType = HandType.FullHouse;
+            checkResultTwoJokers.EvaluatedHand.Cards = threeCard.Concat(jokers).ToList();
+            checkResultTwoJokers.EvaluatedHand.Value =
+                ((int) threeCard[0].Rank * 3 + (int) maxCard.Rank * 2) * Rate;
+
+            return checkResultTwoJokers;
         }
 
         private (bool, List<Card>, List<Card>) CheckForThreeAndPair(List<Card> cards)
@@ -273,320 +273,5 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
                 ? (true, allCards, twoPairs)
                 : (false, null, null);
         }
-
-        private void JokerCheck(bool isJokerGame, List<Card> cards)
-        {
-            if (!isJokerGame) return;
-
-            var numberOfJokers = cards.Where(card => card.Rank == CardRankType.Joker).Select(card => card).Count();
-
-            if (numberOfJokers == 1)
-                OneJokerCheck(cards);
-            else
-                TwoJokerCheck(cards);
-        }
-
-        private void OneJokerCheck(List<Card> cards)
-        {
-            for (var i = 0; i < cards.Count; i++)
-            {
-                if (cards.FindAll(c => c.Rank == cards[i].Rank).Count == 3) continue;
-                if (cards.FindAll(c => c.Rank == cards[i].Rank).Count == 2)
-                {
-                    foreach (var card in cards)
-                        if (card.Rank == CardRankType.Joker)
-                            card.Rank = cards[i].Rank;
-                    break;
-                }
-                
-                foreach (var card in cards)
-                    if (card.Rank == CardRankType.Joker)
-                        card.Rank = (CardRankType)GetMaxValue(cards);
-            }
-        }
-        
-        private void TwoJokerCheck(List<Card> cards)
-        {
-            for (var i = 0; i < cards.Count; i++)
-            {
-                if (cards.FindAll(c => c.Rank == cards[i].Rank).Count == 3) continue;
-                if (cards.FindAll(c => c.Rank == cards[i].Rank).Count == 2)
-                {
-                    foreach (var card in cards)
-                        if (card.Rank == CardRankType.Joker)
-                            card.Rank = cards[i].Rank;
-                    break;
-                }
-                foreach (var card in cards)
-                    if (card.Rank == CardRankType.Joker)
-                        card.Rank = (CardRankType)GetMaxValue(cards);
-            }
-        }
-        
-        private int GetMaxValue(List<Card> cards)
-        {
-            var maxValue = 0;
-            
-            for (var i = 1; i < cards.Count; i++)
-            {
-                if (maxValue < (int)cards[i].Rank)
-                {
-                    if (cards[i].Rank != CardRankType.Joker)
-                        maxValue = (int)cards[i].Rank;
-                }
-            }
-            
-            return maxValue;
-        }
-        
-        private void CheckOnTwoCards(ref int value, List<Card> allCards, ref int counter, ref List<Card> winnerCards)
-        {
-            var index = 0;
-            for (var i = 0; i < allCards.Count; i++)
-            {
-                if (allCards.FindAll(c => c.Rank == allCards[i].Rank).Count >= 2)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            for (var i = 0; i < allCards.Count; i++)
-            {
-                if (allCards.FindAll(c => c.Rank == allCards[i].Rank).Count >= 2)
-                {
-                    if (allCards[i].Rank >= allCards[index].Rank)
-                        index = i;
-                }
-            }
-
-            if (index == 0) return;
-
-            value += (int)allCards[index].Rank * 2;
-            counter++;
-            winnerCards.AddRange(allCards.Where(c => c.Rank == allCards[index].Rank).Select(item => item));
-
-            //Старая рабочая версия
-            //foreach (Card currentCard in temp)
-            //{
-            //    if (temp.FindAll(Card => Card.value == currentCard.value).Count >= 2)
-            //    {
-            //        Value += (int)currentCard.value * 2;
-            //        counter++;
-            //        newTemp.AddRange(temp.Where(g => g.value == currentCard.value).Select(item => item));
-            //        break;
-            //    }
-            //}
-        }
-
-        private void CheckOnThreeCard(ref int value, List<Card> allCards, ref int lastValue, ref int counter, ref List<Card> winnerCards)
-        {
-            var index = 0;
-            for (var i = 0; i < allCards.Count; i++)
-            {
-                if (allCards.FindAll(c => c.Rank == allCards[i].Rank).Count >= 3)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            for (int i = 0; i < allCards.Count; i++)
-            {
-                if (allCards.FindAll(c => c.Rank == allCards[i].Rank).Count == 3)
-                {
-                    if (allCards[i].Rank >= allCards[index].Rank)
-                        index = i;                
-                }
-            }
-
-            if (index == 0) return;
-
-            value += (int)allCards[index].Rank * 3;
-            lastValue = (int)allCards[index].Rank;
-            counter++;
-            winnerCards.AddRange(allCards.Where(c => c.Rank == allCards[index].Rank).Select(card => card));
-        }
     }
 }
-
-// using System.Collections.Generic;
-// using System.Linq;
-// using PokerHand.BusinessLogic.CardEvaluator.Interfaces;
-// using PokerHand.Common.Entities;
-// using PokerHand.Common.Helpers;
-// using PokerHand.Common.Helpers.Card;
-//
-// namespace PokerHand.BusinessLogic.CardEvaluator.Hands
-// {
-//     public class FullHouse : IRules
-//     {
-//         private const int Rate = 6700;
-//
-//         public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
-//         {
-//             var result = new EvaluationResult();
-//             
-//             var allCards = tableCards.Concat(playerHand).ToList();
-//            
-//             JokerCheck(isJokerGame, allCards);
-//
-//             var lastValue = -1;
-//             var counter = 0;
-//
-//             CheckOnThreeCard(ref value, allCards, ref lastValue, ref counter, ref finalCardsList);
-//             
-//             if (lastValue != -1) 
-//                 allCards.RemoveAll(c => (int)c.Rank == lastValue);
-//             
-//             CheckOnTwoCards(ref value, allCards, ref counter, ref finalCardsList);
-//
-//             var isFullHouse = false;
-//             handType = HandType.None;
-//             if (counter == 2)
-//             {
-//                 isFullHouse = true;
-//                 value *= Rate;
-//                 handType = HandType.FullHouse;
-//             }
-//             else
-//             {
-//                 value = 0;
-//                 finalCardsList = null;
-//             }
-//                 
-//
-//             return isFullHouse;
-//         }
-//
-//         private void JokerCheck(bool isJokerGame, List<Card> cards)
-//         {
-//             if (!isJokerGame) return;
-//
-//             var numberOfJokers = cards.Where(card => card.Rank == CardRankType.Joker).Select(card => card).Count();
-//
-//             if (numberOfJokers == 1)
-//                 OneJokerCheck(cards);
-//             else
-//                 TwoJokerCheck(cards);
-//         }
-//
-//         private void OneJokerCheck(List<Card> cards)
-//         {
-//             for (var i = 0; i < cards.Count; i++)
-//             {
-//                 if (cards.FindAll(c => c.Rank == cards[i].Rank).Count == 3) continue;
-//                 if (cards.FindAll(c => c.Rank == cards[i].Rank).Count == 2)
-//                 {
-//                     foreach (var card in cards)
-//                         if (card.Rank == CardRankType.Joker)
-//                             card.Rank = cards[i].Rank;
-//                     break;
-//                 }
-//                 
-//                 foreach (var card in cards)
-//                     if (card.Rank == CardRankType.Joker)
-//                         card.Rank = (CardRankType)GetMaxValue(cards);
-//             }
-//         }
-//         
-//         private void TwoJokerCheck(List<Card> cards)
-//         {
-//             for (var i = 0; i < cards.Count; i++)
-//             {
-//                 if (cards.FindAll(c => c.Rank == cards[i].Rank).Count == 3) continue;
-//                 if (cards.FindAll(c => c.Rank == cards[i].Rank).Count == 2)
-//                 {
-//                     foreach (var card in cards)
-//                         if (card.Rank == CardRankType.Joker)
-//                             card.Rank = cards[i].Rank;
-//                     break;
-//                 }
-//                 foreach (var card in cards)
-//                     if (card.Rank == CardRankType.Joker)
-//                         card.Rank = (CardRankType)GetMaxValue(cards);
-//             }
-//         }
-//         
-//         private int GetMaxValue(List<Card> cards)
-//         {
-//             var maxValue = 0;
-//             
-//             for (var i = 1; i < cards.Count; i++)
-//             {
-//                 if (maxValue < (int)cards[i].Rank)
-//                 {
-//                     if (cards[i].Rank != CardRankType.Joker)
-//                         maxValue = (int)cards[i].Rank;
-//                 }
-//             }
-//             
-//             return maxValue;
-//         }
-//         
-//         private void CheckOnTwoCards(ref int value, List<Card> allCards, ref int counter, ref List<Card> winnerCards)
-//         {
-//             var index = 0;
-//             for (var i = 0; i < allCards.Count; i++)
-//             {
-//                 if (allCards.FindAll(c => c.Rank == allCards[i].Rank).Count >= 2)
-//                 {
-//                     index = i;
-//                     break;
-//                 }
-//             }
-//             for (var i = 0; i < allCards.Count; i++)
-//             {
-//                 if (allCards.FindAll(c => c.Rank == allCards[i].Rank).Count >= 2)
-//                 {
-//                     if (allCards[i].Rank >= allCards[index].Rank)
-//                         index = i;
-//                 }
-//             }
-//
-//             if (index == 0) return;
-//
-//             value += (int)allCards[index].Rank * 2;
-//             counter++;
-//             winnerCards.AddRange(allCards.Where(c => c.Rank == allCards[index].Rank).Select(item => item));
-//
-//             //Старая рабочая версия
-//             //foreach (Card currentCard in temp)
-//             //{
-//             //    if (temp.FindAll(Card => Card.value == currentCard.value).Count >= 2)
-//             //    {
-//             //        Value += (int)currentCard.value * 2;
-//             //        counter++;
-//             //        newTemp.AddRange(temp.Where(g => g.value == currentCard.value).Select(item => item));
-//             //        break;
-//             //    }
-//             //}
-//         }
-//
-//         private void CheckOnThreeCard(ref int value, List<Card> allCards, ref int lastValue, ref int counter, ref List<Card> winnerCards)
-//         {
-//             var index = 0;
-//             for (var i = 0; i < allCards.Count; i++)
-//             {
-//                 if (allCards.FindAll(c => c.Rank == allCards[i].Rank).Count >= 3)
-//                 {
-//                     index = i;
-//                     break;
-//                 }
-//             }
-//             for (int i = 0; i < allCards.Count; i++)
-//             {
-//                 if (allCards.FindAll(c => c.Rank == allCards[i].Rank).Count == 3)
-//                 {
-//                     if (allCards[i].Rank >= allCards[index].Rank)
-//                         index = i;                
-//                 }
-//             }
-//
-//             if (index == 0) return;
-//
-//             value += (int)allCards[index].Rank * 3;
-//             lastValue = (int)allCards[index].Rank;
-//             counter++;
-//             winnerCards.AddRange(allCards.Where(c => c.Rank == allCards[index].Rank).Select(card => card));
-//         }
-//     }
-// }

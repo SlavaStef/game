@@ -56,7 +56,9 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
                     }
                 }
                 
-                CardEvaluator.SortByRankDescending(result.EvaluatedHand.Cards);
+                result.EvaluatedHand.Cards = result.EvaluatedHand.Cards
+                    .OrderByDescending(c => c.Rank)
+                    .ToList();
                 
                 if (numberOfPairs is 0)
                     break;
@@ -80,7 +82,9 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
         
         private void AddSideCards(List<Card> finalCardsList, List<Card> allCards)
         {
-            CardEvaluator.SortByRankDescending(allCards);
+            allCards = allCards
+                .OrderByDescending(c => c.Rank)
+                .ToList();
             
             finalCardsList.Add(allCards[0]);
         }

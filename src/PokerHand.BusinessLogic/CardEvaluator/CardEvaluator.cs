@@ -10,8 +10,6 @@ namespace PokerHand.BusinessLogic.CardEvaluator
     {
         public static List<Player> EvaluatePlayersHands(List<Card> communityCards, List<Player> players, bool isJokerGame)
         {
-            //var currentMaxValue = 0;
-            
             foreach (var player in players)
             {
                 var result = FindCombination(player.PocketCards, communityCards, isJokerGame);
@@ -19,14 +17,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator
                 player.Hand = result.HandType;
                 player.HandValue = result.Value;
                 player.HandCombinationCards = result.Cards;
-
-                // if (player.HandValue > currentMaxValue)
-                //     currentMaxValue = player.HandValue;
             }
-
-            // var winners = players.Where(p => p.HandValue == currentMaxValue).ToList();
-            //
-            // return winners;
 
             return players;
         }
@@ -35,12 +26,13 @@ namespace PokerHand.BusinessLogic.CardEvaluator
         {
             var listRules = new List<IRules>
             {
+                new FiveOfAKind(),
                 // new RoyalFlush(),
-                // new StraightFlush(),
-                // new FourOfAKind(),
+                new StraightFlush(), // TODO: finalize it
+                new FourOfAKind(),
                 new FullHouse(),
-                // new Flush(),
-                // new Straight(),
+                new Flush(),
+                new Straight(),
                 new ThreeOfAKind(),
                 new TwoPairs(),
                 new OnePair(),
@@ -51,6 +43,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator
             
             foreach (var rule in listRules)
             {
+                //TODO: remove isJokerGame
                 var evaluationResult = rule.Check(playerHand, tableCards, isJokerGame);
                 
                 if (evaluationResult.IsWinningHand)
@@ -65,38 +58,6 @@ namespace PokerHand.BusinessLogic.CardEvaluator
             }
 
             return result;
-        }
-        
-        public static void SortByRankAscending(List<Card> cards)
-        {
-            for (var i = 0; i < cards.Count - 1; i++)
-            {
-                for (var j = i + 1; j < cards.Count; j++)
-                {
-                    if (cards[i].Rank > cards[j].Rank)
-                    {
-                        var tempCard = cards[i];
-                        cards[i] = cards[j];
-                        cards[j] = tempCard;
-                    }
-                }
-            }
-        }
-        
-        public static void SortByRankDescending(List<Card> cards)
-        {
-            for (var i = 0; i < cards.Count - 1; i++)
-            {
-                for (var j = i + 1; j < cards.Count; j++)
-                {
-                    if (cards[i].Rank < cards[j].Rank)
-                    {
-                        var tempCard = cards[i];
-                        cards[i] = cards[j];
-                        cards[j] = tempCard;
-                    }
-                }
-            }
         }
     }
 }

@@ -289,24 +289,30 @@ namespace PokerHand.Server.Helpers
                 _logger.LogInformation("RefreshTable. Managing Sit&Go");
                 table.SmallBlind *= 2;
                 table.BigBlind *= 2;
-                
+                _logger.LogInformation("RefreshTable. 1");
                 await RemovePlayersWithEmptyStackMoney(table);
-
+                _logger.LogInformation("RefreshTable. 2");
+                
                 // Handle winner
                 if (table.ActivePlayers.Count is 1)
                 {
+                    _logger.LogInformation("RefreshTable. 3");
                     var firstPlacePrize = TableOptions.Tables[table.Title.ToString()]["FirstPlacePrize"];
                     _logger.LogInformation(
                         $"RemovePlayersWithEmptyStackMoney: firstPlacePrize: {firstPlacePrize}");
                     await _playerService.AddTotalMoney(table.ActivePlayers[0].Id, firstPlacePrize);
-                    
+                    _logger.LogInformation("RefreshTable. 4");
                     await _hub.Clients.Client(table.ActivePlayers[0].ConnectionId)
                         .EndSitAndGoGame("1");
+                    _logger.LogInformation("RefreshTable. 5");
+                    
                 }
+                _logger.LogInformation("RefreshTable. 6");
                 
                 await _hub.Clients.Group(table.Id.ToString())
                         .ReceiveTableState(JsonSerializer.Serialize(table));
-
+                _logger.LogInformation("RefreshTable. 7");
+                
                 table.MinPlayersToStart = table.Players.Count;
                 _logger.LogInformation("RefreshTable. End managing Sit&Go");
             }
@@ -784,8 +790,19 @@ namespace PokerHand.Server.Helpers
                 default:
                     _logger.LogInformation("Showdown. Getting playersWithEvaluatedHands");
                     // 1. Evaluate players' cards => get a list of players with HandValue
-                    var playersWithEvaluatedHands =
-                        CardEvaluator.EvaluatePlayersHands(table.CommunityCards, table.ActivePlayers, isJokerGame);
+                    var playersWithEvaluatedHands = new List<Player>();
+                    try
+                    {
+                        playersWithEvaluatedHands =
+                            CardEvaluator.EvaluatePlayersHands(table.CommunityCards, table.ActivePlayers, isJokerGame , _logger);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError($"{e.Message}");
+                        _logger.LogError($"{e.StackTrace}");
+                        throw;
+                    }
+                    
                     _logger.LogInformation($"Showdown. Players: {JsonSerializer.Serialize(playersWithEvaluatedHands)}");
 
                     _logger.LogInformation("Showdown. Getting sidePots");
@@ -818,35 +835,68 @@ namespace PokerHand.Server.Helpers
         // CleanUp helpers
         private async Task RemovePlayersWithEmptyStackMoney(Table table)
         {
-            for (var index = table.ActivePlayers.Count; index < 0; index--)
+            _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
+
+            while (table.ActivePlayers.Any(p => p.StackMoney is 0))
             {
-                if (table.ActivePlayers[index].StackMoney is not 0)
-                    continue;
+                var playerToRemove = table
+                    .ActivePlayers
+                    .First(p => p.StackMoney is 0);
                 
-                var playerPlace = table.ActivePlayers.Count;
+                var playersPlace = table.ActivePlayers.Count;
 
                 _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
                 _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: active players: {table.ActivePlayers.Count} : {JsonSerializer.Serialize(table.ActivePlayers)}");
                 
-                await _tableService.RemovePlayerFromTable(table.Id, table.ActivePlayers[index].Id);
+                await _tableService.RemovePlayerFromTable(table.Id, playerToRemove.Id);
                
                 _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
                 _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: active players: {table.ActivePlayers.Count} : {JsonSerializer.Serialize(table.ActivePlayers)}");
 
-                if (playerPlace is 2)
+                if (playersPlace is 2)
                 {
                     var secondPlacePrize = TableOptions.Tables[table.Title.ToString()]["SecondPlacePrize"];
                     _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: secondPlacePrize: {secondPlacePrize}");
-                    await _playerService.AddTotalMoney(table.ActivePlayers[index].Id, secondPlacePrize);
+                    await _playerService.AddTotalMoney(playerToRemove.Id, secondPlacePrize);
                 }
                 
                 await _hub.Groups
-                    .RemoveFromGroupAsync(table.ActivePlayers[index].ConnectionId, table.Id.ToString());
+                    .RemoveFromGroupAsync(playerToRemove.ConnectionId, table.Id.ToString());
                 
-                _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: Place: {playerPlace}");
-                await _hub.Clients.Client(table.ActivePlayers[index].ConnectionId)
-                    .EndSitAndGoGame(playerPlace.ToString());
+                _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: Place: {playersPlace}");
+                await _hub.Clients.Client(playerToRemove.ConnectionId)
+                    .EndSitAndGoGame(playersPlace.ToString());
             }
+            
+            // for (var index = 0; index < table.MaxPlayers; index--)
+            // {
+            //     if (table.ActivePlayers[index].StackMoney is not 0)
+            //         continue;
+            //     
+            //     var playerPlace = table.ActivePlayers.Count;
+            //
+            //     _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
+            //     _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: active players: {table.ActivePlayers.Count} : {JsonSerializer.Serialize(table.ActivePlayers)}");
+            //     
+            //     await _tableService.RemovePlayerFromTable(table.Id, table.ActivePlayers[index].Id);
+            //    
+            //     _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
+            //     _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: active players: {table.ActivePlayers.Count} : {JsonSerializer.Serialize(table.ActivePlayers)}");
+            //
+            //     if (playerPlace is 2)
+            //     {
+            //         var secondPlacePrize = TableOptions.Tables[table.Title.ToString()]["SecondPlacePrize"];
+            //         _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: secondPlacePrize: {secondPlacePrize}");
+            //         await _playerService.AddTotalMoney(table.ActivePlayers[index].Id, secondPlacePrize);
+            //     }
+            //     
+            //     await _hub.Groups
+            //         .RemoveFromGroupAsync(table.ActivePlayers[index].ConnectionId, table.Id.ToString());
+            //     
+            //     _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: Place: {playerPlace}");
+            //     await _hub.Clients.Client(table.ActivePlayers[index].ConnectionId)
+            //         .EndSitAndGoGame(playerPlace.ToString());
+            // }
         }
 
         #endregion

@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.CardEvaluator.Hands;
 using PokerHand.BusinessLogic.CardEvaluator.Interfaces;
 using PokerHand.Common.Entities;
@@ -8,17 +11,24 @@ namespace PokerHand.BusinessLogic.CardEvaluator
 {
     public static class CardEvaluator
     {
-        public static List<Player> EvaluatePlayersHands(List<Card> communityCards, List<Player> players, bool isJokerGame)
+        public static List<Player> EvaluatePlayersHands(List<Card> communityCards, List<Player> players, bool isJokerGame, ILogger logger)
         {
+            logger.LogInformation("EvaluatePlayersHands. Start");
             foreach (var player in players)
             {
+                logger.LogInformation($"EvaluatePlayersHands. player: {JsonSerializer.Serialize(player.UserName)}");
                 var result = FindCombination(player.PocketCards, communityCards, isJokerGame);
 
+                logger.LogInformation("EvaluatePlayersHands. 2");
                 player.Hand = result.HandType;
+                logger.LogInformation($"EvaluatePlayersHands. player.Hand: {JsonSerializer.Serialize(player.Hand)}");
                 player.HandValue = result.Value;
+                logger.LogInformation($"EvaluatePlayersHands. player.HandValue: {JsonSerializer.Serialize(player.HandValue)}");
                 player.HandCombinationCards = result.Cards;
+                logger.LogInformation($"EvaluatePlayersHands. player.HandCombinationCards: {JsonSerializer.Serialize(player.HandValue)}");
             }
 
+            logger.LogInformation("EvaluatePlayersHands. End");
             return players;
         }
         

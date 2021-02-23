@@ -33,10 +33,10 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
             switch (numberOfJokers)
             {
                 case 0:
-                    for (var index = 0; index < 3; index++)
+                    for (var index = 0; index < allCards.Count - 4; index++)
                     {
 
-                        var isStraight = (int) allCards[index].Rank == (int) allCards[index + 1].Rank + 1
+                        var isStraight =    (int) allCards[index].Rank == (int) allCards[index + 1].Rank + 1
                                          && (int) allCards[index].Rank == (int) allCards[index + 2].Rank + 2
                                          && (int) allCards[index].Rank == (int) allCards[index + 3].Rank + 3
                                          && (int) allCards[index].Rank == (int) allCards[index + 4].Rank + 4;

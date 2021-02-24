@@ -18,7 +18,7 @@ namespace PokerHand.Server.Hubs
     public class GameHub : Hub<IGameHubClient>, IGameHub
     {
         private readonly List<Table> _allTables;
-        private readonly Dictionary<Guid, string> _allPlayers;
+        private readonly IPlayersOnline _allPlayers;
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
         private readonly IGameProcessManager _gameProcessManager;
@@ -26,18 +26,18 @@ namespace PokerHand.Server.Hubs
 
         public GameHub(
             TablesCollection tablesCollection,
-            PlayersOnline allPlayers,
             ITableService tableService,
             IPlayerService playerService,
             IGameProcessManager gameProcessManager,
-            ILogger<GameHub> logger)
+            ILogger<GameHub> logger, 
+            IPlayersOnline allPlayers)
         {
             _allTables = tablesCollection.Tables;
-            _allPlayers = allPlayers.Players;
             _tableService = tableService;
             _playerService = playerService;
             _gameProcessManager = gameProcessManager;
             _logger = logger;
+            _allPlayers = allPlayers;
         }
 
         public override async Task OnConnectedAsync()
@@ -75,10 +75,7 @@ namespace PokerHand.Server.Hubs
             await Clients.Caller
                 .ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
 
-            if (_allPlayers.ContainsKey(playerIdGuid))
-                _allPlayers[playerIdGuid] = Context.ConnectionId;
-            else
-                _allPlayers.Add(playerIdGuid, Context.ConnectionId);
+            _allPlayers.AddOrUpdate(playerIdGuid, Context.ConnectionId);
             
             _logger.LogInformation($"Player {playerProfileDto.UserName} is authenticated");
         }
@@ -144,7 +141,7 @@ namespace PokerHand.Server.Hubs
         {
             var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
 
-            _allPlayers.TryGetValue(playerIdGuid, out var connectionId);
+            var connectionId = _allPlayers.GetValueByKey(playerIdGuid);
 
             if (connectionId != Context.ConnectionId)
                 return;
@@ -190,7 +187,7 @@ namespace PokerHand.Server.Hubs
             _logger.LogInformation($"GameHub.OnDisconnectedAsync. Start from player {Context.ConnectionId}");
             WriteAllPlayersList();
             
-            var playerId = _allPlayers.First(p => p.Value == Context.ConnectionId).Key;
+            var playerId = _allPlayers.GetKeyByValue(Context.ConnectionId);
             var table = _allTables
                 .FirstOrDefault(t => t.Players.FirstOrDefault(p => p.Id == playerId) != null);
             
@@ -213,7 +210,7 @@ namespace PokerHand.Server.Hubs
         }
 
         private void WriteAllPlayersList() =>
-            _logger.LogInformation($"AllPlayers: {JsonSerializer.Serialize(_allPlayers)}");
+            _logger.LogInformation($"AllPlayers: {JsonSerializer.Serialize(_allPlayers.GetAll())}");
 
     }
 }

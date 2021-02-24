@@ -17,7 +17,7 @@ namespace PokerHand.Server.Hubs
 {
     public class GameHub : Hub<IGameHubClient>, IGameHub
     {
-        private readonly List<Table> _allTables;
+        private readonly ITablesOnline _allTables;
         private readonly IPlayersOnline _allPlayers;
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
@@ -25,19 +25,19 @@ namespace PokerHand.Server.Hubs
         private readonly ILogger<GameHub> _logger;
 
         public GameHub(
-            TablesCollection tablesCollection,
             ITableService tableService,
             IPlayerService playerService,
             IGameProcessManager gameProcessManager,
             ILogger<GameHub> logger, 
-            IPlayersOnline allPlayers)
+            IPlayersOnline allPlayers, 
+            ITablesOnline allTables)
         {
-            _allTables = tablesCollection.Tables;
             _tableService = tableService;
             _playerService = playerService;
             _gameProcessManager = gameProcessManager;
             _logger = logger;
             _allPlayers = allPlayers;
+            _allTables = allTables;
         }
 
         public override async Task OnConnectedAsync()
@@ -128,7 +128,7 @@ namespace PokerHand.Server.Hubs
             var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
 
-            var table = _allTables.First(t => t.Id == tableId);
+            var table = _allTables.GetById(tableId);
             
             table.ActivePlayers
                 .First(p => p.IndexNumber == action?.PlayerIndexNumber)
@@ -188,9 +188,8 @@ namespace PokerHand.Server.Hubs
             WriteAllPlayersList();
             
             var playerId = _allPlayers.GetKeyByValue(Context.ConnectionId);
-            var table = _allTables
-                .FirstOrDefault(t => t.Players.FirstOrDefault(p => p.Id == playerId) != null);
-            
+            var table = _allTables.GetByPlayerId(playerId);
+
             if (table != null)
             {
                 if (table.Players.Count == 1)

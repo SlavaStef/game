@@ -27,7 +27,7 @@ namespace PokerHand.Server.Helpers
     
     public class GameProcessManager : IGameProcessManager
     {
-        private readonly List<Table> _allTables;
+        private readonly ITablesOnline _allTables;
         private readonly IHubContext<GameHub, IGameHubClient> _hub;
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
@@ -35,25 +35,25 @@ namespace PokerHand.Server.Helpers
         private readonly ILogger<GameHub> _logger;
 
         public GameProcessManager(
-            TablesCollection tablesCollection,
             IHubContext<GameHub, IGameHubClient> hubContext,
             IMapper mapper,
             ILogger<GameHub> logger, 
             ITableService tableService, 
-            IPlayerService playerService)
+            IPlayerService playerService,
+            ITablesOnline allTables)
         {
-            _allTables = tablesCollection.Tables;
             _hub = hubContext;
             _mapper = mapper;
             _logger = logger;
             _tableService = tableService;
             _playerService = playerService;
+            _allTables = allTables;
         }
         
         public async Task StartRound(Guid tableId)
         {
             _logger.LogInformation("StartRound. Start");
-            var table = _allTables.First(t => t.Id == tableId);
+            var table = _allTables.GetById(tableId);
             table.CurrentStage = RoundStageType.NotStarted;
 
             _logger.LogInformation($"Start round. Before autotop");

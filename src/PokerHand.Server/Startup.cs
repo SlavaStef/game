@@ -60,7 +60,7 @@ namespace PokerHand.Server
             
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             
-            services.AddSingleton<TablesCollection>();
+            services.AddSingleton<ITablesOnline, TablesOnline>();
             services.AddSingleton<IPlayersOnline, PlayersOnline>();
             
             services.AddAutoMapper(typeof(Startup));

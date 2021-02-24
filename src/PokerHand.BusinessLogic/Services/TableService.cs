@@ -18,24 +18,24 @@ namespace PokerHand.BusinessLogic.Services
 {
     public class TableService : ITableService
     {
-        private readonly List<Table> _allTables;
+        private readonly ITablesOnline _allTables;
         private readonly UserManager<Player> _userManager;
         private readonly IPlayerService _playerService;
         private readonly ILogger<TableService> _logger;
         private readonly IMapper _mapper;
 
         public TableService(
-            TablesCollection tablesCollection,
             UserManager<Player> userManager,
             ILogger<TableService> logger, 
             IMapper mapper, 
-            IPlayerService playerService)
+            IPlayerService playerService, 
+            ITablesOnline allTables)
         {
-            _allTables = tablesCollection.Tables;
             _userManager = userManager;
             _logger = logger;
             _mapper = mapper;
             _playerService = playerService;
+            _allTables = allTables;
         }
 
         public TableInfoDto GetTableInfo(string tableName)
@@ -148,7 +148,7 @@ namespace PokerHand.BusinessLogic.Services
 
         public async Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId)
         {
-            var table = _allTables.First(t => t.Id == tableId);
+            var table = _allTables.GetById(tableId);
             var player = table.Players.First(p => p.Id == playerId);
             
             // Deal with player's state on table
@@ -178,7 +178,7 @@ namespace PokerHand.BusinessLogic.Services
 
             if (table.Players.Count == 0)
             {
-                _allTables.Remove(table);
+                _allTables.Remove(table.Id);
                 table.Dispose();
                 _logger.LogInformation("Table was removed from all tables list");
                 return null;
@@ -187,13 +187,8 @@ namespace PokerHand.BusinessLogic.Services
             return _mapper.Map<TableDto>(table);
         }
         
-        public void RemoveTableById(Guid tableId)
-        {
-            var tableToRemove = _allTables.FirstOrDefault(t => t.Id == tableId);
-
-            if (tableToRemove != null)
-                _allTables.Remove(tableToRemove);
-        }
+        public void RemoveTableById(Guid tableId) => 
+            _allTables.Remove(tableId);
 
         #region privateHelpers
 
@@ -204,13 +199,13 @@ namespace PokerHand.BusinessLogic.Services
                 tableTitle == TableTitle.CityDreamsResort ||
                 tableTitle == TableTitle.HeritageBank)
             {
-                return _allTables?
-                    .Where(t => t.Title == tableTitle)
-                    .FirstOrDefault(t => t.CurrentStage == RoundStageType.NotStarted);
+                return _allTables
+                    .GetManyByTitle(tableTitle)
+                    .FirstOrDefault(t => t.CurrentStage is RoundStageType.NotStarted);
             }
             
-            return _allTables?
-                .Where(t => t.Title == tableTitle)
+            return _allTables
+                .GetManyByTitle(tableTitle)
                 .FirstOrDefault(t => t.Players.Count < t.MaxPlayers);
         }
 

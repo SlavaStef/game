@@ -17,25 +17,24 @@ namespace PokerHand.BusinessLogic.Services
 {
     public class PlayerService : IPlayerService
     {
-        private readonly List<Table> _allTables;
+        private readonly ITablesOnline _allTables;
         private readonly UserManager<Player> _userManager;
         private readonly ILogger<TableService> _logger;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
         public PlayerService(
-            TablesCollection tablesCollection,
             UserManager<Player> userManager, 
             IMapper mapper, 
             ILogger<TableService> logger, 
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork, 
+            ITablesOnline allTables)
         {
-            _allTables = tablesCollection.Tables;
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
             _unitOfWork = unitOfWork;
-            
+            _allTables = allTables;
         }
 
         public async Task<PlayerProfileDto> AddNewPlayer(string playerName)
@@ -100,8 +99,9 @@ namespace PokerHand.BusinessLogic.Services
 
             await _unitOfWork.Players.SubtractTotalMoneyAsync(playerId, requiredAmount);
 
-            _allTables.First(t => t.Id == tableId)
-                .Players.First(p => p.Id == playerId)
+            _allTables.GetById(tableId)
+                .Players
+                .First(p => p.Id == playerId)
                 .StackMoney = requiredAmount;
             
             return true;
@@ -118,10 +118,10 @@ namespace PokerHand.BusinessLogic.Services
         
         public void SetPlayerReady(Guid tableId, Guid playerId)
         {
-            _allTables
-                .First(t => t.Id == tableId)
+            _allTables.GetById(tableId)
                 .Players
-                .First(p => p.Id == playerId).IsReady = true;
+                .First(p => p.Id == playerId)
+                .IsReady = true;
         }
     }
 }

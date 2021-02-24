@@ -11,14 +11,14 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
     {
         private const int Rate = 17;
 
-        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
+        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards)
         {
             var result = new EvaluationResult {EvaluatedHand = {Cards = new List<Card>(5)}};
 
             var allCards = tableCards.Concat(playerHand).ToList();
             
             // Substitute Joker with a card of max value 
-            if (isJokerGame)
+            if (allCards.Any(c => c.Rank is CardRankType.Joker))
             {
                 foreach (var card in allCards.Where(card => card.Rank == CardRankType.Joker))
                 {
@@ -43,7 +43,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
                             .Where(c => c.Rank == card.Rank)
                             .ToArray();
 
-                        if (isJokerGame)
+                        if (allCards.Any(c => c.Rank is CardRankType.Joker))
                         {
                             foreach (var cardToAdd in cardsToAdd.Where(cardToAdd => cardToAdd.WasJoker))
                                 cardToAdd.Rank = CardRankType.Joker;

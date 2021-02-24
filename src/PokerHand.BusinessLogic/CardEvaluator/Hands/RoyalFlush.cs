@@ -10,7 +10,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
     {
         private const int Rate = 200000;
         
-        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
+        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards)
         {
             return null;
         }

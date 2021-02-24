@@ -11,7 +11,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
     {
         private const int Rate = 400;
 
-        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
+        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards)
         {
             var result = new EvaluationResult();
             var allCards = tableCards.Concat(playerHand).ToList();

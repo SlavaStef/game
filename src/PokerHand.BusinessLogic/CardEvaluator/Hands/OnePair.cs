@@ -11,78 +11,87 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
     {
         private const int Rate = 5;
 
-        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
+        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards)
         {
             var result = new EvaluationResult();
             
             var allCards = tableCards.Concat(playerHand).ToList();
-            
-            if (isJokerGame)
-            {
-                foreach (var card in allCards.Where(card => card.Rank == CardRankType.Joker))
-                {
-                    card.Rank = (CardRankType)GetMaxCardValue(allCards);
-                    card.WasJoker = true;
-                }
-            }
+            var numberOfJokers = allCards.Count(c => c.Rank is CardRankType.Joker);
 
-            // There can be only one pair
-            foreach (var card in allCards)
+            switch (numberOfJokers)
             {
-                if (allCards.Count(c => c.Rank == card.Rank) is 2)
-                {
-                    var cardsToAdd = allCards
-                        .Where(c => c.Rank == card.Rank)
-                        .ToList();
-
-                    if (isJokerGame)
+                case 0:
+                    foreach (var card in allCards.Where(card => allCards.Count(c => c.Rank == card.Rank) is 2))
                     {
-                        foreach (var cardToAdd in cardsToAdd.Where(cardToAdd => cardToAdd.WasJoker))
-                            cardToAdd.Rank = CardRankType.Joker;
+                        result.IsWinningHand = true;
+                        result.EvaluatedHand.HandType = HandType.OnePair;
+                        
+                        var cardsToAdd = allCards
+                            .Where(c => c.Rank == card.Rank)
+                            .ToList();
+                        
+                        result.EvaluatedHand.Cards = new List<Card>(5);
+                        result.EvaluatedHand.Cards.AddRange(cardsToAdd);
+
+                        foreach (var c in cardsToAdd)
+                            allCards.Remove(c);
+                        
+                        result.EvaluatedHand.Cards.AddRange(GetSideCards(allCards));
+                        
+                        result.EvaluatedHand.Value = CalculateHandValue(result.EvaluatedHand.Cards);
+                        return result;
                     }
 
-                    result.EvaluatedHand.Cards = new List<Card>(5);
-                    result.EvaluatedHand.Cards.AddRange(cardsToAdd);
-
-                    foreach (var c in cardsToAdd)
-                        allCards.Remove(c);
-
-                    AddSideCards(result.EvaluatedHand.Cards, allCards);
-                    
+                    return result;
+                case 1:
                     result.IsWinningHand = true;
-                    result.EvaluatedHand.Value = (int)card.Rank * 2 * Rate;
                     result.EvaluatedHand.HandType = HandType.OnePair;
+
+                    var highestCard = allCards
+                        .Where(c => c.Rank is not CardRankType.Joker)
+                        .OrderByDescending(c => c.Rank)
+                        .First();
                     
-                    break;
-                }
+                    result.EvaluatedHand.Cards = new List<Card>(5);
+                    result.EvaluatedHand.Cards.Add(highestCard);
+                    allCards.Remove(highestCard);
+                    
+                    result.EvaluatedHand.Cards.Add(allCards.First(c => c.Rank is CardRankType.Joker));
+                    allCards.Remove(allCards.First(c => c.Rank is CardRankType.Joker));
+                    
+                    result.EvaluatedHand.Cards.AddRange(GetSideCards(allCards));
+                    
+                    result.EvaluatedHand.Value = CalculateHandValue(result.EvaluatedHand.Cards);
+                    return result;
             }
 
             return result;
         }
 
-        private void AddSideCards(List<Card> finalCardsList, List<Card> allCards)
+        private static int CalculateHandValue(List<Card> cards)
         {
-            allCards = allCards
+            var value = 0;
+
+            value += (int)cards[0].Rank * 2 * Rate;
+
+            for (var index = 2; index < 5; index++)
+                value += (int) cards[index].Rank;
+
+            return value;
+        }
+
+        private static IEnumerable<Card> GetSideCards(List<Card> cards)
+        {
+            var sideCards = new List<Card>(3);
+            
+            cards = cards
                 .OrderByDescending(c => c.Rank)
                 .ToList();
 
             for (var i = 0; i < 3; i++)
-                finalCardsList.Add(allCards[i]);
-        }
+                sideCards.Add(cards[i]);
 
-        private int GetMaxCardValue(List<Card> cards)
-        {
-            var  maxValue = 0;
-            
-            foreach (var card in cards)
-            {
-                if (maxValue < (int)card.Rank && card.Rank is not CardRankType.Joker)
-                {
-                    maxValue = (int)card.Rank;
-                }
-            }
-            
-            return maxValue;
+            return sideCards;
         }
     }
 }

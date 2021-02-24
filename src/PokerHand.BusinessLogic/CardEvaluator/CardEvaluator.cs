@@ -11,13 +11,13 @@ namespace PokerHand.BusinessLogic.CardEvaluator
 {
     public static class CardEvaluator
     {
-        public static List<Player> EvaluatePlayersHands(List<Card> communityCards, List<Player> players, bool isJokerGame, ILogger logger)
+        public static List<Player> EvaluatePlayersHands(List<Card> communityCards, List<Player> players, ILogger logger)
         {
             logger.LogInformation("EvaluatePlayersHands. Start");
             foreach (var player in players)
             {
                 logger.LogInformation($"EvaluatePlayersHands. player: {JsonSerializer.Serialize(player.UserName)}");
-                var result = FindCombination(player.PocketCards, communityCards, isJokerGame);
+                var result = FindCombination(player.PocketCards, communityCards);
 
                 logger.LogInformation("EvaluatePlayersHands. 2");
                 player.Hand = result.HandType;
@@ -32,7 +32,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator
             return players;
         }
         
-        private static EvaluatedHand FindCombination(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
+        private static EvaluatedHand FindCombination(List<Card> playerHand, List<Card> tableCards)
         {
             var listRules = new List<IRules>
             {
@@ -54,7 +54,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator
             foreach (var rule in listRules)
             {
                 //TODO: remove isJokerGame
-                var evaluationResult = rule.Check(playerHand, tableCards, isJokerGame);
+                var evaluationResult = rule.Check(playerHand, tableCards);
                 
                 if (evaluationResult.IsWinningHand)
                 {

@@ -36,10 +36,9 @@ namespace PokerHand.BusinessLogic.Tests
                 new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club},
                 new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club}
             };
-            var isJokerGame = false;
             
             // Act
-            var result = highCard.Check(playerHand, tableCards, isJokerGame);
+            var result = highCard.Check(playerHand, tableCards);
             
             // Assert
             result.IsWinningHand.Should().Be(true);
@@ -71,15 +70,13 @@ namespace PokerHand.BusinessLogic.Tests
              
              var expectedResult = new List<Card> {card4, card1, card7, card6, card5};
 
-             var isJokerGame = false;
-             
              // Act
-             var result = onePair.Check(playerHand, tableCards, isJokerGame);
+             var result = onePair.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
              result.EvaluatedHand.HandType.Should().Be(HandType.OnePair);
-             result.EvaluatedHand.Value.Should().Be((int)CardRankType.Four * 2 * 5);
+             result.EvaluatedHand.Value.Should().Be((int)CardRankType.Four * 2 * 5 + (int)CardRankType.Ace + (int)CardRankType.King + (int)CardRankType.Queen);
              result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
          }
          
@@ -100,10 +97,8 @@ namespace PokerHand.BusinessLogic.Tests
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
 
-             var isJokerGame = false;
-             
              // Act
-             var result = onePair.Check(playerHand, tableCards, isJokerGame);
+             var result = onePair.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -131,15 +126,13 @@ namespace PokerHand.BusinessLogic.Tests
              
              var expectedResult = new List<Card> {card7, card1, card6, card5, card3};
 
-             var isJokerGame = true;
-             
              // Act
-             var result = onePair.Check(playerHand, tableCards, isJokerGame);
+             var result = onePair.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
              result.EvaluatedHand.HandType.Should().Be(HandType.OnePair);
-             result.EvaluatedHand.Value.Should().Be((int)CardRankType.Ace * 2 * 5);
+             result.EvaluatedHand.Value.Should().Be((int)CardRankType.Ace * 2 * 5 + (int)CardRankType.King + (int)CardRankType.Queen + (int)CardRankType.Seven);
              result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
          }
          #endregion
@@ -171,7 +164,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
              
              // Act
-             var result = twoPairs.Check(playerHand, tableCards, isJokerGame);
+             var result = twoPairs.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -201,7 +194,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
              
              // Act
-             var result = twoPairs.Check(playerHand, tableCards, isJokerGame);
+             var result = twoPairs.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -233,7 +226,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
              
              // Act
-             var result = twoPairs.Check(playerHand, tableCards, isJokerGame);
+             var result = twoPairs.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -270,7 +263,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = threeOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = threeOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -300,7 +293,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = threeOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = threeOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -332,7 +325,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = threeOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = threeOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -364,7 +357,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = threeOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = threeOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -396,7 +389,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = threeOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = threeOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -433,7 +426,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -465,7 +458,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -497,7 +490,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -529,7 +522,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -562,7 +555,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -595,7 +588,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -628,7 +621,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -661,7 +654,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -694,7 +687,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -727,7 +720,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -760,7 +753,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -793,7 +786,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -826,7 +819,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -859,7 +852,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -892,7 +885,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -925,7 +918,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -958,7 +951,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -991,7 +984,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1024,7 +1017,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1057,7 +1050,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
          
              // Act
-             var result = straight.Check(playerHand, tableCards, isJokerGame);
+             var result = straight.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1094,7 +1087,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1126,7 +1119,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1158,7 +1151,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1190,7 +1183,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1222,7 +1215,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1254,7 +1247,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1286,7 +1279,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1318,7 +1311,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1350,7 +1343,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1382,7 +1375,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1414,7 +1407,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1446,7 +1439,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = flush.Check(playerHand, tableCards, isJokerGame);
+             var result = flush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1481,7 +1474,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1511,7 +1504,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1541,7 +1534,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1571,7 +1564,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1601,7 +1594,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1631,7 +1624,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1661,7 +1654,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1691,7 +1684,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1721,7 +1714,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1751,7 +1744,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fullHouse.Check(playerHand, tableCards, isJokerGame);
+             var result = fullHouse.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1786,7 +1779,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = fourOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = fourOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1816,7 +1809,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = fourOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = fourOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1846,7 +1839,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fourOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = fourOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1876,7 +1869,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fourOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = fourOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -1906,7 +1899,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fourOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = fourOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1936,7 +1929,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fourOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = fourOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -1966,7 +1959,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true;
 
              // Act
-             var result = fourOfAKind.Check(playerHand, tableCards, isJokerGame);
+             var result = fourOfAKind.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -2003,7 +1996,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = straightFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = straightFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2035,7 +2028,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = straightFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = straightFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2067,7 +2060,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = straightFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = straightFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2097,7 +2090,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = straightFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = straightFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -2127,7 +2120,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = straightFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = straightFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -2159,7 +2152,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = straightFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = straightFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2191,7 +2184,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = straightFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = straightFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2223,7 +2216,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = false;
 
              // Act
-             var result = straightFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = straightFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2260,7 +2253,7 @@ namespace PokerHand.BusinessLogic.Tests
             var isJokerGame = true; 
          
             // Act
-            var result = royalFlush.Check(playerHand, tableCards, isJokerGame);
+            var result = royalFlush.Check(playerHand, tableCards);
              
             // Assert
             result.IsWinningHand.Should().Be(true);
@@ -2297,7 +2290,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true; 
          
              // Act
-             var result = royalFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = royalFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -2329,7 +2322,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true; 
          
              // Act
-             var result = royalFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = royalFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2361,7 +2354,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true; 
          
              // Act
-             var result = royalFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = royalFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);
@@ -2393,7 +2386,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true; 
          
              // Act
-             var result = royalFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = royalFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2425,7 +2418,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true; 
          
              // Act
-             var result = royalFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = royalFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(true);
@@ -2457,7 +2450,7 @@ namespace PokerHand.BusinessLogic.Tests
              var isJokerGame = true; 
          
              // Act
-             var result = royalFlush.Check(playerHand, tableCards, isJokerGame);
+             var result = royalFlush.Check(playerHand, tableCards);
              
              // Assert
              result.IsWinningHand.Should().Be(false);

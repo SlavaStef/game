@@ -11,13 +11,13 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
     {
         private const int Rate = 180000;
         
-        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards, bool isJokerGame)
+        public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards)
         {
             var result = new EvaluationResult();
             var allCards = tableCards.Concat(playerHand).ToList();
             var numberOfJokers = allCards.Count(c => c.Rank is CardRankType.Joker);
 
-            var isStraightResult = new Straight().Check(playerHand, tableCards, isJokerGame);
+            var isStraightResult = new Straight().Check(playerHand, tableCards);
             if (isStraightResult.IsWinningHand is false)
                 return result;
 

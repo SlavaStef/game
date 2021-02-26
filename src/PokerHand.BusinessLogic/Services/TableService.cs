@@ -12,6 +12,7 @@ using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.BusinessLogic.Services
@@ -148,43 +149,54 @@ namespace PokerHand.BusinessLogic.Services
 
         public async Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId)
         {
-            var table = _allTables.GetById(tableId);
-            var player = table.Players.First(p => p.Id == playerId);
-            
-            // Deal with player's state on table
-            if (player.CurrentBet != 0)
-                table.Pot.TotalAmount += player.CurrentBet;
-            
-            if (player.StackMoney > 0) 
-                await _playerService.AddTotalMoney(playerId, player.StackMoney);
-            
-            if (table.ActivePlayers.Contains(player))
-                table.ActivePlayers.Remove(player); 
-            
-            table.Players.Remove(player);
-            
-            _logger.LogInformation($"Player was removed from table");
-            
-            // Dealing with the state of table if player's removal effects it
-            // Two not ordinary situations:
-            // 1. One player left at table -> end game and wait for a new player to join
-            // 2. No players left at table -> delete this table
-            
-            //TODO: Implement this logics
-            if (table.Players.Count == 1)
+            _logger.LogInformation($"RemovePlayerFromTable. player: {playerId}");
+            try
             {
-                table.WaitForPlayerBet.Set();
-            }
+                var table = _allTables.GetById(tableId);
+                var player = table.Players.First(p => p.Id == playerId);
+            
+                // Deal with player's state on table
+                if (player.CurrentBet != 0)
+                    table.Pot.TotalAmount += player.CurrentBet;
+            
+                if (player.StackMoney > 0) 
+                    await _playerService.AddTotalMoney(playerId, player.StackMoney);
+            
+                if (table.ActivePlayers.Contains(player))
+                    table.ActivePlayers.Remove(player); 
+            
+                table.Players.Remove(player);
+            
+                _logger.LogInformation($"Player was removed from table");
+            
+                // Dealing with the state of table if player's removal effects it
+                // Two not ordinary situations:
+                // 1. One player left at table -> end game and wait for a new player to join
+                // 2. No players left at table -> delete this table
+            
+                //TODO: Implement this logics
+                if (table.Players.Count is 1)
+                {
+                    table.WaitForPlayerBet.Set();
+                }
 
-            if (table.Players.Count == 0)
+                if (table.Players.Count(p => p.Type is PlayerType.Human) is 0)
+                {
+                    _allTables.Remove(table.Id);
+                    table.Dispose();
+                    _logger.LogInformation("Table was removed from all tables list");
+                    return null;
+                }
+            
+                return _mapper.Map<TableDto>(table);
+            }
+            catch (Exception e)
             {
-                _allTables.Remove(table.Id);
-                table.Dispose();
-                _logger.LogInformation("Table was removed from all tables list");
-                return null;
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
             }
             
-            return _mapper.Map<TableDto>(table);
         }
         
         public void RemoveTableById(Guid tableId) => 

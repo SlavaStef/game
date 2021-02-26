@@ -64,7 +64,7 @@ namespace PokerHand.Common.Entities
         {
             var tableName = Enum.GetName(typeof(TableTitle), (int) tableTitle);
 
-            if (tableName == null)
+            if (tableName is null)
                 throw new Exception();
             
             Type = (TableType)TableOptions.Tables[tableName]["TableType"];

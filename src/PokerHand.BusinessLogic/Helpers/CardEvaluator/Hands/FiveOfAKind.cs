@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using PokerHand.BusinessLogic.CardEvaluator.Interfaces;
+using PokerHand.BusinessLogic.Helpers.CardEvaluator.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
 
-namespace PokerHand.BusinessLogic.CardEvaluator.Hands
+namespace PokerHand.BusinessLogic.Helpers.CardEvaluator.Hands
 {
     public class FiveOfAKind : IRules
     {

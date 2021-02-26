@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
-using PokerHand.BusinessLogic.CardEvaluator.Hands;
+using PokerHand.BusinessLogic.Helpers.CardEvaluator.Hands;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
@@ -16,35 +16,37 @@ namespace PokerHand.BusinessLogic.Tests
         // High card with Joker is impossible
         
         [Fact]
-        public void HighCart_NoJoker_ReturnsTrue()
+        public void HighCard_NoJoker_ReturnsTrue()
         {
             // Arrange
-            var highCard = new HighCard();
+            var fullHouse = new HighCard();
 
-            var playerHand = new List<Card>();
-            var firstCard = new Card {Rank = CardRankType.King, Suit = CardSuitType.Diamond};
-            var secondCard = new Card {Rank = CardRankType.Three, Suit = CardSuitType.Heart};
+            var card1 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+            var card2 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Heart};
+            var card3 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Three, Suit = CardSuitType.Spade};
+            var card5 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
+             
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
             
-            playerHand.Add(firstCard);
-            playerHand.Add(secondCard);
-            
-            var tableCards = new List<Card>
-            {
-                new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Diamond},
-                new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Spade},
-                new Card {Rank = CardRankType.Four, Suit = CardSuitType.Spade},
-                new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club},
-                new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club}
-            };
-            
+            var expectedResult = new List<Card> {card6, card3, card7, card1, card2};
+
+            var isJokerGame = false;
+
             // Act
-            var result = highCard.Check(playerHand, tableCards);
-            
+            var result = fullHouse.Check(playerHand, tableCards);
+             
             // Assert
             result.IsWinningHand.Should().Be(true);
             result.EvaluatedHand.HandType.Should().Be(HandType.HighCard);
-            result.EvaluatedHand.Value.Should().Be((int) firstCard.Rank);
-            result.EvaluatedHand.Cards.Should().Contain(firstCard);
+            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Ace + (int) CardRankType.King +
+                                                   (int) CardRankType.Eight + (int) CardRankType.Seven +
+                                                   (int) CardRankType.Four);
+            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
         }
         #endregion
 
@@ -169,7 +171,39 @@ namespace PokerHand.BusinessLogic.Tests
              // Assert
              result.IsWinningHand.Should().Be(true);
              result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
-             result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Jack * 2 + (int)CardRankType.Three * 2) * 17);
+             result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Jack * 2 + (int)CardRankType.Three * 2) * 17 + (int) CardRankType.Ace);
+             result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+         }
+         
+         [Fact]
+         public void TwoPairs_NoJoker_ReturnsTrue2()
+         {
+             // Arrange
+             var twoPairs = new TwoPairs();
+
+             var card1 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+             var card2 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Diamond};
+             var card3 = new Card {Rank = CardRankType.Six, Suit = CardSuitType.Spade};
+             var card4 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Heart};
+             var card5 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Diamond};
+             var card6 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Spade};
+             var card7 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+             
+             var playerHand = new List<Card> {card1, card2};
+
+             var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+             
+             var expectedResult = new List<Card> {card6, card7, card4, card2, card1};
+
+             var isJokerGame = false;
+             
+             // Act
+             var result = twoPairs.Check(playerHand, tableCards);
+             
+             // Assert
+             result.IsWinningHand.Should().Be(true);
+             result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
+             result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Deuce * 2 + (int)CardRankType.Seven * 2) * 17 + (int)CardRankType.Ten);
              result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
          }
          
@@ -1082,7 +1116,7 @@ namespace PokerHand.BusinessLogic.Tests
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
-             var expectedResult = new List<Card> {card3, card7, card5, card6, card1};
+             var expectedResult = new List<Card> {card1, card6, card5, card7, card3};
              
              var isJokerGame = false;
 
@@ -1114,7 +1148,7 @@ namespace PokerHand.BusinessLogic.Tests
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
-             var expectedResult = new List<Card> {card2, card3, card5, card6, card7};
+             var expectedResult = new List<Card> {card7, card6, card5, card3, card2};
              
              var isJokerGame = false;
 
@@ -1146,7 +1180,7 @@ namespace PokerHand.BusinessLogic.Tests
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
-             var expectedResult = new List<Card> {card3, card4, card5, card6, card7};
+             var expectedResult = new List<Card> {card7, card6, card5, card4, card3};
              
              var isJokerGame = false;
 

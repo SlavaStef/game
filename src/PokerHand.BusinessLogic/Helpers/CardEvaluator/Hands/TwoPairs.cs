@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using PokerHand.BusinessLogic.CardEvaluator.Interfaces;
+using PokerHand.BusinessLogic.Helpers.CardEvaluator.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
 
-namespace PokerHand.BusinessLogic.CardEvaluator.Hands
+namespace PokerHand.BusinessLogic.Helpers.CardEvaluator.Hands
 {
     public class TwoPairs : IRules
     {
@@ -70,6 +70,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
                 result.EvaluatedHand.HandType = HandType.TwoPairs;
 
                 AddSideCards(result.EvaluatedHand.Cards, allCards);
+                result.EvaluatedHand.Value += (int)result.EvaluatedHand.Cards[4].Rank;
             }
             else
             {
@@ -87,6 +88,7 @@ namespace PokerHand.BusinessLogic.CardEvaluator.Hands
                 .ToList();
             
             finalCardsList.Add(allCards[0]);
+            
         }
         
         private int GetMaxCardValue(List<Card> cards)

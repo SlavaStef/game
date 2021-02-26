@@ -57,7 +57,7 @@ namespace PokerHand.Server.Helpers
             table.CurrentStage = RoundStageType.NotStarted;
 
             _logger.LogInformation($"Start round. Before autotop");
-            await AutoTopStackMoney(table);
+            await HandlePlayersWithEmptyStackMoney(table);
             _logger.LogInformation($"Start round. After autotop");
             
             WaitForPlayers(table);
@@ -281,39 +281,8 @@ namespace PokerHand.Server.Helpers
             table.Winners = new List<Player>(table.MaxPlayers);
             table.IsEndDueToAllIn = false;
 
-            // Manage Sit&Go table state
-            if (table.Type is SitAndGo)
-            {
-                _logger.LogInformation("RefreshTable. Managing Sit&Go");
-                table.SmallBlind *= 2;
-                table.BigBlind *= 2;
-                _logger.LogInformation("RefreshTable. 1");
-                await RemovePlayersWithEmptyStackMoney(table);
-                _logger.LogInformation("RefreshTable. 2");
-                
-                // Handle winner
-                if (table.ActivePlayers.Count is 1)
-                {
-                    _logger.LogInformation("RefreshTable. 3");
-                    var firstPlacePrize = TableOptions.Tables[table.Title.ToString()]["FirstPlacePrize"];
-                    _logger.LogInformation(
-                        $"RemovePlayersWithEmptyStackMoney: firstPlacePrize: {firstPlacePrize}");
-                    await _playerService.AddTotalMoney(table.ActivePlayers[0].Id, firstPlacePrize);
-                    _logger.LogInformation("RefreshTable. 4");
-                    await _hub.Clients.Client(table.ActivePlayers[0].ConnectionId)
-                        .EndSitAndGoGame("1");
-                    _logger.LogInformation("RefreshTable. 5");
-                    
-                }
-                _logger.LogInformation("RefreshTable. 6");
-                
-                await _hub.Clients.Group(table.Id.ToString())
-                        .ReceiveTableState(JsonSerializer.Serialize(table));
-                _logger.LogInformation("RefreshTable. 7");
-                
-                table.MinPlayersToStart = table.Players.Count;
-                _logger.LogInformation("RefreshTable. End managing Sit&Go");
-            }
+            if (table.Type is SitAndGo) 
+                await RefreshSitAndGoTable(table);
 
             table.ActivePlayers = new List<Player>(table.MaxPlayers);
             
@@ -328,33 +297,43 @@ namespace PokerHand.Server.Helpers
         #region PrivateHelpers
         
         // StartRound helpers
-        private async Task AutoTopStackMoney(Table table)
+        private async Task HandlePlayersWithEmptyStackMoney(Table table)
         {
             _logger.LogInformation("AutoTop. Start");
             var minBuyIn = TableOptions.Tables[table.Title.ToString()]["MinBuyIn"];
 
-            foreach (var player in table.Players.Where(player => player.StackMoney is 0 && player.IsAutoTop && player.TotalMoney >= minBuyIn))
+            var playersForAutoTop = table
+                .Players
+                .Where(player => player.StackMoney is 0 && player.IsAutoTop && player.TotalMoney >= minBuyIn);
+
+            foreach (var player in playersForAutoTop)
             {
                 _logger.LogInformation($"AutoTop. Player: {JsonSerializer.Serialize(player)}");
-                var wasEnoughMoney = await _playerService.GetFromTotalMoney(player.Id, minBuyIn);
-                _logger.LogInformation($"AutoTop. wasEnoughMoney: {wasEnoughMoney}");
-                if (wasEnoughMoney)
+
+                var isEnoughTotalMoney = await _playerService.GetFromTotalMoney(player.Id, minBuyIn);
+                _logger.LogInformation($"AutoTop. wasEnoughMoney: {isEnoughTotalMoney}");
+
+                if (isEnoughTotalMoney)
                 {
                     _logger.LogInformation($"AutoTop. old player's stackMoney: {player.StackMoney}");
                     player.StackMoney += minBuyIn;
-                            
+
                     _logger.LogInformation($"AutoTop. new player's stackMoney: {player.StackMoney}");
                     await _hub.Clients.Client(player.ConnectionId)
                         .ReceivePlayerDto(JsonSerializer.Serialize(_mapper.Map<PlayerDto>(player)));
                     _logger.LogInformation("AutoTop. Player profile is sent");
                 }
             }
-            
+
             _logger.LogInformation("AutoTop. End");
-            
-            foreach (var player in table.ActivePlayers.Where(p => p.StackMoney == 0))
+
+            foreach (var player in table.Players.Where(p => p.StackMoney is 0))
+            {
                 await _hub.Clients.Client(player.ConnectionId)
                     .OnLackOfStackMoney();
+                
+                _logger.LogInformation($"AutoTop. player: {player.Id}, {player.UserName} recived OnLackOfStackMoney");
+            }
             
             _logger.LogInformation("AutoTop. OnLackOfStackMoney is sent");
         }
@@ -831,17 +810,51 @@ namespace PokerHand.Server.Helpers
         }
         
         // CleanUp helpers
+        private async Task RefreshSitAndGoTable(Table table)
+        {
+            _logger.LogInformation("RefreshSitAndGoTable. Start");
+                
+            table.SmallBlind *= 2;
+            table.BigBlind *= 2;
+            _logger.LogInformation("RefreshSitAndGoTable. Blinds are doubled");
+                
+            await RemovePlayersWithEmptyStackMoney(table);
+            _logger.LogInformation("RefreshSitAndGoTable. Players with stack == 0 are removed");
+
+            // Handle winner
+            if (table.Players.Count is 1)
+            {
+                _logger.LogInformation("RefreshSitAndGoTable. Start handling winner");
+                    
+                var firstPlacePrize = TableOptions.Tables[table.Title.ToString()]["FirstPlacePrize"];
+                _logger.LogInformation($"RefreshSitAndGoTable. firstPlacePrize: {firstPlacePrize}");
+                    
+                await _playerService.AddTotalMoney(table.ActivePlayers[0].Id, firstPlacePrize);
+                _logger.LogInformation("RefreshSitAndGoTable. Prize added to db");
+                    
+                await _hub.Clients.Client(table.ActivePlayers[0].ConnectionId)
+                    .EndSitAndGoGame("1");
+                _logger.LogInformation("RefreshSitAndGoTable. EndSitAndGoGame is sent");
+            }
+
+            await _hub.Clients.Group(table.Id.ToString())
+                .ReceiveTableState(JsonSerializer.Serialize(table));
+            _logger.LogInformation("RefreshSitAndGoTable. Table is sent to all players");
+
+            table.MinPlayersToStart = table.Players.Count;
+            _logger.LogInformation("RefreshSitAndGoTable. End");
+        }
         private async Task RemovePlayersWithEmptyStackMoney(Table table)
         {
             _logger.LogInformation($"RemovePlayersWithEmptyStackMoney: players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
 
-            while (table.ActivePlayers.Any(p => p.StackMoney is 0))
+            while (table.Players.Any(p => p.StackMoney is 0))
             {
                 var playerToRemove = table
-                    .ActivePlayers
+                    .Players
                     .First(p => p.StackMoney is 0);
 
-                var playersPlace = table.ActivePlayers.Count;
+                var playersPlace = table.Players.Count;
 
                 _logger.LogInformation(
                     $"RemovePlayersWithEmptyStackMoney: players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
@@ -851,9 +864,9 @@ namespace PokerHand.Server.Helpers
                 await _tableService.RemovePlayerFromTable(table.Id, playerToRemove.Id);
 
                 _logger.LogInformation(
-                    $"RemovePlayersWithEmptyStackMoney: players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
+                    $"RemovePlayersWithEmptyStackMoney: new players: {table.Players.Count} : {JsonSerializer.Serialize(table.Players)}");
                 _logger.LogInformation(
-                    $"RemovePlayersWithEmptyStackMoney: active players: {table.ActivePlayers.Count} : {JsonSerializer.Serialize(table.ActivePlayers)}");
+                    $"RemovePlayersWithEmptyStackMoney: new active players: {table.ActivePlayers.Count} : {JsonSerializer.Serialize(table.ActivePlayers)}");
 
                 if (playersPlace is 2)
                 {

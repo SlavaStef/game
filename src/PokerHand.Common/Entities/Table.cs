@@ -12,7 +12,7 @@ namespace PokerHand.Common.Entities
     {
         private bool _disposed = false;
         private readonly SafeHandle _handle = new SafeFileHandle(IntPtr.Zero, true);
-        public AutoResetEvent WaitForPlayerBet { get; set; }
+        public AutoResetEvent WaitForPlayerBet { get; set; } = new(false);
         
         public Table(TableTitle title)
         {
@@ -32,7 +32,7 @@ namespace PokerHand.Common.Entities
             SmallBlindIndex = -1;
             BigBlindIndex = -1;
 
-            WaitForPlayerBet = new AutoResetEvent(false);
+            //WaitForPlayerBet = new AutoResetEvent(false);
         }
 
         public Guid Id { get; }

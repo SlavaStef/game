@@ -38,7 +38,10 @@ namespace PokerHand.Common
         public void Add(Table table) =>
             Tables.Add(table);
 
-        public void Remove(Guid tableId) =>
-            Tables.Remove(Tables.First(t => t.Id == tableId));
+        public void Remove(Guid tableId)
+        {
+            if (Tables.Any(t => t.Id == tableId))
+                Tables.Remove(Tables.First(t => t.Id == tableId));
+        }
     }
 }

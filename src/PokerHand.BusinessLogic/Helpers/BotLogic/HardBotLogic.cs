@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Helpers.BotLogic.Interfaces;
+using PokerHand.BusinessLogic.Interfaces;
+using PokerHand.BusinessLogic.Services;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 
@@ -9,14 +12,19 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
 {
     public class HardBotLogic : IBotLogic
     {
+        private readonly ICardEvaluationService _cardEvaluationService;
         private static readonly Random Random = new();
         private static bool _isStep3GoodCombination;
         private static PlayerActionType _thirdRoundChoice;
 
+        public HardBotLogic(ICardEvaluationService cardEvaluationService)
+        {
+            _cardEvaluationService = cardEvaluationService;
+        }
+
         public PlayerAction Act(Player bot, Table table)
         {
-            bot = CardEvaluator.CardEvaluator.EvaluatePlayersHands(table.CommunityCards, new List<Player> {bot})
-                .First();
+            bot = _cardEvaluationService.EvaluatePlayerHand(table.CommunityCards, bot);
 
             return table.CurrentStage switch
             {

@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using PokerHand.BusinessLogic.Helpers.CardEvaluator.Interfaces;
+using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
 
-namespace PokerHand.BusinessLogic.Helpers.CardEvaluator.Hands
+namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
     public class OnePair : IRules
     {
@@ -55,9 +55,11 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluator.Hands
                     result.EvaluatedHand.Cards = new List<Card>(5);
                     result.EvaluatedHand.Cards.Add(highestCard);
                     allCards.Remove(highestCard);
-                    
-                    result.EvaluatedHand.Cards.Add(allCards.First(c => c.Rank is CardRankType.Joker));
-                    allCards.Remove(allCards.First(c => c.Rank is CardRankType.Joker));
+
+                    var joker = allCards.First(c => c.Rank is CardRankType.Joker);
+                    joker.SubstitutedCard = new Card {Rank = highestCard.Rank};
+                    result.EvaluatedHand.Cards.Add(joker);
+                    allCards.Remove(joker);
                     
                     result.EvaluatedHand.Cards.AddRange(GetSideCards(allCards));
                     

@@ -7,13 +7,11 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using PokerHand.BusinessLogic.Helpers.CardEvaluator;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
-using PokerHand.Common.Helpers.Bot;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Table;
 using PokerHand.Server.Hubs;
@@ -34,6 +32,7 @@ namespace PokerHand.Server.Helpers
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
         private readonly IBotService _botService;
+        private readonly ICardEvaluationService _cardEvaluationService;
         private readonly IMapper _mapper;
         private readonly ILogger<GameHub> _logger;
 
@@ -44,7 +43,8 @@ namespace PokerHand.Server.Helpers
             ITableService tableService,
             IPlayerService playerService,
             ITablesOnline allTables,
-            IBotService botService)
+            IBotService botService, 
+            ICardEvaluationService cardEvaluationService)
         {
             _hub = hubContext;
             _mapper = mapper;
@@ -53,6 +53,7 @@ namespace PokerHand.Server.Helpers
             _playerService = playerService;
             _allTables = allTables;
             _botService = botService;
+            _cardEvaluationService = cardEvaluationService;
         }
 
         public async Task StartRound(Guid tableId)
@@ -174,9 +175,22 @@ namespace PokerHand.Server.Helpers
                 await _hub.Clients.Group(table.Id.ToString())
                     .ReceiveCurrentPlayerIdInWagering(JsonSerializer.Serialize(table.CurrentPlayer.Id));
 
+                _logger.LogInformation($"StartWagering. Table after setting current player: {JsonSerializer.Serialize(table)}");
                 if (table.CurrentPlayer.Type is PlayerType.Computer)
                 {
-                    var action = _botService.Act(table.CurrentPlayer, table);
+                    var action = new PlayerAction();
+                    _logger.LogInformation("Bot is chosen to act");
+                    try
+                    {
+                        action = _botService.Act(table.CurrentPlayer, table);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError($"{e.Message}");
+                        _logger.LogError($"{e.StackTrace}");
+                        throw;
+                    }
+                    
 
                     _logger.LogInformation($"StartWagering. bot action: {JsonSerializer.Serialize(action)}");
                     table.CurrentPlayer.CurrentAction = action;
@@ -267,7 +281,7 @@ namespace PokerHand.Server.Helpers
             _logger.LogInformation("Showdown. Start");
             table.CurrentStage = RoundStageType.Showdown;
 
-            var finalSidePots = CalculateFinalSidePots(table);
+            var finalSidePots = _cardEvaluationService.CalculateSidePotsWinners(table);
 
             GiveMoneyToWinners(finalSidePots);
 
@@ -361,16 +375,16 @@ namespace PokerHand.Server.Helpers
                 _logger.LogInformation("StartRound. Waiting for players");
                 _logger.LogInformation($"StartRound. MinPlayersToStart: {table.MinPlayersToStart}");
 
-                if (table.Players.Count(p => p.StackMoney > 0) < 2 &&
-                    table.Type is not SitAndGo)
-                {
-                    var bot = _botService.Create(table, BotComplexity.Hard);
-
-                    table.Players.Add(bot);
-
-                    await _hub.Clients.Group(table.Id.ToString())
-                        .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-                }
+                // if (table.Players.Count(p => p.StackMoney > 0) < 2 &&
+                //     table.Type is not SitAndGo)
+                // {
+                //     var bot = _botService.Create(table, BotComplexity.Hard);
+                //
+                //     table.Players.Add(bot);
+                //
+                //     await _hub.Clients.Group(table.Id.ToString())
+                //         .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+                // }
 
                 while (table.Players.Count(p => p.StackMoney > 0) < table.MinPlayersToStart)
                     Thread.Sleep(1000);
@@ -725,141 +739,6 @@ namespace PokerHand.Server.Helpers
         }
 
         // Showdown helpers 
-        private List<SidePot> CalculateFinalSidePots(Table table)
-        {
-            var finalSidePots = new List<SidePot>();
-
-            switch (table.ActivePlayers.Count)
-            {
-                case 1:
-                    finalSidePots.Add(new SidePot()
-                    {
-                        Type = SidePotType.Main,
-                        WinningAmountPerPlayer = table.Pot.TotalAmount,
-                        Winners = new List<Player>() {table.ActivePlayers.First()}
-                    });
-                    break;
-                default:
-                    _logger.LogInformation("Showdown. Getting playersWithEvaluatedHands");
-                    // 1. Evaluate players' cards => get a list of players with HandValue
-                    var playersWithEvaluatedHands = 
-                        CardEvaluator.EvaluatePlayersHands(table.CommunityCards, table.ActivePlayers);
-                    
-                    _logger.LogInformation($"Showdown. Players: {JsonSerializer.Serialize(playersWithEvaluatedHands)}");
-
-                    _logger.LogInformation("Showdown. Getting sidePots");
-                    // 2. Get a list of sidePots with Type, Players, AmountOfOneBet, TotalAmount
-                    var sidePots = CreateSidePots(table);
-                    _logger.LogInformation($"Showdown. SidePots: {JsonSerializer.Serialize(sidePots)}");
-
-                    _logger.LogInformation("Showdown. Getting final sidePots");
-                    // 3.Get final sidePots
-                    finalSidePots = GetSidePotsWithWinners(sidePots, playersWithEvaluatedHands);
-                    _logger.LogInformation($"Showdown. SidePots: {JsonSerializer.Serialize(finalSidePots)}");
-
-                    break;
-            }
-
-            return finalSidePots;
-        }
-
-        private List<SidePot> CreateSidePots(Table table)
-        {
-            var bets = table.Pot.Bets;
-            _logger.LogInformation($"CreateSidePots. Bets: {JsonSerializer.Serialize(bets)}");
-
-            var finalSidePotsList = new List<SidePot>();
-
-            while (bets.Any(b => b.Value > 0))
-            {
-                var sidePot = new SidePot();
-
-                var minBet = bets
-                    .Where(b => b.Value > 0)
-                    .Select(bet => bet.Value)
-                    .Min();
-
-                _logger.LogInformation($"CreateSidePots. minBet: {JsonSerializer.Serialize(minBet)}");
-
-                // Find all players with bet equal or greater than minBet => add them to current sidePot
-                foreach (var (playerId, bet) in bets.Where(b => b.Value >= minBet))
-                {
-                    _logger.LogInformation($"CreateSidePots. playerId: {JsonSerializer.Serialize(playerId)}");
-                    _logger.LogInformation($"CreateSidePots. table: {JsonSerializer.Serialize(table)}");
-
-                    var player = table
-                        .ActivePlayers
-                        .FirstOrDefault(p => p.Id == playerId);
-
-                    if (player is not null)
-                        sidePot.Players.Add(player);
-
-                    sidePot.TotalAmount += minBet;
-                    bets[playerId] -= minBet;
-                    _logger.LogInformation($"CreateSidePots. player: {JsonSerializer.Serialize(player)}");
-                }
-
-                sidePot.Type = finalSidePotsList.Count == 0
-                    ? SidePotType.Main
-                    : SidePotType.Side;
-
-                finalSidePotsList.Add(sidePot);
-                _logger.LogInformation($"CreateSidePots. new SidePot: {JsonSerializer.Serialize(sidePot)}");
-            }
-
-            _logger.LogInformation($"CreateSidePots. finalSidePotsList: {JsonSerializer.Serialize(finalSidePotsList)}");
-            return finalSidePotsList;
-        }
-
-        private List<SidePot> GetSidePotsWithWinners(List<SidePot> sidePots, List<Player> players)
-        {
-            _logger.LogInformation("GetSidePotsWithWinners. Start");
-            foreach (var sidePot in sidePots)
-            {
-                for (var index = 11; index > 0; index--)
-                {
-                    var handType = (HandType) index;
-                    var playersWithCurrentHand = players
-                        .Where(p => p.Hand == handType)
-                        .ToList();
-                    
-                    switch (playersWithCurrentHand.Count)
-                    {
-                        case 0:
-                            continue;
-                        case 1:
-                            sidePot.Winners = playersWithCurrentHand.ToList();
-                            break;
-                        default:
-                            for (var cardIndex = 0; cardIndex < 5; cardIndex++)
-                            {
-                                var currentMaxRank = playersWithCurrentHand
-                                    .Select(player => (int) player.HandCombinationCards[cardIndex].Rank)
-                                    .Prepend(0)
-                                    .Max();
-
-                                playersWithCurrentHand = playersWithCurrentHand
-                                    .Where(p => (int) p.HandCombinationCards[index].Rank == currentMaxRank)
-                                    .ToList();
-
-                                if (playersWithCurrentHand.Count is not 1)
-                                    continue;
-                                
-                                sidePot.Winners = playersWithCurrentHand.ToList();
-                                break;
-                            }
-                            break;
-                    }
-                }
-
-                sidePot.WinningAmountPerPlayer = sidePot.TotalAmount / sidePot.Winners.Count;
-            }
-
-            _logger.LogInformation($"GetSidePotsWithWinners. SidePots: {JsonSerializer.Serialize(sidePots)}");
-            return sidePots;
-        }
-
-
         private void GiveMoneyToWinners(List<SidePot> finalSidePots)
         {
             foreach (var pot in finalSidePots)

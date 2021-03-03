@@ -2,7 +2,7 @@
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 
-namespace PokerHand.BusinessLogic.Helpers.CardEvaluator.Interfaces
+namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces
 {
     public interface IRules
     {

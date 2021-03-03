@@ -123,18 +123,28 @@ namespace PokerHand.Server.Hubs
         
         public async Task ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer)
         {
-            _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Start");
+            try
+            {
+                _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Start by {Context.ConnectionId}");
             
-            var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
-            var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
+                var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
+                var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
 
-            var table = _allTables.GetById(tableId);
+                var table = _allTables.GetById(tableId);
             
-            table.ActivePlayers
-                .First(p => p.IndexNumber == action?.PlayerIndexNumber)
-                .CurrentAction = action;
+                table.ActivePlayers
+                    .First(p => p.IndexNumber == action?.PlayerIndexNumber)
+                    .CurrentAction = action;
             
-            table.WaitForPlayerBet.Set();
+                table.WaitForPlayerBet.Set();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
+            
         }
 
         public async Task SendPlayerProfile(string playerId)

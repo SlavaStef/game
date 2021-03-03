@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
-using PokerHand.BusinessLogic.Helpers.CardEvaluator.Hands;
+using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
@@ -238,7 +238,7 @@ namespace PokerHand.BusinessLogic.Tests
          }
          
          [Fact]
-         public void TwoPairs_WithJoker_ReturnsTrue()
+         public void TwoPairs_WithJoker_ReturnsTrue_IfThereIsOnePair()
          {
              // Arrange
              var twoPairs = new TwoPairs();
@@ -255,7 +255,7 @@ namespace PokerHand.BusinessLogic.Tests
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
-             var expectedResult = new List<Card> {card1, card7, card4, card5, card6};
+             var expectedResult = new List<Card> {card7, card1, card4, card5, card6};
 
              var isJokerGame = true;
              
@@ -265,8 +265,104 @@ namespace PokerHand.BusinessLogic.Tests
              // Assert
              result.IsWinningHand.Should().Be(true);
              result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
-             result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Ace * 2 + (int)CardRankType.Three * 2) * 17);
+             result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Ace * 2 + (int)CardRankType.Three * 2) * 17 + (int)CardRankType.King);
              result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+         }
+         
+         [Fact]
+         public void TwoPairs_WithJoker_ReturnsTrueWithJoker_IfThereIsTwoPairs()
+         {
+             // Arrange
+             var twoPairs = new TwoPairs();
+
+             var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Red};
+             var card2 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+             var card3 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+             var card4 = new Card {Rank = CardRankType.Three, Suit = CardSuitType.Club};
+             var card5 = new Card {Rank = CardRankType.Three, Suit = CardSuitType.Spade};
+             var card6 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Spade};
+             var card7 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+             
+             var playerHand = new List<Card> {card1, card2};
+
+             var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+             
+             var expectedResult = new List<Card> {card7, card1, card6, card2, card3};
+
+             var isJokerGame = true;
+             
+             // Act
+             var result = twoPairs.Check(playerHand, tableCards);
+             
+             // Assert
+             result.IsWinningHand.Should().Be(true);
+             result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
+             result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Ace * 2 + (int)CardRankType.Jack * 2) * 17 + (int)CardRankType.Seven);
+             result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+         }
+         
+         [Fact]
+         public void TwoPairs_WithJoker_ReturnsTrueWithoutJoker_IfThereIsTwoPairs()
+         {
+             // Arrange
+             var twoPairs = new TwoPairs();
+
+             var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Red};
+             var card2 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+             var card3 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+             var card4 = new Card {Rank = CardRankType.Three, Suit = CardSuitType.Club};
+             var card5 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Spade};
+             var card6 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Spade};
+             var card7 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+             
+             var playerHand = new List<Card> {card1, card2};
+
+             var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+             
+             var expectedResult = new List<Card> {card6, card7, card5, card2, card3};
+
+             var isJokerGame = true;
+             
+             // Act
+             var result = twoPairs.Check(playerHand, tableCards);
+             
+             // Assert
+             result.IsWinningHand.Should().Be(true);
+             result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
+             result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Ace * 2 + (int)CardRankType.Jack * 2) * 17 + (int)CardRankType.Seven);
+             result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+         }
+         
+         [Fact]
+         public void TwoPairs_WithJoker_ReturnsFalse_IfThereIsNoPair()
+         {
+             // Arrange
+             var twoPairs = new TwoPairs();
+
+             var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Red};
+             var card2 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Club};
+             var card3 = new Card {Rank = CardRankType.Four, Suit = CardSuitType.Club};
+             var card4 = new Card {Rank = CardRankType.Five, Suit = CardSuitType.Club};
+             var card5 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Spade};
+             var card6 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Spade};
+             var card7 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+             
+             var playerHand = new List<Card> {card1, card2};
+
+             var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+             
+             var expectedResult = new List<Card> {card6, card7, card5, card2, card3};
+
+             var isJokerGame = true;
+             
+             // Act
+             var result = twoPairs.Check(playerHand, tableCards);
+             
+             // Assert
+             result.IsWinningHand.Should().Be(false);
+             result.EvaluatedHand.HandType.Should().Be(HandType.None);
+             result.EvaluatedHand.Value.Should().Be(0);
+             result.EvaluatedHand.Cards.Should().BeNull();
          }
          #endregion
 
@@ -1149,8 +1245,6 @@ namespace PokerHand.BusinessLogic.Tests
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
              var expectedResult = new List<Card> {card7, card6, card5, card3, card2};
-             
-             var isJokerGame = false;
 
              // Act
              var result = flush.Check(playerHand, tableCards);
@@ -1213,8 +1307,6 @@ namespace PokerHand.BusinessLogic.Tests
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
              var expectedResult = new List<Card> {card3, card7, card5, card6, card1};
-             
-             var isJokerGame = true;
 
              // Act
              var result = flush.Check(playerHand, tableCards);
@@ -1534,8 +1626,6 @@ namespace PokerHand.BusinessLogic.Tests
              var playerHand = new List<Card> {card1, card2};
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
-             
-             var isJokerGame = false;
 
              // Act
              var result = fullHouse.Check(playerHand, tableCards);
@@ -1564,8 +1654,6 @@ namespace PokerHand.BusinessLogic.Tests
              var playerHand = new List<Card> {card1, card2};
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
-             
-             var isJokerGame = false;
 
              // Act
              var result = fullHouse.Check(playerHand, tableCards);
@@ -2058,8 +2146,6 @@ namespace PokerHand.BusinessLogic.Tests
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
              var expectedResult = new List<Card> {card6, card7, card5, card4, card3};
-             
-             var isJokerGame = false;
 
              // Act
              var result = straightFlush.Check(playerHand, tableCards);
@@ -2090,8 +2176,6 @@ namespace PokerHand.BusinessLogic.Tests
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
              var expectedResult = new List<Card> {card6, card7, card5, card4, card3};
-             
-             var isJokerGame = false;
 
              // Act
              var result = straightFlush.Check(playerHand, tableCards);
@@ -2120,8 +2204,6 @@ namespace PokerHand.BusinessLogic.Tests
              var playerHand = new List<Card> {card1, card2};
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
-             
-             var isJokerGame = false;
 
              // Act
              var result = straightFlush.Check(playerHand, tableCards);
@@ -2150,8 +2232,6 @@ namespace PokerHand.BusinessLogic.Tests
              var playerHand = new List<Card> {card1, card2};
 
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
-             
-             var isJokerGame = false;
 
              // Act
              var result = straightFlush.Check(playerHand, tableCards);
@@ -2182,8 +2262,6 @@ namespace PokerHand.BusinessLogic.Tests
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
              var expectedResult = new List<Card> {card6, card5, card4, card3, card2};
-             
-             var isJokerGame = false;
 
              // Act
              var result = straightFlush.Check(playerHand, tableCards);
@@ -2214,8 +2292,6 @@ namespace PokerHand.BusinessLogic.Tests
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
              var expectedResult = new List<Card> {card6, card5, card4, card3, card2};
-             
-             var isJokerGame = false;
 
              // Act
              var result = straightFlush.Check(playerHand, tableCards);
@@ -2246,8 +2322,6 @@ namespace PokerHand.BusinessLogic.Tests
              var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
              var expectedResult = new List<Card> {card6, card5, card4, card3, card2};
-             
-             var isJokerGame = false;
 
              // Act
              var result = straightFlush.Check(playerHand, tableCards);
@@ -2261,17 +2335,17 @@ namespace PokerHand.BusinessLogic.Tests
         #endregion
 
         #region RoyalFlash
-        // TODO: Not tested yet
+        
         // ROYAL FLASH
         // Royal flash is a hand that contains five cards of one rank
         [Fact]
-        public void RoyalFlush_WithJoker_ReturnsTrue()
+        public void RoyalFlush_NoJoker_ReturnsTrue_IfThereIsStraightFlushWithAce()
         {
             // Arrange
             var royalFlush = new RoyalFlush();
          
-            var card1 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Diamond};
-            var card2 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
+            var card1 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            var card2 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
             var card3 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
             var card4 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
             var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
@@ -2282,19 +2356,78 @@ namespace PokerHand.BusinessLogic.Tests
          
             var tableCards = new List<Card> {card3, card4, card5, card6, card7};
              
-            var expectedResult = new List<Card> {card3, card4, card5, card7, card6};
+            var expectedResult = new List<Card> {card1, card2, card6, card7, card5};
              
-            var isJokerGame = true; 
-         
             // Act
             var result = royalFlush.Check(playerHand, tableCards);
              
             // Assert
             result.IsWinningHand.Should().Be(true);
             result.EvaluatedHand.HandType.Should().Be(HandType.RoyalFlush);
-            result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Seven + (int)CardRankType.Eight + (int)CardRankType.Nine + (int)CardRankType.Ten + (int)CardRankType.Jack) * 180000);
-            result.EvaluatedHand.Cards.Should().Contain(x => x.Rank == CardRankType.Ace);
+            result.EvaluatedHand.Value.Should().Be(((int)CardRankType.Ace + (int)CardRankType.King + (int)CardRankType.Queen + (int)CardRankType.Jack + (int)CardRankType.Ten) * 200000);
+            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
         }
+        
+        [Fact]
+        public void RoyalFlush_NoJoker_ReturnsFalse_IfThereIsStraightFlush_AndNoAce()
+        {
+            // Arrange
+            var royalFlush = new RoyalFlush();
+         
+            var card1 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Club};
+            var card2 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Spade};
+            var card7 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+             
+            var playerHand = new List<Card> {card1, card2};
+         
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+             
+            var expectedResult = new List<Card> {card1, card2, card6, card7, card5};
+             
+            // Act
+            var result = royalFlush.Check(playerHand, tableCards);
+             
+            // Assert
+            result.IsWinningHand.Should().Be(false);
+            result.EvaluatedHand.HandType.Should().Be(0);
+            result.EvaluatedHand.Value.Should().Be(0);
+            result.EvaluatedHand.Cards.Should().BeNull();
+        }
+        
+        [Fact]
+        public void RoyalFlush_NoJoker_ReturnsFalse_IfThereIsStraightAndNoFlush()
+        {
+            // Arrange
+            var royalFlush = new RoyalFlush();
+         
+            var card1 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Club};
+            var card2 = new Card {Rank = CardRankType.King, Suit = CardSuitType.Club};
+            var card3 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
+            var card4 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Spade};
+            var card7 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+             
+            var playerHand = new List<Card> {card1, card2};
+         
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+             
+            var expectedResult = new List<Card> {card1, card2, card6, card7, card5};
+             
+            // Act
+            var result = royalFlush.Check(playerHand, tableCards);
+             
+            // Assert
+            result.IsWinningHand.Should().Be(false);
+            result.EvaluatedHand.HandType.Should().Be(0);
+            result.EvaluatedHand.Value.Should().Be(0);
+            result.EvaluatedHand.Cards.Should().BeNull();
+        }
+        
         #endregion
         
         #region FiveOfAKind

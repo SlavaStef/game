@@ -39,7 +39,7 @@ namespace PokerHand.Common.Entities
         
         [NotMapped] public int IndexNumber { get; set; }
         
-        [NotMapped] public HandType Hand;
+        [NotMapped] public HandType Hand { get; set; }
         
         [NotMapped] public int HandValue { get; set; }
         

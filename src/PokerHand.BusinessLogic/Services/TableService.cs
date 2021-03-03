@@ -153,6 +153,9 @@ namespace PokerHand.BusinessLogic.Services
             try
             {
                 var table = _allTables.GetById(tableId);
+                if (table is null)
+                    return null;
+                
                 var player = table.Players.First(p => p.Id == playerId);
             
                 // Deal with player's state on table
@@ -180,7 +183,7 @@ namespace PokerHand.BusinessLogic.Services
                     table.WaitForPlayerBet.Set();
                 }
 
-                if (table.Players.Count(p => p.Type is PlayerType.Human) is 0)
+                if (table.Players.Count(p => p.Type is not PlayerType.Computer) is 0)
                 {
                     _allTables.Remove(table.Id);
                     table.Dispose();

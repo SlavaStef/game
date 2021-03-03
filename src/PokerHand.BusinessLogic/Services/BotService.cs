@@ -1,16 +1,27 @@
 ﻿using System;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Helpers.BotLogic;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Bot;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Table;
+using Serilog;
 
 namespace PokerHand.BusinessLogic.Services
 {
     public class BotService : IBotService
     {
-        private static Random _random = new();
+        private readonly ICardEvaluationService _cardEvaluationService;
+        private static readonly Random Random = new();
+        private readonly ILogger<BotService> _logger;
+
+        public BotService(ICardEvaluationService cardEvaluationService, ILogger<BotService> logger)
+        {
+            _cardEvaluationService = cardEvaluationService;
+            _logger = logger;
+        }
 
         public Player Create(Table table, BotComplexity complexity)
         {
@@ -24,10 +35,10 @@ namespace PokerHand.BusinessLogic.Services
                 Type = PlayerType.Computer,
                 Complexity = complexity,
                 
-                TotalMoney = _random.Next(maxBuyIn, maxBuyIn * 2),
-                StackMoney = _random.Next(minBuyIn + minBuyIn / 10, maxBuyIn),
-                UserName = "TestBot " + _random.Next(1000, 10000),
-                ConnectionId = _random.Next(10000, 100000).ToString(),
+                TotalMoney = Random.Next(maxBuyIn, maxBuyIn * 2),
+                StackMoney = Random.Next(minBuyIn + minBuyIn / 10, maxBuyIn),
+                UserName = "TestBot " + Random.Next(1000, 10000),
+                ConnectionId = Random.Next(10000, 100000).ToString(),
                 IndexNumber = table.Players.Count,
                 IsAutoTop = true,
                 IsReady = true
@@ -36,18 +47,21 @@ namespace PokerHand.BusinessLogic.Services
             
         public PlayerAction Act(Player bot, Table table)
         {
+            _logger.LogInformation("BotService. Act. Start");
             var action = new PlayerAction();
             
             switch (bot.Complexity)
             {
                 case BotComplexity.Simple:
-                    action = new SimpleBotLogic().Act(bot, table);
+                    action = new SimpleBotLogic(_cardEvaluationService).Act(bot, table);
                     break;
                 case BotComplexity.Medium:
-                    action = new MediumBotLogic().Act(bot, table);
+                    action = new MediumBotLogic(_cardEvaluationService).Act(bot, table);
                     break;
                 case BotComplexity.Hard:
-                    action = new HardBotLogic().Act(bot, table);
+                    _logger.LogInformation("BotService. Act. Inside Hard logic");
+                    action = new HardBotLogic(_cardEvaluationService).Act(bot, table);
+                    _logger.LogInformation($"BotService. Act. action: {JsonSerializer.Serialize(action)}");
                     break;
             }
             

@@ -151,6 +151,8 @@ namespace PokerHand.BusinessLogic.Services
                     default:
                         for (var cardIndex = 0; cardIndex < 5; cardIndex++)
                         {
+                            SubstituteJokers(playersWithCurrentHand, cardIndex);
+                            
                             var currentMaxRank = playersWithCurrentHand
                                 .Select(player => (int) player.HandCombinationCards[cardIndex].Rank)
                                 .Prepend(0)
@@ -159,6 +161,8 @@ namespace PokerHand.BusinessLogic.Services
                             playersWithCurrentHand = playersWithCurrentHand
                                 .Where(p => (int) p.HandCombinationCards[cardIndex].Rank == currentMaxRank)
                                 .ToList();
+
+                            RestoreJokers(playersWithCurrentHand, cardIndex);
 
                             if (playersWithCurrentHand.Count is 1)
                             {
@@ -173,6 +177,28 @@ namespace PokerHand.BusinessLogic.Services
 
                 if (sidePot.Winners.Count > 0)
                     break;
+            }
+        }
+
+        private static void RestoreJokers(List<Player> playersWithCurrentHand, int cardIndex)
+        {
+            foreach (var player in playersWithCurrentHand)
+            {
+                var currentCard = player.HandCombinationCards[cardIndex];
+
+                if (currentCard.SubstitutedCard is not null)
+                    currentCard.Rank = CardRankType.Joker;
+            }
+        }
+
+        private static void SubstituteJokers(List<Player> playersWithCurrentHand, int cardIndex)
+        {
+            foreach (var player in playersWithCurrentHand)
+            {
+                var currentCard = player.HandCombinationCards[cardIndex];
+
+                if (currentCard.Rank is CardRankType.Joker)
+                    currentCard.Rank = currentCard.SubstitutedCard.Rank;
             }
         }
 
@@ -198,7 +224,7 @@ namespace PokerHand.BusinessLogic.Services
             {
                 new FiveOfAKind(), // +++
                 new RoyalFlush(), // + no joker logic
-                new StraightFlush(), // +
+                new StraightFlush(), // + no joker logic
                 new FourOfAKind(), // +++
                 new FullHouse(), // +++
                 new Flush(), // +++

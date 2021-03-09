@@ -14,7 +14,7 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
         public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards)
         {
             var result = new EvaluationResult();
-            var numbersOfSuits = new Dictionary<int, int>();;
+            var numbersOfSuits = new Dictionary<int, int>();
             
             var allCards = tableCards.Concat(playerHand).ToList();
             
@@ -22,6 +22,7 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
             
             if (numberOfJokers > 0)
             {
+                // Write info about all cards to dictionary
                 foreach (var card in allCards.Where(c => c.Rank is not CardRankType.Joker))
                 {
                     if (!numbersOfSuits.ContainsKey((int) card.Suit))
@@ -57,11 +58,22 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 // Add jokers
                 foreach (var card in allCards.Where(c => c.Rank is CardRankType.Joker))
                 {
-                    var maxValue = GetMaxValue(allCards.Where(c => c.Rank is not CardRankType.Joker).ToList());
+                    var maxValue = GetMaxValue(result.EvaluatedHand.Cards);
+                    card.SubstitutedCard = new Card
+                        {Rank = (CardRankType) maxValue, Suit = result.EvaluatedHand.Cards[0].Suit};
+
+                    card.Rank = (CardRankType) maxValue;
                     
                     result.EvaluatedHand.Cards.Add(card);
                     result.EvaluatedHand.Value += maxValue * Rate;
                 }
+
+                result.EvaluatedHand.Cards = result.EvaluatedHand.Cards
+                    .OrderByDescending(c => c.Rank)
+                    .ToList();
+
+                foreach (var card in result.EvaluatedHand.Cards.Where(card => card.SubstitutedCard is not null))
+                    card.Rank = CardRankType.Joker;
 
                 return result;
             }
@@ -105,18 +117,13 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
         private int GetMaxValue(List<Card> cards)
         {
-            var maxValue = 0;
-        
-            foreach (var card in cards)
+            for (var cardRank = CardRankType.Ace; cardRank >= CardRankType.Deuce; cardRank--)
             {
-                if (maxValue < (int)card.Rank)
-                {
-                    if (card.Rank is not CardRankType.Joker)
-                        maxValue = (int)card.Rank;
-                }
+                if (cards.Any(c => c.Rank == cardRank) is false)
+                    return (int)cardRank;
             }
-        
-            return maxValue;
+
+            return 2;
         }
     }
 }

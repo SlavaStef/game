@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
@@ -17,26 +18,19 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
             var allCards = tableCards.Concat(playerHand).ToList();
             var numberOfJokers = allCards.Count(c => c.Rank is CardRankType.Joker);
 
-            var isStraightResult = new Straight().Check(playerHand, tableCards);
-            if (isStraightResult.IsWinningHand is false)
-                return result;
-
-            var (isStraightFlush, numberOfUsedJokers) =
-                AnalyzeStraightCardsSuits(isStraightResult.EvaluatedHand.Cards);
-
-            if (isStraightFlush is false) 
-                return result;
-            
-            result.IsWinningHand = true;
-            result.EvaluatedHand.HandType = HandType.StraightFlush;
-            result.EvaluatedHand.Cards = isStraightResult.EvaluatedHand.Cards.ToList();
-
-            foreach (var card in result.EvaluatedHand.Cards)
+            switch (numberOfJokers)
             {
-                result.EvaluatedHand.Value += (int) card.Rank * Rate;
+                case 0:
+                    return CheckWithNoJokers(playerHand, tableCards, result);
+                case 1:
+                    return CheckWithOneJoker(playerHand, tableCards, result);
+                case 2:
+                    return result;
+                default:
+                    return result;
             }
-
-            return result;
+            
+            
 
             // var firstCardSuit = isStraightResult.EvaluatedHand.Cards[0].Suit;
             // var isStraightFlush = isStraightResult.EvaluatedHand.Cards.Where(c => c.Rank is not CardRankType.Joker)
@@ -125,6 +119,88 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
             //         return result;
             // }
 
+        }
+
+        private EvaluationResult CheckWithOneJoker(List<Card> playerHand, List<Card> tableCards, EvaluationResult result)
+        {
+            var isStraightResult = new Straight().Check(playerHand, tableCards);
+            if (isStraightResult.IsWinningHand is false)
+                return result;
+
+            var (isStraightFlush, numberOfUsedJokers) =
+                AnalyzeStraightCardsSuits(isStraightResult.EvaluatedHand.Cards);
+
+            if (isStraightFlush is false)
+                return result;
+
+            result.IsWinningHand = true;
+            result.EvaluatedHand.HandType = HandType.StraightFlush;
+            result.EvaluatedHand.Cards = isStraightResult.EvaluatedHand.Cards.ToList();
+
+            var joker = isStraightResult.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker);
+            joker.SubstitutedCard.Suit = result.EvaluatedHand.Cards[0].Suit;
+
+            EvaluateHand(result);
+
+            result.EvaluatedHand.Cards = SortByDescending(result.EvaluatedHand.Cards);
+
+            return result;
+        }
+
+        private List<Card> SortByDescending(List<Card> cards)
+        {
+            foreach (var card in cards.Where(c => c.Rank is CardRankType.Joker))
+            {
+                card.Rank = card.SubstitutedCard.Rank;
+            }
+
+            cards = cards
+                .OrderByDescending(c => c.Rank)
+                .ToList();
+
+            foreach (var card in cards.Where(c => c.SubstitutedCard is not null))
+            {
+                card.Rank = CardRankType.Joker;
+            }
+
+            return cards;
+        }
+
+        private static void EvaluateHand(EvaluationResult result)
+        {
+            foreach (var card in result.EvaluatedHand.Cards)
+            {
+                if (card.Rank is CardRankType.Joker)
+                {
+                   result.EvaluatedHand.Value += (int) card.SubstitutedCard.Rank * Rate;
+                   continue;
+                }
+                
+                result.EvaluatedHand.Value += (int) card.Rank * Rate;
+            }
+                
+        }
+
+        private EvaluationResult CheckWithNoJokers(List<Card> playerHand, List<Card> tableCards, EvaluationResult result)
+        {
+            var isStraightResult = new Straight().Check(playerHand, tableCards);
+            if (isStraightResult.IsWinningHand is false)
+                return result;
+
+            var (isStraightFlush, numberOfUsedJokers) =
+                AnalyzeStraightCardsSuits(isStraightResult.EvaluatedHand.Cards);
+
+            if (isStraightFlush is false)
+                return result;
+
+            result.IsWinningHand = true;
+            result.EvaluatedHand.HandType = HandType.StraightFlush;
+            result.EvaluatedHand.Cards = isStraightResult.EvaluatedHand.Cards.ToList();
+
+            foreach (var card in result.EvaluatedHand.Cards)
+                result.EvaluatedHand.Value += (int) card.Rank * Rate;
+
+            return result;
         }
 
         private (bool, int) AnalyzeStraightCardsSuits(List<Card> cards)

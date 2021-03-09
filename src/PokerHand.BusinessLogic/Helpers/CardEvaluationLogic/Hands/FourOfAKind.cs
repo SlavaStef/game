@@ -45,6 +45,7 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                             result.EvaluatedHand.Value += (int) threeOfAKindCheck.threeCards[0].Rank * 4 * Rate;
 
                             var joker = allCards.First(c => c.Rank is CardRankType.Joker);
+                            joker.SubstitutedCard = new Card {Rank = threeOfAKindCheck.threeCards[0].Rank};
                             result.EvaluatedHand.Cards.Add(joker);
                             
                             var side = allCards
@@ -72,7 +73,11 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                             result.EvaluatedHand.Cards.AddRange(onePairCheck.onePair);
                             result.EvaluatedHand.Value += (int) onePairCheck.onePair[0].Rank * 4 * Rate;
 
-                            var jokers = allCards.Where(c => c.Rank is CardRankType.Joker);
+                            var jokers = allCards.Where(c => c.Rank is CardRankType.Joker).ToList();
+
+                            foreach (var card in jokers)
+                                card.SubstitutedCard = new Card {Rank = result.EvaluatedHand.Cards[0].Rank};
+                            
                             result.EvaluatedHand.Cards.AddRange(jokers);
                             
                             var side = allCards

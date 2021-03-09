@@ -56,7 +56,6 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
         {
             var checkResultOneJoker = new EvaluationResult();
             Card joker;
-            Card maxCard;
 
             // ThreeOfAKind + (Joker + MaxCard)
             var (isThreeOfAKind, newCards, threeCard) = CheckForThreeOfAKind(allCards);
@@ -75,11 +74,14 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 var highestRankFromTwoPairs = twoPairsCheckResult.twoPairs.Select(c => (int) c.Rank).Max();
 
                 joker = twoPairsCheckResult.newCards.First(c => c.Rank == CardRankType.Joker);
+                joker.SubstitutedCard = new Card {Rank = (CardRankType) highestRankFromTwoPairs};
 
                 checkResultOneJoker.IsWinningHand = true;
                 checkResultOneJoker.EvaluatedHand.HandType = HandType.FullHouse;
-                checkResultOneJoker.EvaluatedHand.Cards = twoPairsCheckResult.twoPairs
-                    .Concat(new List<Card>() {joker}).ToList();
+
+                checkResultOneJoker.EvaluatedHand.Cards = new List<Card>(5) {joker};
+                checkResultOneJoker.EvaluatedHand.Cards.AddRange(
+                    twoPairsCheckResult.twoPairs.OrderByDescending(c => c.Rank));
                 checkResultOneJoker.EvaluatedHand.Value = ((int) twoPairsCheckResult.twoPairs[0].Rank * 2 +
                                                            (int) twoPairsCheckResult.twoPairs[2].Rank * 2 +
                                                            highestRankFromTwoPairs) * Rate;
@@ -87,16 +89,17 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 return checkResultOneJoker;
             }
 
-            maxCard = newCards
+            var maxCard = newCards
                 .First(c => (int) c.Rank == newCards.Where(card => card.Rank != CardRankType.Joker)
                     .Select(card => (int) card.Rank).Max());
 
             joker = newCards.First(c => c.Rank == CardRankType.Joker);
+            joker.SubstitutedCard = new Card {Rank = maxCard.Rank};
 
             checkResultOneJoker.IsWinningHand = true;
             checkResultOneJoker.EvaluatedHand.HandType = HandType.FullHouse;
             checkResultOneJoker.EvaluatedHand.Cards =
-                threeCard.Concat(new List<Card>() {maxCard, joker}).ToList();
+                threeCard.Concat(new List<Card> {maxCard, joker}).ToList();
             checkResultOneJoker.EvaluatedHand.Value =
                 ((int) threeCard[0].Rank * 3 + (int) maxCard.Rank * 2) * Rate;
 
@@ -108,6 +111,7 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
             var checkResultTwoJokers = new EvaluationResult();
 
             // ThreeOfAKind + (Joker + Joker)
+            // TODO: situation: (one card from threeOfAKind + Joker + Joker) + highCard + highCard
             var (isThreeOfAKind, newCards, threeCard) = CheckForThreeOfAKind(allCards);
 
             if (isThreeOfAKind is false)
@@ -128,29 +132,56 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
                 var jokersFromList = allCards.Where(c => c.Rank == CardRankType.Joker).ToList();
 
+                foreach (var card in jokersFromList)
+                {
+                    card.SubstitutedCard = new Card {Rank = maxCardFromPair.Rank};
+                    card.Rank = maxCardFromPair.Rank;
+                }
+                
                 checkResultTwoJokers.IsWinningHand = true;
                 checkResultTwoJokers.EvaluatedHand.HandType = HandType.FullHouse;
                 checkResultTwoJokers.EvaluatedHand.Cards =
-                    onePair.Concat(jokersFromList).Concat(new List<Card>() {maxCardFromPair}).ToList();
+                    onePair.Concat(jokersFromList).Concat(new List<Card> {maxCardFromPair}).ToList();
                 checkResultTwoJokers.EvaluatedHand.Value =
                     ((int) onePair[0].Rank * 2 + (int) maxCardFromPair.Rank * 3) * Rate;
+
+                checkResultTwoJokers.EvaluatedHand.Cards =
+                    checkResultTwoJokers.EvaluatedHand.Cards.OrderByDescending(c => c.Rank).ToList();
+
+                foreach (var card in checkResultTwoJokers.EvaluatedHand.Cards.Where(card => card.SubstitutedCard is not null))
+                    card.Rank = CardRankType.Joker;
 
                 return checkResultTwoJokers;
             }
 
-            var maxCard = newCards
-                .First(c => (int) c.Rank == newCards.Where(card => card.Rank != CardRankType.Joker)
-                    .Select(card => (int) card.Rank).Max());
+            var maxRank =
+                GetMaxAvailableRank(allCards.Except(threeCard).Where(c => c.Rank is not CardRankType.Joker).ToList(),
+                    threeCard[0].Rank);
 
             var jokers = newCards.Where(c => c.Rank == CardRankType.Joker).ToList();
 
+            foreach (var card in jokers)
+                card.SubstitutedCard = new Card {Rank = (CardRankType) maxRank};
+
             checkResultTwoJokers.IsWinningHand = true;
             checkResultTwoJokers.EvaluatedHand.HandType = HandType.FullHouse;
+            
             checkResultTwoJokers.EvaluatedHand.Cards = threeCard.Concat(jokers).ToList();
             checkResultTwoJokers.EvaluatedHand.Value =
-                ((int) threeCard[0].Rank * 3 + (int) maxCard.Rank * 2) * Rate;
+                ((int) threeCard[0].Rank * 3 + maxRank * 2) * Rate;
 
             return checkResultTwoJokers;
+        }
+
+        private int GetMaxAvailableRank(List<Card> cards, CardRankType rank)
+        {
+            for (var cardRank = CardRankType.Ace; cardRank >= CardRankType.Deuce; cardRank--)
+            {
+                if (cardRank != rank && cards.Any(c => c.Rank == cardRank) is false)
+                    return (int)cardRank;
+            }
+
+            return 2;
         }
 
         private (bool, List<Card>, List<Card>) CheckForThreeAndPair(List<Card> cards)

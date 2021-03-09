@@ -55,7 +55,10 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
                     result.EvaluatedHand.Cards = new List<Card>();
                     result.EvaluatedHand.Cards.AddRange(cards);
-                    result.EvaluatedHand.Cards.Add(allCards.First(c => c.Rank is CardRankType.Joker));
+
+                    var joker = allCards.First(c => c.Rank is CardRankType.Joker);
+                    joker.SubstitutedCard = new Card {Rank = result.EvaluatedHand.Cards[0].Rank};
+                    result.EvaluatedHand.Cards.Add(joker);
 
                     result.EvaluatedHand.Value = (int) cards[0].Rank * 5 * Rate;
 
@@ -78,7 +81,15 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                     
                     result.EvaluatedHand.Cards = new List<Card>();
                     result.EvaluatedHand.Cards.AddRange(cardsToAdd);
-                    result.EvaluatedHand.Cards.AddRange(allCards.Where(c => c.Rank is CardRankType.Joker).ToList());
+                    var jokersToAdd = allCards.Where(c => c.Rank is CardRankType.Joker).ToList();
+
+                    foreach (var card in jokersToAdd)
+                        card.SubstitutedCard = new Card {Rank = result.EvaluatedHand.Cards[0].Rank};
+                    
+                    result.EvaluatedHand.Cards.AddRange(jokersToAdd);
+
+                    if (result.EvaluatedHand.Cards.Count > 5)
+                        result.EvaluatedHand.Cards.Remove(result.EvaluatedHand.Cards.Last());
 
                     result.EvaluatedHand.Value = (int) cardsToAdd[0].Rank * 5 * Rate;
 

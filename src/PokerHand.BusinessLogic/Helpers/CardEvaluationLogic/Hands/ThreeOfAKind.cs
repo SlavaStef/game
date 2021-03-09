@@ -35,7 +35,10 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
                     // Reset jokers
                     foreach (var cardToAdd in result.EvaluatedHand.Cards.Where(cardToAdd => cardToAdd.WasJoker))
+                    {
+                        cardToAdd.SubstitutedCard = new Card {Rank = cardToAdd.Rank};
                         cardToAdd.Rank = CardRankType.Joker;
+                    }
                     
                     foreach (var cardToRemove in possibleThreeOfAKind) 
                         allCards.Remove(cardToRemove);

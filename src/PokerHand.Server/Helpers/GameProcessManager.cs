@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -172,8 +173,9 @@ namespace PokerHand.Server.Helpers
 
                 // Choose next player to make choice
                 SetCurrentPlayer(table);
+                var currentPlayerId = table.CurrentPlayer.Id;
                 await _hub.Clients.Group(table.Id.ToString())
-                    .ReceiveCurrentPlayerIdInWagering(JsonSerializer.Serialize(table.CurrentPlayer.Id));
+                    .ReceiveCurrentPlayerIdInWagering(JsonSerializer.Serialize(currentPlayerId));
 
                 _logger.LogInformation($"StartWagering. Table after setting current player: {JsonSerializer.Serialize(table)}");
                 if (table.CurrentPlayer.Type is PlayerType.Computer)
@@ -201,14 +203,21 @@ namespace PokerHand.Server.Helpers
                 {
                     //TODO: Handle player's leaving during WaitOne
                     //TODO: Make timer
+                    _logger.LogInformation($"StartWagering. Waiting");
                     table.WaitForPlayerBet.WaitOne();
                 }
 
-                await ProcessPlayerAction(table, table.CurrentPlayer);
+                if (table.ActivePlayers.Any(p => p.Id == currentPlayerId))
+                {
+                    _logger.LogInformation($"StartWagering. Inside IF");
+                    await ProcessPlayerAction(table, table.CurrentPlayer);
 
-                await _hub.Clients.GroupExcept(table.Id.ToString(), table.CurrentPlayer.ConnectionId)
-                    .ReceivePlayerAction(JsonSerializer.Serialize(table.CurrentPlayer.CurrentAction));
+                    await _hub.Clients.GroupExcept(table.Id.ToString(), table.CurrentPlayer.ConnectionId)
+                        .ReceivePlayerAction(JsonSerializer.Serialize(table.CurrentPlayer.CurrentAction));
+                }
 
+                _logger.LogInformation($"StartWagering. Outside IF");
+                
                 // Check if one of two players folded
                 if (table.ActivePlayers.Count == 1)
                 {
@@ -218,12 +227,6 @@ namespace PokerHand.Server.Helpers
 
                 await _hub.Clients.Group(table.Id.ToString())
                     .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-
-                // if (CheckForEndRoundDueToAllIn(table))
-                // {
-                //     await DealCommunityCards(table, 5 - table.CommunityCards.Count);
-                //     break;
-                // }
 
                 actionCounter--;
             } while (!CheckForWageringEnd(table, actionCounter));
@@ -281,12 +284,12 @@ namespace PokerHand.Server.Helpers
             _logger.LogInformation("Showdown. Start");
             table.CurrentStage = RoundStageType.Showdown;
 
-            var finalSidePots = _cardEvaluationService.CalculateSidePotsWinners(table);
+            table.SidePots = _cardEvaluationService.CalculateSidePotsWinners(table);
 
-            GiveMoneyToWinners(finalSidePots);
+            GiveMoneyToWinners(table.SidePots);
 
             await _hub.Clients.Group(table.Id.ToString())
-                .ReceiveWinners(JsonSerializer.Serialize(_mapper.Map<List<SidePotDto>>(finalSidePots)));
+                .ReceiveWinners(JsonSerializer.Serialize(_mapper.Map<List<SidePotDto>>(table.SidePots)));
 
             await _hub.Clients.Group(table.Id.ToString())
                 .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
@@ -300,6 +303,8 @@ namespace PokerHand.Server.Helpers
         // CleanUp
         private async Task RefreshTable(Table table)
         {
+            await Statistics(table);
+            
             table.CurrentStage = RoundStageType.Refresh;
 
             table.Deck = new Deck(table.Type);
@@ -308,8 +313,8 @@ namespace PokerHand.Server.Helpers
             table.CommunityCards = new List<Card>(5);
             table.CurrentPlayer = null;
             table.CurrentMaxBet = 0;
-            table.Winners = new List<Player>(table.MaxPlayers);
             table.IsEndDueToAllIn = false;
+            table.SidePots = new List<SidePot>(table.MaxPlayers);
 
             if (table.Type is SitAndGo)
                 await RefreshSitAndGoTable(table);
@@ -322,6 +327,34 @@ namespace PokerHand.Server.Helpers
                 .OnGameEnd();
 
             await RunNextStage(table);
+        }
+
+        private async Task Statistics(Table table)
+        {
+            foreach (var player in table.ActivePlayers)
+            {
+                var isWinner = table.SidePots
+                    .First(sp => sp.Type is SidePotType.Main)
+                    .Winners
+                    .Contains(player);
+                
+                await _playerService.IncreaseNumberOfPlayedGamesAsync(player.Id, isWinner);
+
+                if (player.BestHandType < player.Hand)
+                    await _playerService.ChangeBestHandTypeAsync(player.Id, (int) player.Hand);
+
+                if (isWinner)
+                {
+                    var winAmount = table.SidePots.First(sp => sp.Type is SidePotType.Main).WinningAmountPerPlayer;
+
+                    if (player.BiggestWin < winAmount)
+                        await _playerService.ChangeBiggestWinAsync(player.Id, winAmount);
+
+                    await _playerService.AddWinExperienceAsync(player.Id);
+                }
+
+                await _playerService.AddLooseExperienceAsync(player.Id);
+            }
         }
 
         #region PrivateHelpers
@@ -755,8 +788,16 @@ namespace PokerHand.Server.Helpers
         {
             _logger.LogInformation("RefreshSitAndGoTable. Start");
 
-            table.SmallBlind *= 2;
-            table.BigBlind *= 2;
+            if (table.SitAndGoRoundCounter is 4)
+            {
+                table.SmallBlind *= 2;
+                table.BigBlind *= 2;
+
+                table.SitAndGoRoundCounter = 0;
+            }
+
+            table.SitAndGoRoundCounter++;
+            
             _logger.LogInformation("RefreshSitAndGoTable. Blinds are doubled");
 
             await RemovePlayersWithEmptyStackMoney(table);
@@ -772,6 +813,8 @@ namespace PokerHand.Server.Helpers
 
                 await _playerService.AddTotalMoney(table.ActivePlayers[0].Id, firstPlacePrize);
                 _logger.LogInformation("RefreshSitAndGoTable. Prize added to db");
+
+                await _playerService.IncreaseNumberOfSitNGoWinsAsync(table.ActivePlayers[0].Id);
 
                 await _hub.Clients.Client(table.ActivePlayers[0].ConnectionId)
                     .EndSitAndGoGame("1");

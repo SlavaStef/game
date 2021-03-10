@@ -66,7 +66,8 @@ namespace PokerHand.DataAccess.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task IncreaseNumberOfPlayedGamedAsync(Guid playerId, bool isWin)
+        // Statistics
+        public async Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin)
         {
             var player = await _context.Players.FirstOrDefaultAsync(p => p.Id == playerId);
 

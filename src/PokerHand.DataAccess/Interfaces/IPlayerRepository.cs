@@ -13,7 +13,7 @@ namespace PokerHand.DataAccess.Interfaces
         Task SubtractTotalMoneyAsync(Guid playerId, int amount);
         Task AddCoinsAsync(Guid playerId, int amount);
         Task SubtractCoinsAsync(Guid playerId, int amount);
-        Task IncreaseNumberOfPlayedGamedAsync(Guid playerId, bool isWin);
+        Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin);
         Task IncreaseNumberOfSitNGoWinsAsync(Guid playerId);
         Task ChangeBestHandTypeAsync(Guid playerId, int newHandType);
         Task ChangeBiggestWinAsync(Guid playerId, int newBiggestWin);

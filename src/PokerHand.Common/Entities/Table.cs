@@ -27,10 +27,11 @@ namespace PokerHand.Common.Entities
             ActivePlayers = new List<Player>(MaxPlayers);
             Pot = new Pot(this);
             CommunityCards = new List<Card>(5);
-            Winners = new List<Player>(MaxPlayers);
             DealerIndex = -1;
             SmallBlindIndex = -1;
             BigBlindIndex = -1;
+            SitAndGoRoundCounter = 0;
+            SidePots = new List<SidePot>(MaxPlayers);
 
             //WaitForPlayerBet = new AutoResetEvent(false);
         }
@@ -58,7 +59,8 @@ namespace PokerHand.Common.Entities
         public int DealerIndex { get; set; }
         public int SmallBlindIndex { get; set; }
         public int BigBlindIndex { get; set; }
-        public List<Player> Winners { get; set; }
+        public List<SidePot> SidePots { get; set; }
+        public int SitAndGoRoundCounter { get; set; }
 
         private void SetOptions(TableTitle tableTitle)
         {

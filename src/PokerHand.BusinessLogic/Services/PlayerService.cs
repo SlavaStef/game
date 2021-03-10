@@ -23,6 +23,9 @@ namespace PokerHand.BusinessLogic.Services
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
+        private const int WinExperience = 10;
+        private const int LooseExperience = 5;
+
         public PlayerService(
             UserManager<Player> userManager, 
             IMapper mapper, 
@@ -122,6 +125,37 @@ namespace PokerHand.BusinessLogic.Services
                 .Players
                 .First(p => p.Id == playerId)
                 .IsReady = true;
+        }
+
+        // Statistics
+        
+        public async Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin)
+        {
+            await _unitOfWork.Players.IncreaseNumberOfPlayedGamesAsync(playerId, isWin);
+        }
+        public async Task IncreaseNumberOfSitNGoWinsAsync(Guid playerId)
+        {
+            await _unitOfWork.Players.IncreaseNumberOfSitNGoWinsAsync(playerId);
+        }
+        
+        public async Task ChangeBestHandTypeAsync(Guid playerId, int newHandType)
+        {
+            await _unitOfWork.Players.ChangeBestHandTypeAsync(playerId, newHandType);
+        }
+
+        public async Task ChangeBiggestWinAsync(Guid playerId, int newBiggestWin)
+        {
+            await _unitOfWork.Players.ChangeBiggestWinAsync(playerId, newBiggestWin);
+        }
+
+        public async Task AddWinExperienceAsync(Guid playerId)
+        {
+            await _unitOfWork.Players.AddExperienceAsync(playerId, WinExperience);
+        }
+        
+        public async Task AddLooseExperienceAsync(Guid playerId)
+        {
+            await _unitOfWork.Players.AddExperienceAsync(playerId, LooseExperience);
         }
     }
 }

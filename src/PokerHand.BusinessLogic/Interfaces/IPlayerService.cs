@@ -14,5 +14,12 @@ namespace PokerHand.BusinessLogic.Interfaces
         Task AddTotalMoney(Guid playerId, int amountToAdd);
         Task<PlayerProfileDto> GetPlayerProfile(Guid playerId);
         void SetPlayerReady(Guid tableId, Guid playerId);
+
+        Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin);
+        Task IncreaseNumberOfSitNGoWinsAsync(Guid playerId);
+        Task ChangeBestHandTypeAsync(Guid playerId, int newHandType);
+        Task ChangeBiggestWinAsync(Guid playerId, int newBiggestWin);
+        Task AddWinExperienceAsync(Guid playerId);
+        Task AddLooseExperienceAsync(Guid playerId);
     }
 }

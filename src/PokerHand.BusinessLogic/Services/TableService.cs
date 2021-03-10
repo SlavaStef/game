@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -153,12 +154,13 @@ namespace PokerHand.BusinessLogic.Services
             try
             {
                 var table = _allTables.GetById(tableId);
-                if (table is null)
+                var player = table?.Players.FirstOrDefault(p => p.Id == playerId);
+                if (player is null) 
                     return null;
-                
-                var player = table.Players.First(p => p.Id == playerId);
             
                 // Deal with player's state on table
+                await Statistics(player);
+                
                 if (player.CurrentBet != 0)
                     table.Pot.TotalAmount += player.CurrentBet;
             
@@ -201,7 +203,14 @@ namespace PokerHand.BusinessLogic.Services
             }
             
         }
-        
+
+        private async Task Statistics(Player player)
+        {
+            await _playerService.IncreaseNumberOfPlayedGamesAsync(player.Id, false);
+            
+            await _playerService.AddLooseExperienceAsync(player.Id);
+        }
+
         public void RemoveTableById(Guid tableId) => 
             _allTables.Remove(tableId);
 

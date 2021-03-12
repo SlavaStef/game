@@ -11,6 +11,16 @@ namespace PokerHand.Server
     {
         public static void Main(string[] args)
         {
+            var rootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot");
+            var profileImagesPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "profileImages");
+            
+            if (Directory.Exists(profileImagesPath) is false)
+            {
+                Directory.CreateDirectory(rootPath);
+                Directory.CreateDirectory(profileImagesPath);
+            }
+            
+            
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -27,7 +37,7 @@ namespace PokerHand.Server
             CreateHostBuilder(args).Build().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
+        private static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .UseSerilog()
                 .ConfigureWebHostDefaults(webBuilder =>

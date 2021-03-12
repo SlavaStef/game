@@ -6,17 +6,20 @@ using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers;
 using PokerHand.DataAccess.Interfaces;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace PokerHand.BusinessLogic.Services
 {
     public class PlayerService : IPlayerService
     {
+        private readonly IMediaService _mediaService;
         private readonly ITablesOnline _allTables;
         private readonly UserManager<Player> _userManager;
         private readonly ILogger<TableService> _logger;
@@ -31,16 +34,17 @@ namespace PokerHand.BusinessLogic.Services
             IMapper mapper, 
             ILogger<TableService> logger, 
             IUnitOfWork unitOfWork, 
-            ITablesOnline allTables)
+            ITablesOnline allTables, IMediaService mediaService)
         {
             _userManager = userManager;
             _mapper = mapper;
             _logger = logger;
             _unitOfWork = unitOfWork;
             _allTables = allTables;
+            _mediaService = mediaService;
         }
 
-        public async Task<PlayerProfileDto> AddNewPlayer(string playerName)
+        public async Task<PlayerProfileDto> CreatePlayer(string playerName)
         {
             var newPlayer = new Player
             {
@@ -57,10 +61,16 @@ namespace PokerHand.BusinessLogic.Services
                 SitAndGoWins = 0
             };
             
-            var addPlayerResult = await _userManager.CreateAsync(newPlayer);
+            var createResult = await _userManager.CreateAsync(newPlayer);
 
-            if (!addPlayerResult.Succeeded)
+            if (!createResult.Succeeded)
                 return null;
+
+            var setImageResult = await _mediaService.SetDefaultProfileImage(JsonSerializer.Serialize(newPlayer.Id));
+            if (setImageResult.IsSuccess is false)
+            {
+                _logger.LogError($"CreatePlayer. {setImageResult.Message} playerId: {newPlayer.Id}");
+            }
             
             _logger.LogInformation($"New player {newPlayer.UserName} registered");
             return _mapper.Map<PlayerProfileDto>(newPlayer);

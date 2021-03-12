@@ -15,6 +15,9 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task ReceivePlayerAction(string actionFromPlayer);
         Task PlayerDisconnected(string tableDto);
 
+        // Media
+        Task ReceiveProfileImage(byte[] image);
+
         // Methods, used in game process manager
         Task WaitForPlayers();
         Task SetDealerAndBlinds(string tableDto);

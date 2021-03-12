@@ -15,5 +15,10 @@ namespace PokerHand.Server.Hubs.Interfaces
         void ReceiveActivePlayerStatus(string tableId, string playerId);
         Task LeaveTable(string tableId, string playerId);
         Task OnDisconnectedAsync(Exception exception);
+        
+        // Media
+        Task UpdateProfileImage(string imageJson);
+        Task GetProfileImage(string playerIdJson);
+        Task RemoveProfileImage(string playerIdJson);
     }
 }

@@ -9,7 +9,7 @@ using Xunit;
 
 namespace PokerHand.BusinessLogic.Tests
 {
-    public class HandEvaluatorTests
+    public class CardEvaluationLogicTests
     {
         #region High Card
 

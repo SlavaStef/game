@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +24,7 @@ namespace PokerHand.Server.Hubs
         private readonly IPlayersOnline _allPlayers;
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
+        private readonly IMediaService _mediaService;
         private readonly IGameProcessManager _gameProcessManager;
         private readonly ILogger<GameHub> _logger;
         private readonly IMapper _mapper;
@@ -33,7 +36,8 @@ namespace PokerHand.Server.Hubs
             ILogger<GameHub> logger, 
             IPlayersOnline allPlayers, 
             ITablesOnline allTables, 
-            IMapper mapper)
+            IMapper mapper, 
+            IMediaService mediaService)
         {
             _tableService = tableService;
             _playerService = playerService;
@@ -42,8 +46,9 @@ namespace PokerHand.Server.Hubs
             _allPlayers = allPlayers;
             _allTables = allTables;
             _mapper = mapper;
+            _mediaService = mediaService;
         }
-
+        
         public override async Task OnConnectedAsync()
         {
             _logger.LogInformation($"GameHub. Player {Context.ConnectionId} connected");
@@ -51,7 +56,7 @@ namespace PokerHand.Server.Hubs
         
         public async Task RegisterNewPlayer(string userName)
         {
-            var playerProfileDto = await _playerService.AddNewPlayer(userName);
+            var playerProfileDto = await _playerService.CreatePlayer(userName);
 
             if (playerProfileDto == null)
                 return;

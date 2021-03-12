@@ -59,6 +59,7 @@ namespace PokerHand.Server
             services.AddTransient<ITableService, TableService>();
             services.AddTransient<IBotService, BotService>();
             services.AddTransient<ICardEvaluationService, CardEvaluationService>();
+            services.AddTransient<IMediaService, MediaService>();
             
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             

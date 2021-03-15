@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Table;
 using PokerHand.Server.Helpers;
 using PokerHand.Server.Hubs.Interfaces;

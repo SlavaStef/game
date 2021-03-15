@@ -4,7 +4,8 @@ using System.IO.Abstractions;
 using System.Text.Json;
 using System.Threading.Tasks;
 using PokerHand.BusinessLogic.Interfaces;
-using PokerHand.Common.Helpers;
+using PokerHand.Common;
+using PokerHand.Common.Helpers.Media;
 
 namespace PokerHand.BusinessLogic.Services
 {

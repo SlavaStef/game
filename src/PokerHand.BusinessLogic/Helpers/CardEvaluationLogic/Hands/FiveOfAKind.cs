@@ -2,8 +2,8 @@
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
 
 namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
@@ -43,7 +43,7 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                         return result;
 
                     result.IsWinningHand = true;
-                    result.EvaluatedHand.HandType = HandType.FiveOfAKind;
+                    result.Hand.HandType = HandType.FiveOfAKind;
                     
                     var rank = dict
                         .First(c => c.Value is 4)
@@ -53,14 +53,14 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                         .Where(c => c.Rank == rank)
                         .ToList();
 
-                    result.EvaluatedHand.Cards = new List<Card>();
-                    result.EvaluatedHand.Cards.AddRange(cards);
+                    result.Hand.Cards = new List<Card>();
+                    result.Hand.Cards.AddRange(cards);
 
                     var joker = allCards.First(c => c.Rank is CardRankType.Joker);
-                    joker.SubstitutedCard = new Card {Rank = result.EvaluatedHand.Cards[0].Rank};
-                    result.EvaluatedHand.Cards.Add(joker);
+                    joker.SubstitutedCard = new Card {Rank = result.Hand.Cards[0].Rank};
+                    result.Hand.Cards.Add(joker);
 
-                    result.EvaluatedHand.Value = (int) cards[0].Rank * 5 * Rate;
+                    result.Hand.Value = (int) cards[0].Rank * 5 * Rate;
 
                     return result;
                 case 2:
@@ -69,7 +69,7 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                         return result;
                     
                     result.IsWinningHand = true;
-                    result.EvaluatedHand.HandType = HandType.FiveOfAKind;
+                    result.Hand.HandType = HandType.FiveOfAKind;
                     
                     var cardsRank = dict
                         .First(c => c.Value >= 3)
@@ -79,19 +79,19 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                         .Where(c => c.Rank == cardsRank)
                         .ToList();
                     
-                    result.EvaluatedHand.Cards = new List<Card>();
-                    result.EvaluatedHand.Cards.AddRange(cardsToAdd);
+                    result.Hand.Cards = new List<Card>();
+                    result.Hand.Cards.AddRange(cardsToAdd);
                     var jokersToAdd = allCards.Where(c => c.Rank is CardRankType.Joker).ToList();
 
                     foreach (var card in jokersToAdd)
-                        card.SubstitutedCard = new Card {Rank = result.EvaluatedHand.Cards[0].Rank};
+                        card.SubstitutedCard = new Card {Rank = result.Hand.Cards[0].Rank};
                     
-                    result.EvaluatedHand.Cards.AddRange(jokersToAdd);
+                    result.Hand.Cards.AddRange(jokersToAdd);
 
-                    if (result.EvaluatedHand.Cards.Count > 5)
-                        result.EvaluatedHand.Cards.Remove(result.EvaluatedHand.Cards.Last());
+                    if (result.Hand.Cards.Count > 5)
+                        result.Hand.Cards.Remove(result.Hand.Cards.Last());
 
-                    result.EvaluatedHand.Value = (int) cardsToAdd[0].Rank * 5 * Rate;
+                    result.Hand.Value = (int) cardsToAdd[0].Rank * 5 * Rate;
 
                     return result;
             }

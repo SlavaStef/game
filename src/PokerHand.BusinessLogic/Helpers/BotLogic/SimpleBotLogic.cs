@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using PokerHand.BusinessLogic.Helpers.BotLogic.Interfaces;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.CardEvaluation;
+using PokerHand.Common.Helpers.GameProcess;
 
 namespace PokerHand.BusinessLogic.Helpers.BotLogic
 {

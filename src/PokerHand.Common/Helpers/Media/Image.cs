@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PokerHand.Common.Helpers
+namespace PokerHand.Common.Helpers.Media
 {
     public class Image
     {

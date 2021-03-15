@@ -4,7 +4,7 @@ using System.IO.Abstractions.TestingHelpers;
 using System.Text.Json;
 using FluentAssertions;
 using PokerHand.BusinessLogic.Services;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.Media;
 using Xunit;
 
 namespace PokerHand.BusinessLogic.Tests

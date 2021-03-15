@@ -5,9 +5,9 @@ using PokerHand.BusinessLogic.Helpers.BotLogic;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Bot;
+using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Table;
-using Serilog;
 
 namespace PokerHand.BusinessLogic.Services
 {

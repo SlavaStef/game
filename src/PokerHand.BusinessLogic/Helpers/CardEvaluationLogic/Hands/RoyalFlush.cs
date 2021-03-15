@@ -2,8 +2,8 @@
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
 
 namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
@@ -19,14 +19,14 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
             switch (straightFlushCheckResult.IsWinningHand)
             {
-                case true when straightFlushCheckResult.EvaluatedHand.Cards[0].Rank is CardRankType.Ace:
+                case true when straightFlushCheckResult.Hand.Cards[0].Rank is CardRankType.Ace:
                 {
                     result.IsWinningHand = true;
-                    result.EvaluatedHand.HandType = HandType.RoyalFlush;
-                    result.EvaluatedHand.Cards = straightFlushCheckResult.EvaluatedHand.Cards.ToList();
+                    result.Hand.HandType = HandType.RoyalFlush;
+                    result.Hand.Cards = straightFlushCheckResult.Hand.Cards.ToList();
 
-                    foreach (var card in result.EvaluatedHand.Cards)
-                        result.EvaluatedHand.Value += (int) card.Rank * Rate;
+                    foreach (var card in result.Hand.Cards)
+                        result.Hand.Value += (int) card.Rank * Rate;
 
                     return result;
                 }

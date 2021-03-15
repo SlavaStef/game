@@ -2,7 +2,7 @@
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.CardEvaluation;
 
 namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
@@ -13,7 +13,7 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
             var result = new EvaluationResult
             {
                 IsWinningHand = true,
-                EvaluatedHand = new EvaluatedHand
+                Hand = new Hand
                 {
                     Cards = new List<Card>(5),
                     HandType = HandType.HighCard,
@@ -28,8 +28,8 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
             for (var index = 0; index < 5; index++)
             {
-                result.EvaluatedHand.Cards.Add(allCards[index]);
-                result.EvaluatedHand.Value += (int)allCards[index].Rank;
+                result.Hand.Cards.Add(allCards[index]);
+                result.Hand.Value += (int)allCards[index].Rank;
             }
             
             return result;

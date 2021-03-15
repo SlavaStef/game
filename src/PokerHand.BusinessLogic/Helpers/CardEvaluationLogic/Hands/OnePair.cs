@@ -2,8 +2,8 @@
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
 
 namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
@@ -24,46 +24,46 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                     foreach (var card in allCards.Where(card => allCards.Count(c => c.Rank == card.Rank) is 2))
                     {
                         result.IsWinningHand = true;
-                        result.EvaluatedHand.HandType = HandType.OnePair;
+                        result.Hand.HandType = HandType.OnePair;
                         
                         var cardsToAdd = allCards
                             .Where(c => c.Rank == card.Rank)
                             .ToList();
                         
-                        result.EvaluatedHand.Cards = new List<Card>(5);
-                        result.EvaluatedHand.Cards.AddRange(cardsToAdd);
+                        result.Hand.Cards = new List<Card>(5);
+                        result.Hand.Cards.AddRange(cardsToAdd);
 
                         foreach (var c in cardsToAdd)
                             allCards.Remove(c);
                         
-                        result.EvaluatedHand.Cards.AddRange(GetSideCards(allCards));
+                        result.Hand.Cards.AddRange(GetSideCards(allCards));
                         
-                        result.EvaluatedHand.Value = CalculateHandValue(result.EvaluatedHand.Cards);
+                        result.Hand.Value = CalculateHandValue(result.Hand.Cards);
                         return result;
                     }
 
                     return result;
                 case 1:
                     result.IsWinningHand = true;
-                    result.EvaluatedHand.HandType = HandType.OnePair;
+                    result.Hand.HandType = HandType.OnePair;
 
                     var highestCard = allCards
                         .Where(c => c.Rank is not CardRankType.Joker)
                         .OrderByDescending(c => c.Rank)
                         .First();
                     
-                    result.EvaluatedHand.Cards = new List<Card>(5);
-                    result.EvaluatedHand.Cards.Add(highestCard);
+                    result.Hand.Cards = new List<Card>(5);
+                    result.Hand.Cards.Add(highestCard);
                     allCards.Remove(highestCard);
 
                     var joker = allCards.First(c => c.Rank is CardRankType.Joker);
                     joker.SubstitutedCard = new Card {Rank = highestCard.Rank};
-                    result.EvaluatedHand.Cards.Add(joker);
+                    result.Hand.Cards.Add(joker);
                     allCards.Remove(joker);
                     
-                    result.EvaluatedHand.Cards.AddRange(GetSideCards(allCards));
+                    result.Hand.Cards.AddRange(GetSideCards(allCards));
                     
-                    result.EvaluatedHand.Value = CalculateHandValue(result.EvaluatedHand.Cards);
+                    result.Hand.Value = CalculateHandValue(result.Hand.Cards);
                     return result;
             }
 

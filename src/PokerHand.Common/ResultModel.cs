@@ -1,4 +1,4 @@
-﻿namespace PokerHand.Common.Helpers
+﻿namespace PokerHand.Common
 {
     public class ResultModel
     {
@@ -15,7 +15,7 @@
 
         public ResultModel(T value)
         {
-            this.Value = value;
+            Value = value;
         }
     }
 }

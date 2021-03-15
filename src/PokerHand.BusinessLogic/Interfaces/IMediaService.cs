@@ -1,6 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-using PokerHand.Common.Helpers;
+﻿using System.Threading.Tasks;
+using PokerHand.Common;
 
 namespace PokerHand.BusinessLogic.Interfaces
 {

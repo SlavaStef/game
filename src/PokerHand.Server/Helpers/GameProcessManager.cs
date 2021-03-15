@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Table;
 using PokerHand.Server.Hubs;
@@ -34,6 +33,7 @@ namespace PokerHand.Server.Helpers
         private readonly IPlayerService _playerService;
         private readonly IBotService _botService;
         private readonly ICardEvaluationService _cardEvaluationService;
+        private readonly IDeckService _deckService;
         private readonly IMapper _mapper;
         private readonly ILogger<GameHub> _logger;
 
@@ -45,7 +45,7 @@ namespace PokerHand.Server.Helpers
             IPlayerService playerService,
             ITablesOnline allTables,
             IBotService botService, 
-            ICardEvaluationService cardEvaluationService)
+            ICardEvaluationService cardEvaluationService, IDeckService deckService)
         {
             _hub = hubContext;
             _mapper = mapper;
@@ -55,6 +55,7 @@ namespace PokerHand.Server.Helpers
             _allTables = allTables;
             _botService = botService;
             _cardEvaluationService = cardEvaluationService;
+            _deckService = deckService;
         }
 
         public async Task StartRound(Guid tableId)
@@ -135,7 +136,7 @@ namespace PokerHand.Server.Helpers
 
             //table.CurrentStage = RoundStageType.DealCommunityCards;
 
-            var cardsToAdd = table.Deck.GetRandomCardsFromDeck(numberOfCards);
+            var cardsToAdd = _deckService.GetRandomCardsFromDeck(table.Deck, numberOfCards);
             table.CommunityCards.AddRange(cardsToAdd);
 
             await _hub.Clients.Group(table.Id.ToString())
@@ -307,8 +308,8 @@ namespace PokerHand.Server.Helpers
             
             table.CurrentStage = RoundStageType.Refresh;
 
-            table.Deck = new Deck(table.Type);
-            table.Pot = new Pot(table);
+            table.Deck = _deckService.GetNewDeck(table.Type);
+            table.Pot = new Pot();
 
             table.CommunityCards = new List<Card>(5);
             table.CurrentPlayer = null;
@@ -545,7 +546,7 @@ namespace PokerHand.Server.Helpers
             _logger.LogInformation("DealPocketCards. Start");
 
             foreach (var player in table.ActivePlayers)
-                player.PocketCards = table.Deck.GetRandomCardsFromDeck(2);
+                player.PocketCards = _deckService.GetRandomCardsFromDeck(table.Deck, 2);
 
             _logger.LogInformation("DealPocketCards. End");
         }

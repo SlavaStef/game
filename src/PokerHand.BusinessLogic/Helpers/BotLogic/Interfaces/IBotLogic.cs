@@ -1,4 +1,5 @@
 ﻿using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers.GameProcess;
 
 namespace PokerHand.BusinessLogic.Helpers.BotLogic.Interfaces
 {

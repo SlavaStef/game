@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.DataAccess.Interfaces;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -143,6 +141,7 @@ namespace PokerHand.BusinessLogic.Services
         {
             await _unitOfWork.Players.IncreaseNumberOfPlayedGamesAsync(playerId, isWin);
         }
+        
         public async Task IncreaseNumberOfSitNGoWinsAsync(Guid playerId)
         {
             await _unitOfWork.Players.IncreaseNumberOfSitNGoWinsAsync(playerId);

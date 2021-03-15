@@ -1,10 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.Media;
 
 namespace PokerHand.Server.Hubs
 {
@@ -21,7 +19,7 @@ namespace PokerHand.Server.Hubs
                 return;
             }
 
-            await Clients.Caller.ReceiveProfileImage(updateResult.Value);
+            await Clients.Caller.ReceiveProfileImage(JsonSerializer.Serialize(updateResult.Value));
         }
 
         public async Task GetProfileImage(string playerIdJson)
@@ -35,7 +33,7 @@ namespace PokerHand.Server.Hubs
                 return;
             }
             
-            await Clients.Caller.ReceiveProfileImage(getResult.Value);
+            await Clients.Caller.ReceiveProfileImage(JsonSerializer.Serialize(getResult.Value));
         }
 
         public async Task RemoveProfileImage(string playerIdJson)
@@ -49,7 +47,7 @@ namespace PokerHand.Server.Hubs
                 return;
             }
             
-            await Clients.Caller.ReceiveProfileImage(removeResult.Value);
+            await Clients.Caller.ReceiveProfileImage(JsonSerializer.Serialize(removeResult.Value));
         }
     }
 }

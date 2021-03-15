@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +12,7 @@ using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Table;
 
@@ -23,6 +23,7 @@ namespace PokerHand.BusinessLogic.Services
         private readonly ITablesOnline _allTables;
         private readonly UserManager<Player> _userManager;
         private readonly IPlayerService _playerService;
+        private readonly IDeckService _deckService;
         private readonly ILogger<TableService> _logger;
         private readonly IMapper _mapper;
 
@@ -31,13 +32,14 @@ namespace PokerHand.BusinessLogic.Services
             ILogger<TableService> logger, 
             IMapper mapper, 
             IPlayerService playerService, 
-            ITablesOnline allTables)
+            ITablesOnline allTables, IDeckService deckService)
         {
             _userManager = userManager;
             _logger = logger;
             _mapper = mapper;
             _playerService = playerService;
             _allTables = allTables;
+            _deckService = deckService;
         }
 
         public TableInfoDto GetTableInfo(string tableName)
@@ -188,7 +190,6 @@ namespace PokerHand.BusinessLogic.Services
                 if (table.Players.Count(p => p.Type is not PlayerType.Computer) is 0)
                 {
                     _allTables.Remove(table.Id);
-                    table.Dispose();
                     _logger.LogInformation("Table was removed from all tables list");
                     return null;
                 }
@@ -215,6 +216,21 @@ namespace PokerHand.BusinessLogic.Services
             _allTables.Remove(tableId);
 
         #region privateHelpers
+        
+        private static void SetTableOptions(Table table)
+        {
+            var tableName = Enum.GetName(typeof(TableTitle), (int) table.Title);
+
+            if (tableName is null)
+                throw new Exception();
+            
+            table.Type = (TableType)TableOptions.Tables[tableName]["TableType"];
+            table.SmallBlind = TableOptions.Tables[tableName]["SmallBlind"];
+            table.BigBlind = TableOptions.Tables[tableName]["BigBlind"];
+            table.MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"];
+            
+            table.MinPlayersToStart = table.Type is TableType.SitAndGo ? 5 : 2;
+        }
 
         // Get a required table with free seats
         private Table GetFreeTable(TableTitle tableTitle)
@@ -235,10 +251,28 @@ namespace PokerHand.BusinessLogic.Services
 
         private Table CreateNewTable(TableTitle tableTitle)
         {
-            var newTable = new Table(tableTitle);
-            _allTables.Add(newTable);
+            var table = new Table();
             
-            return newTable;
+            table.Id = Guid.NewGuid();
+            table.WaitForPlayerBet = new AutoResetEvent(false);
+            table.Title = tableTitle;
+            table.CurrentStage = RoundStageType.NotStarted;
+            SetTableOptions(table);
+
+            table.Deck = _deckService.GetNewDeck(table.Type);
+            table.Players = new List<Player>(table.MaxPlayers);
+            table.ActivePlayers = new List<Player>(table.MaxPlayers);
+            table.Pot = new Pot();
+            table.CommunityCards = new List<Card>(5);
+            table.DealerIndex = -1;
+            table.SmallBlindIndex = -1;
+            table.BigBlindIndex = -1;
+            table.SitAndGoRoundCounter = 0;
+            table.SidePots = new List<SidePot>(table.MaxPlayers);
+            
+            _allTables.Add(table);
+            
+            return table;
         }
 
         private static int GetFreeSeatIndex(Table table)

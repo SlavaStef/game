@@ -1,6 +1,4 @@
-﻿using PokerHand.Common.Helpers;
-
-namespace PokerHand.Common.Entities
+﻿namespace PokerHand.Common.Helpers.GameProcess
 {
     public class PlayerAction
     {

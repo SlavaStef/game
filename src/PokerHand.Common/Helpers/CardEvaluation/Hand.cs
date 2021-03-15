@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 
-namespace PokerHand.Common.Helpers
+namespace PokerHand.Common.Helpers.CardEvaluation
 {
-    public class EvaluatedHand
+    public class Hand
     {
         public int Value { get; set; }
         public HandType HandType { get; set; }
         public List<Entities.Card> Cards { get; set; }
         
-        public EvaluatedHand()
+        public Hand()
         {
             Value = 0;
             HandType = HandType.None;

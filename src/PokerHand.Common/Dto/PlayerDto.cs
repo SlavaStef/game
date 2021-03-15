@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.CardEvaluation;
+using PokerHand.Common.Helpers.GameProcess;
 
 namespace PokerHand.Common.Dto
 {
     /*
-     * PlayerDto is sent to client during game process.
+     * PlayerDto sends to client during game process.
      * It contains information, related only to game process
      */
     

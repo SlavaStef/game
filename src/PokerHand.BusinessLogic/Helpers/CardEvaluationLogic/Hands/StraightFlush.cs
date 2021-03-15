@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
 
 namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
@@ -128,21 +127,21 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 return result;
 
             var (isStraightFlush, numberOfUsedJokers) =
-                AnalyzeStraightCardsSuits(isStraightResult.EvaluatedHand.Cards);
+                AnalyzeStraightCardsSuits(isStraightResult.Hand.Cards);
 
             if (isStraightFlush is false)
                 return result;
 
             result.IsWinningHand = true;
-            result.EvaluatedHand.HandType = HandType.StraightFlush;
-            result.EvaluatedHand.Cards = isStraightResult.EvaluatedHand.Cards.ToList();
+            result.Hand.HandType = HandType.StraightFlush;
+            result.Hand.Cards = isStraightResult.Hand.Cards.ToList();
 
-            var joker = isStraightResult.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker);
-            joker.SubstitutedCard.Suit = result.EvaluatedHand.Cards[0].Suit;
+            var joker = isStraightResult.Hand.Cards.First(c => c.Rank is CardRankType.Joker);
+            joker.SubstitutedCard.Suit = result.Hand.Cards[0].Suit;
 
             EvaluateHand(result);
 
-            result.EvaluatedHand.Cards = SortByDescending(result.EvaluatedHand.Cards);
+            result.Hand.Cards = SortByDescending(result.Hand.Cards);
 
             return result;
         }
@@ -168,15 +167,15 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
         private static void EvaluateHand(EvaluationResult result)
         {
-            foreach (var card in result.EvaluatedHand.Cards)
+            foreach (var card in result.Hand.Cards)
             {
                 if (card.Rank is CardRankType.Joker)
                 {
-                   result.EvaluatedHand.Value += (int) card.SubstitutedCard.Rank * Rate;
+                   result.Hand.Value += (int) card.SubstitutedCard.Rank * Rate;
                    continue;
                 }
                 
-                result.EvaluatedHand.Value += (int) card.Rank * Rate;
+                result.Hand.Value += (int) card.Rank * Rate;
             }
                 
         }
@@ -188,17 +187,17 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 return result;
 
             var (isStraightFlush, numberOfUsedJokers) =
-                AnalyzeStraightCardsSuits(isStraightResult.EvaluatedHand.Cards);
+                AnalyzeStraightCardsSuits(isStraightResult.Hand.Cards);
 
             if (isStraightFlush is false)
                 return result;
 
             result.IsWinningHand = true;
-            result.EvaluatedHand.HandType = HandType.StraightFlush;
-            result.EvaluatedHand.Cards = isStraightResult.EvaluatedHand.Cards.ToList();
+            result.Hand.HandType = HandType.StraightFlush;
+            result.Hand.Cards = isStraightResult.Hand.Cards.ToList();
 
-            foreach (var card in result.EvaluatedHand.Cards)
-                result.EvaluatedHand.Value += (int) card.Rank * Rate;
+            foreach (var card in result.Hand.Cards)
+                result.Hand.Value += (int) card.Rank * Rate;
 
             return result;
         }

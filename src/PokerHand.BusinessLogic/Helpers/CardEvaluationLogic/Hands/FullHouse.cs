@@ -2,8 +2,8 @@
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
 
 namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
@@ -13,7 +13,7 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
         public EvaluationResult Check(List<Card> playerHand, List<Card> tableCards)
         {
-            var result = new EvaluationResult {EvaluatedHand = {Cards = new List<Card>()}};
+            var result = new EvaluationResult {Hand = {Cards = new List<Card>()}};
 
             var allCards = tableCards.Concat(playerHand).ToList();
             var numberOfJokers = allCards.Count(c => c.Rank is CardRankType.Joker);
@@ -44,9 +44,9 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
             }
 
             checkResultZeroJokers.IsWinningHand = true;
-            checkResultZeroJokers.EvaluatedHand.HandType = HandType.FullHouse;
-            checkResultZeroJokers.EvaluatedHand.Cards = threeCards.Concat(onePair).ToList();
-            checkResultZeroJokers.EvaluatedHand.Value =
+            checkResultZeroJokers.Hand.HandType = HandType.FullHouse;
+            checkResultZeroJokers.Hand.Cards = threeCards.Concat(onePair).ToList();
+            checkResultZeroJokers.Hand.Value =
                 ((int) threeCards[0].Rank * 3 + (int) onePair[0].Rank * 2) * Rate;
 
             return checkResultZeroJokers;
@@ -77,12 +77,12 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 joker.SubstitutedCard = new Card {Rank = (CardRankType) highestRankFromTwoPairs};
 
                 checkResultOneJoker.IsWinningHand = true;
-                checkResultOneJoker.EvaluatedHand.HandType = HandType.FullHouse;
+                checkResultOneJoker.Hand.HandType = HandType.FullHouse;
 
-                checkResultOneJoker.EvaluatedHand.Cards = new List<Card>(5) {joker};
-                checkResultOneJoker.EvaluatedHand.Cards.AddRange(
+                checkResultOneJoker.Hand.Cards = new List<Card>(5) {joker};
+                checkResultOneJoker.Hand.Cards.AddRange(
                     twoPairsCheckResult.twoPairs.OrderByDescending(c => c.Rank));
-                checkResultOneJoker.EvaluatedHand.Value = ((int) twoPairsCheckResult.twoPairs[0].Rank * 2 +
+                checkResultOneJoker.Hand.Value = ((int) twoPairsCheckResult.twoPairs[0].Rank * 2 +
                                                            (int) twoPairsCheckResult.twoPairs[2].Rank * 2 +
                                                            highestRankFromTwoPairs) * Rate;
 
@@ -97,10 +97,10 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
             joker.SubstitutedCard = new Card {Rank = maxCard.Rank};
 
             checkResultOneJoker.IsWinningHand = true;
-            checkResultOneJoker.EvaluatedHand.HandType = HandType.FullHouse;
-            checkResultOneJoker.EvaluatedHand.Cards =
+            checkResultOneJoker.Hand.HandType = HandType.FullHouse;
+            checkResultOneJoker.Hand.Cards =
                 threeCard.Concat(new List<Card> {maxCard, joker}).ToList();
-            checkResultOneJoker.EvaluatedHand.Value =
+            checkResultOneJoker.Hand.Value =
                 ((int) threeCard[0].Rank * 3 + (int) maxCard.Rank * 2) * Rate;
 
             return checkResultOneJoker;
@@ -139,16 +139,16 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 }
                 
                 checkResultTwoJokers.IsWinningHand = true;
-                checkResultTwoJokers.EvaluatedHand.HandType = HandType.FullHouse;
-                checkResultTwoJokers.EvaluatedHand.Cards =
+                checkResultTwoJokers.Hand.HandType = HandType.FullHouse;
+                checkResultTwoJokers.Hand.Cards =
                     onePair.Concat(jokersFromList).Concat(new List<Card> {maxCardFromPair}).ToList();
-                checkResultTwoJokers.EvaluatedHand.Value =
+                checkResultTwoJokers.Hand.Value =
                     ((int) onePair[0].Rank * 2 + (int) maxCardFromPair.Rank * 3) * Rate;
 
-                checkResultTwoJokers.EvaluatedHand.Cards =
-                    checkResultTwoJokers.EvaluatedHand.Cards.OrderByDescending(c => c.Rank).ToList();
+                checkResultTwoJokers.Hand.Cards =
+                    checkResultTwoJokers.Hand.Cards.OrderByDescending(c => c.Rank).ToList();
 
-                foreach (var card in checkResultTwoJokers.EvaluatedHand.Cards.Where(card => card.SubstitutedCard is not null))
+                foreach (var card in checkResultTwoJokers.Hand.Cards.Where(card => card.SubstitutedCard is not null))
                     card.Rank = CardRankType.Joker;
 
                 return checkResultTwoJokers;
@@ -164,10 +164,10 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 card.SubstitutedCard = new Card {Rank = (CardRankType) maxRank};
 
             checkResultTwoJokers.IsWinningHand = true;
-            checkResultTwoJokers.EvaluatedHand.HandType = HandType.FullHouse;
+            checkResultTwoJokers.Hand.HandType = HandType.FullHouse;
             
-            checkResultTwoJokers.EvaluatedHand.Cards = threeCard.Concat(jokers).ToList();
-            checkResultTwoJokers.EvaluatedHand.Value =
+            checkResultTwoJokers.Hand.Cards = threeCard.Concat(jokers).ToList();
+            checkResultTwoJokers.Hand.Value =
                 ((int) threeCard[0].Rank * 3 + maxRank * 2) * Rate;
 
             return checkResultTwoJokers;

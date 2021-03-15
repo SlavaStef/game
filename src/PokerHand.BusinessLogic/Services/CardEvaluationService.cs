@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -7,8 +6,9 @@ using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
+using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.BusinessLogic.Services
 {
@@ -216,9 +216,9 @@ namespace PokerHand.BusinessLogic.Services
             return players;
         }
 
-        private EvaluatedHand FindCombination(List<Card> playerHand, List<Card> tableCards)
+        private Hand FindCombination(List<Card> playerHand, List<Card> tableCards)
         {
-            var result = new EvaluatedHand();
+            var result = new Hand();
             
             var listRules = new List<IRules>
             {
@@ -244,9 +244,9 @@ namespace PokerHand.BusinessLogic.Services
                     continue;
                 
                 // TODO: create mapping rule
-                result.Value = evaluationResult.EvaluatedHand.Value;
-                result.HandType = evaluationResult.EvaluatedHand.HandType;
-                result.Cards = evaluationResult.EvaluatedHand.Cards;
+                result.Value = evaluationResult.Hand.Value;
+                result.HandType = evaluationResult.Hand.HandType;
+                result.Cards = evaluationResult.Hand.Cards;
 
                 break;
             }

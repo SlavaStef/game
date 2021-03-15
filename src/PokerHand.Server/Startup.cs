@@ -1,5 +1,4 @@
 using System;
-using AutoMapper;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -60,6 +59,7 @@ namespace PokerHand.Server
             services.AddTransient<IBotService, BotService>();
             services.AddTransient<ICardEvaluationService, CardEvaluationService>();
             services.AddTransient<IMediaService, MediaService>();
+            services.AddTransient<IDeckService, DeckService>();
             
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             

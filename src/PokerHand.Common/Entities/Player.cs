@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Bot;
+using PokerHand.Common.Helpers.CardEvaluation;
+using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
 
 namespace PokerHand.Common.Entities

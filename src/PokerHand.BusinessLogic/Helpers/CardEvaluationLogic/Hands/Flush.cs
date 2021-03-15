@@ -2,8 +2,8 @@
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
 
 namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
@@ -35,8 +35,8 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                     return result;
 
                 result.IsWinningHand = true;
-                result.EvaluatedHand.HandType = HandType.Flush;
-                result.EvaluatedHand.Cards = new List<Card>();
+                result.Hand.HandType = HandType.Flush;
+                result.Hand.Cards = new List<Card>();
                 
                 var maxSuit = (CardSuitType) numbersOfSuits
                     .Where(c => c.Value >= (5 - numberOfJokers))
@@ -51,28 +51,28 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
                 for (var index = 0; index < 5 - numberOfJokers; index++)
                 {
-                    result.EvaluatedHand.Cards.Add(cardsToAdd[index]);
-                    result.EvaluatedHand.Value += (int) cardsToAdd[index].Rank * Rate;
+                    result.Hand.Cards.Add(cardsToAdd[index]);
+                    result.Hand.Value += (int) cardsToAdd[index].Rank * Rate;
                 }
                 
                 // Add jokers
                 foreach (var card in allCards.Where(c => c.Rank is CardRankType.Joker))
                 {
-                    var maxValue = GetMaxValue(result.EvaluatedHand.Cards);
+                    var maxValue = GetMaxValue(result.Hand.Cards);
                     card.SubstitutedCard = new Card
-                        {Rank = (CardRankType) maxValue, Suit = result.EvaluatedHand.Cards[0].Suit};
+                        {Rank = (CardRankType) maxValue, Suit = result.Hand.Cards[0].Suit};
 
                     card.Rank = (CardRankType) maxValue;
                     
-                    result.EvaluatedHand.Cards.Add(card);
-                    result.EvaluatedHand.Value += maxValue * Rate;
+                    result.Hand.Cards.Add(card);
+                    result.Hand.Value += maxValue * Rate;
                 }
 
-                result.EvaluatedHand.Cards = result.EvaluatedHand.Cards
+                result.Hand.Cards = result.Hand.Cards
                     .OrderByDescending(c => c.Rank)
                     .ToList();
 
-                foreach (var card in result.EvaluatedHand.Cards.Where(card => card.SubstitutedCard is not null))
+                foreach (var card in result.Hand.Cards.Where(card => card.SubstitutedCard is not null))
                     card.Rank = CardRankType.Joker;
 
                 return result;
@@ -90,8 +90,8 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 return result;
 
             result.IsWinningHand = true;
-            result.EvaluatedHand.HandType = HandType.Flush;
-            result.EvaluatedHand.Cards = new List<Card>();
+            result.Hand.HandType = HandType.Flush;
+            result.Hand.Cards = new List<Card>();
                 
             var winningSuit = (CardSuitType) numbersOfSuits
                 .First(c => c.Value >= 5)
@@ -104,11 +104,11 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 
             for (var index = 0; index < 5; index++)
             {
-                result.EvaluatedHand.Cards.Add(winningCards[index]);
-                result.EvaluatedHand.Value += (int) winningCards[index].Rank * Rate;
+                result.Hand.Cards.Add(winningCards[index]);
+                result.Hand.Value += (int) winningCards[index].Rank * Rate;
             }
 
-            result.EvaluatedHand.Cards = result.EvaluatedHand.Cards
+            result.Hand.Cards = result.Hand.Cards
                 .OrderByDescending(c => c.Rank)
                 .ToList();
 

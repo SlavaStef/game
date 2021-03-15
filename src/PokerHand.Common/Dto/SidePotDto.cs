@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
+using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.Common.Dto
 {

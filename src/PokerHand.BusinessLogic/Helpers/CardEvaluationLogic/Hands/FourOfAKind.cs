@@ -2,8 +2,8 @@
 using System.Linq;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
 
 namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
 {
@@ -38,23 +38,23 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                         if (threeOfAKindCheck.isThreeOfAKind)
                         {
                             result.IsWinningHand = true;
-                            result.EvaluatedHand.HandType = HandType.FourOfAKind;
-                            result.EvaluatedHand.Cards = new List<Card>();
+                            result.Hand.HandType = HandType.FourOfAKind;
+                            result.Hand.Cards = new List<Card>();
                     
-                            result.EvaluatedHand.Cards.AddRange(threeOfAKindCheck.threeCards);
-                            result.EvaluatedHand.Value += (int) threeOfAKindCheck.threeCards[0].Rank * 4 * Rate;
+                            result.Hand.Cards.AddRange(threeOfAKindCheck.threeCards);
+                            result.Hand.Value += (int) threeOfAKindCheck.threeCards[0].Rank * 4 * Rate;
 
                             var joker = allCards.First(c => c.Rank is CardRankType.Joker);
                             joker.SubstitutedCard = new Card {Rank = threeOfAKindCheck.threeCards[0].Rank};
-                            result.EvaluatedHand.Cards.Add(joker);
+                            result.Hand.Cards.Add(joker);
                             
                             var side = allCards
-                                .Except(result.EvaluatedHand.Cards)
+                                .Except(result.Hand.Cards)
                                 .OrderByDescending(c => c.Rank)
                                 .First();
                             
-                            result.EvaluatedHand.Cards.Add(side);
-                            result.EvaluatedHand.Value += (int) side.Rank * Rate;
+                            result.Hand.Cards.Add(side);
+                            result.Hand.Value += (int) side.Rank * Rate;
 
                             return result;
                         }
@@ -67,26 +67,26 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                         if (onePairCheck.isOnePair)
                         {
                             result.IsWinningHand = true;
-                            result.EvaluatedHand.HandType = HandType.FourOfAKind;
-                            result.EvaluatedHand.Cards = new List<Card>();
+                            result.Hand.HandType = HandType.FourOfAKind;
+                            result.Hand.Cards = new List<Card>();
                     
-                            result.EvaluatedHand.Cards.AddRange(onePairCheck.onePair);
-                            result.EvaluatedHand.Value += (int) onePairCheck.onePair[0].Rank * 4 * Rate;
+                            result.Hand.Cards.AddRange(onePairCheck.onePair);
+                            result.Hand.Value += (int) onePairCheck.onePair[0].Rank * 4 * Rate;
 
                             var jokers = allCards.Where(c => c.Rank is CardRankType.Joker).ToList();
 
                             foreach (var card in jokers)
-                                card.SubstitutedCard = new Card {Rank = result.EvaluatedHand.Cards[0].Rank};
+                                card.SubstitutedCard = new Card {Rank = result.Hand.Cards[0].Rank};
                             
-                            result.EvaluatedHand.Cards.AddRange(jokers);
+                            result.Hand.Cards.AddRange(jokers);
                             
                             var side = allCards
-                                .Except(result.EvaluatedHand.Cards)
+                                .Except(result.Hand.Cards)
                                 .OrderByDescending(c => c.Rank)
                                 .First();
                             
-                            result.EvaluatedHand.Cards.Add(side);
-                            result.EvaluatedHand.Value += (int) side.Rank * Rate;
+                            result.Hand.Cards.Add(side);
+                            result.Hand.Value += (int) side.Rank * Rate;
 
                             return result;
                         }
@@ -99,8 +99,8 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 return result;
 
             result.IsWinningHand = true;
-            result.EvaluatedHand.HandType = HandType.FourOfAKind;
-            result.EvaluatedHand.Cards = new List<Card>();
+            result.Hand.HandType = HandType.FourOfAKind;
+            result.Hand.Cards = new List<Card>();
 
             var winningRank = dict
                 .First(c => c.Value is 4)
@@ -117,9 +117,9 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 .OrderByDescending(c => c.Rank)
                 .First();
             
-            result.EvaluatedHand.Cards.AddRange(winningCards);
-            result.EvaluatedHand.Cards.Add(sideCard);
-            result.EvaluatedHand.Value = ((int)winningCards[0].Rank * 4 + (int)sideCard.Rank) * Rate;
+            result.Hand.Cards.AddRange(winningCards);
+            result.Hand.Cards.Add(sideCard);
+            result.Hand.Value = ((int)winningCards[0].Rank * 4 + (int)sideCard.Rank) * Rate;
 
             return result;
         }

@@ -1,4 +1,4 @@
-﻿namespace PokerHand.Common.Helpers
+﻿namespace PokerHand.Common.Helpers.CardEvaluation
 {
     public enum HandType
     {

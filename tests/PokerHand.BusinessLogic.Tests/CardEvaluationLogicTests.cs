@@ -3,8 +3,8 @@ using System.Linq;
 using FluentAssertions;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers;
 using PokerHand.Common.Helpers.Card;
+using PokerHand.Common.Helpers.CardEvaluation;
 using Xunit;
 
 namespace PokerHand.BusinessLogic.Tests
@@ -42,11 +42,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.HighCard);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.HighCard);
+            result.Hand.Value.Should().Be((int) CardRankType.Ace + (int) CardRankType.King +
                                                    (int) CardRankType.Eight + (int) CardRankType.Seven +
                                                    (int) CardRankType.Four);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         #endregion
@@ -79,10 +79,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.OnePair);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Four * 2 * 5 + (int) CardRankType.Ace +
+            result.Hand.HandType.Should().Be(HandType.OnePair);
+            result.Hand.Value.Should().Be((int) CardRankType.Four * 2 * 5 + (int) CardRankType.Ace +
                                                    (int) CardRankType.King + (int) CardRankType.Queen);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -107,9 +107,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -136,10 +136,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.OnePair);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Ace * 2 * 5 + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.OnePair);
+            result.Hand.Value.Should().Be((int) CardRankType.Ace * 2 * 5 + (int) CardRankType.King +
                                                    (int) CardRankType.Queen + (int) CardRankType.Seven);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         #endregion
@@ -174,10 +174,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Jack * 2 + (int) CardRankType.Three * 2) * 17 +
+            result.Hand.HandType.Should().Be(HandType.TwoPairs);
+            result.Hand.Value.Should().Be(((int) CardRankType.Jack * 2 + (int) CardRankType.Three * 2) * 17 +
                                                    (int) CardRankType.Ace);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -205,10 +205,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Deuce * 2 + (int) CardRankType.Seven * 2) * 17 +
+            result.Hand.HandType.Should().Be(HandType.TwoPairs);
+            result.Hand.Value.Should().Be(((int) CardRankType.Deuce * 2 + (int) CardRankType.Seven * 2) * 17 +
                                                    (int) CardRankType.Ten);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -234,9 +234,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -264,10 +264,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace * 2 + (int) CardRankType.Three * 2) * 17 +
+            result.Hand.HandType.Should().Be(HandType.TwoPairs);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace * 2 + (int) CardRankType.Three * 2) * 17 +
                                                    (int) CardRankType.King);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -295,10 +295,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace * 2 + (int) CardRankType.Jack * 2) * 17 +
+            result.Hand.HandType.Should().Be(HandType.TwoPairs);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace * 2 + (int) CardRankType.Jack * 2) * 17 +
                                                    (int) CardRankType.Seven);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -326,10 +326,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.TwoPairs);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace * 2 + (int) CardRankType.Jack * 2) * 17 +
+            result.Hand.HandType.Should().Be(HandType.TwoPairs);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace * 2 + (int) CardRankType.Jack * 2) * 17 +
                                                    (int) CardRankType.Seven);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -355,9 +355,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         #endregion
@@ -392,9 +392,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.ThreeOfAKind);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Four * 3 * 170);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.HandType.Should().Be(HandType.ThreeOfAKind);
+            result.Hand.Value.Should()
+                .Be((int) CardRankType.Four * 3 * 170 + (int) CardRankType.Ace + (int) CardRankType.King);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -420,13 +421,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
-        public void ThreeOfAKind_WithOneJoker_ReturnsTrue()
+        public void ThreeOfAKind_WithOneJoker_ReturnsTrue_IfThereIsAPair()
         {
             // Arrange
             var threeOfAKind = new ThreeOfAKind();
@@ -443,16 +444,17 @@ namespace PokerHand.BusinessLogic.Tests
 
             var tableCards = new List<Card> {card3, card4, card5, card6, card7};
 
-            var expectedResult = new List<Card> {card4, card1, card2, card7, card6};
+            var expectedResult = new List<Card> {card1, card2, card4, card7, card6};
 
             // Act
             var result = threeOfAKind.Check(playerHand, tableCards);
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.ThreeOfAKind);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Four * 3 * 170);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.HandType.Should().Be(HandType.ThreeOfAKind);
+            result.Hand.Value.Should()
+                .Be((int) CardRankType.Four * 3 * 170 + (int) CardRankType.Ace + (int) CardRankType.King);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -478,9 +480,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -501,16 +503,16 @@ namespace PokerHand.BusinessLogic.Tests
 
             var tableCards = new List<Card> {card3, card4, card5, card6, card7};
 
-            var expectedResult = new List<Card> {card4, card7, card2, card6, card5};
+            var expectedResult = new List<Card> {card7, card4, card2, card6, card5};
 
             // Act
             var result = threeOfAKind.Check(playerHand, tableCards);
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.ThreeOfAKind);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Ace * 3 * 170);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.HandType.Should().Be(HandType.ThreeOfAKind);
+            result.Hand.Value.Should().Be((int) CardRankType.Ace * 3 * 170 + (int) CardRankType.King + (int) CardRankType.Queen);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         #endregion
@@ -545,11 +547,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -577,11 +579,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
                                                     (int) CardRankType.Four + (int) CardRankType.Five +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -609,11 +611,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
                                                     (int) CardRankType.Four + (int) CardRankType.Five +
                                                     (int) CardRankType.Six) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -641,11 +643,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Three + (int) CardRankType.Four +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Three + (int) CardRankType.Four +
                                                     (int) CardRankType.Five + (int) CardRankType.Six +
                                                     (int) CardRankType.Seven) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -674,11 +676,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -707,12 +709,12 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
                 .Be(CardRankType.Ace);
         }
 
@@ -742,12 +744,12 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Four + (int) CardRankType.Five +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Four + (int) CardRankType.Five +
                                                     (int) CardRankType.Six + (int) CardRankType.Seven +
                                                     (int) CardRankType.Eight) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
                 .Be(CardRankType.Eight);
         }
 
@@ -777,12 +779,12 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Jack + (int) CardRankType.Queen +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Jack + (int) CardRankType.Queen +
                                                     (int) CardRankType.King + (int) CardRankType.Ace +
                                                     (int) CardRankType.Ten) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
                 .Be(CardRankType.Ten);
         }
 
@@ -810,9 +812,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -841,12 +843,12 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
                                                     (int) CardRankType.Four + (int) CardRankType.Five +
                                                     (int) CardRankType.Six) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
                 .Be(CardRankType.Four);
         }
 
@@ -876,12 +878,12 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
                                                     (int) CardRankType.Four + (int) CardRankType.Five +
                                                     (int) CardRankType.Six) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
                 .Be(CardRankType.Five);
         }
 
@@ -911,13 +913,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Deuce + (int) CardRankType.Three +
                                                     (int) CardRankType.Four + (int) CardRankType.Five +
                                                     (int) CardRankType.Six) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Six);
-            result.EvaluatedHand.Cards[1].SubstitutedCard.Rank.Should().Be(CardRankType.Five);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Six);
+            result.Hand.Cards[1].SubstitutedCard.Rank.Should().Be(CardRankType.Five);
         }
 
         [Fact]
@@ -946,13 +948,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
-            result.EvaluatedHand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Ten);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Ten);
         }
 
         [Fact]
@@ -981,13 +983,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank = CardRankType.Jack;
-            result.EvaluatedHand.Cards[4].SubstitutedCard.Rank = CardRankType.Ten;
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[3].SubstitutedCard.Rank = CardRankType.Jack;
+            result.Hand.Cards[4].SubstitutedCard.Rank = CardRankType.Ten;
         }
 
         [Fact]
@@ -1016,11 +1018,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Three + (int) CardRankType.Four +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Three + (int) CardRankType.Four +
                                                     (int) CardRankType.Five + (int) CardRankType.Six +
                                                     (int) CardRankType.Seven) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -1049,12 +1051,12 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
                 .Be(CardRankType.Ace);
         }
 
@@ -1083,12 +1085,12 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
                 .Be(CardRankType.Ten);
         }
 
@@ -1118,13 +1120,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Four + (int) CardRankType.Five +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Four + (int) CardRankType.Five +
                                                     (int) CardRankType.Six + (int) CardRankType.Seven +
                                                     (int) CardRankType.Eight) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Eight);
-            result.EvaluatedHand.Cards[1].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Eight);
+            result.Hand.Cards[1].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
         }
 
         [Fact]
@@ -1153,12 +1155,12 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.First(c => c.Rank is CardRankType.Joker).SubstitutedCard.Rank.Should()
                 .Be(CardRankType.Ace);
         }
 
@@ -1188,11 +1190,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Straight);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
+            result.Hand.HandType.Should().Be(HandType.Straight);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 400);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         #endregion
@@ -1227,11 +1229,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.Six +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.Six +
                                                     (int) CardRankType.Eight + (int) CardRankType.King +
                                                     (int) CardRankType.Seven) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -1259,11 +1261,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Six + (int) CardRankType.Seven +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Six + (int) CardRankType.Seven +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -1291,11 +1293,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
                                                     (int) CardRankType.Queen + (int) CardRankType.King +
                                                     (int) CardRankType.Ace) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -1323,9 +1325,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -1353,13 +1355,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
                                                     (int) CardRankType.Queen + (int) CardRankType.Jack +
                                                     (int) CardRankType.Four) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[1].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[1].SubstitutedCard.Rank.Should().Be(CardRankType.King);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[1].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[1].SubstitutedCard.Rank.Should().Be(CardRankType.King);
         }
         
         [Fact]
@@ -1387,13 +1389,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
                                                     (int) CardRankType.Queen + (int) CardRankType.Four +
                                                     (int) CardRankType.Deuce) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
         }
 
         [Fact]
@@ -1421,13 +1423,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
                                                     (int) CardRankType.Queen + (int) CardRankType.Six +
                                                     (int) CardRankType.Five) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
         }
 
         [Fact]
@@ -1455,13 +1457,13 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
                                                     (int) CardRankType.Queen + (int) CardRankType.Eight +
                                                     (int) CardRankType.Six) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
         }
 
         [Fact]
@@ -1487,9 +1489,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -1517,15 +1519,15 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
                                                     (int) CardRankType.Queen + (int) CardRankType.Jack +
                                                     (int) CardRankType.Six) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.Cards[3].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
         }
 
         [Fact]
@@ -1553,15 +1555,15 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
                                                     (int) CardRankType.Queen + (int) CardRankType.Jack +
                                                     (int) CardRankType.Eight) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.Cards[3].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
         }
 
         [Fact]
@@ -1589,15 +1591,15 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.Flush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.Flush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
                                                     (int) CardRankType.Queen + (int) CardRankType.Jack +
                                                     (int) CardRankType.Eight) * 1300);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.Cards[3].SubstitutedCard.Suit.Should().Be(CardSuitType.Club);
+            result.Hand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
         }
 
         [Fact]
@@ -1623,9 +1625,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         #endregion
@@ -1658,9 +1660,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -1686,9 +1688,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -1714,9 +1716,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -1742,9 +1744,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FullHouse);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace * 3 + (int) CardRankType.Six * 2) * 6700);
-            result.EvaluatedHand.Cards.Should()
+            result.Hand.HandType.Should().Be(HandType.FullHouse);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace * 3 + (int) CardRankType.Six * 2) * 6700);
+            result.Hand.Cards.Should()
                 .OnlyContain(x => x.Rank == CardRankType.Ace || x.Rank == CardRankType.Six);
         }
 
@@ -1771,9 +1773,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FullHouse);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace * 3 + (int) CardRankType.Six * 2) * 6700);
-            result.EvaluatedHand.Cards.Should()
+            result.Hand.HandType.Should().Be(HandType.FullHouse);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace * 3 + (int) CardRankType.Six * 2) * 6700);
+            result.Hand.Cards.Should()
                 .OnlyContain(x => x.Rank == CardRankType.Ace || x.Rank == CardRankType.Six);
         }
 
@@ -1802,10 +1804,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FullHouse);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Six * 3 + (int) CardRankType.Ace * 2) * 6700);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.HandType.Should().Be(HandType.FullHouse);
+            result.Hand.Value.Should().Be(((int) CardRankType.Six * 3 + (int) CardRankType.Ace * 2) * 6700);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
         }
 
         [Fact]
@@ -1833,10 +1835,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FullHouse);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Six * 3 + (int) CardRankType.Deuce * 2) * 6700);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Six);
+            result.Hand.HandType.Should().Be(HandType.FullHouse);
+            result.Hand.Value.Should().Be(((int) CardRankType.Six * 3 + (int) CardRankType.Deuce * 2) * 6700);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Six);
         }
 
         [Fact]
@@ -1862,9 +1864,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -1892,11 +1894,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FullHouse);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Six * 3 + (int) CardRankType.Ace * 2) * 6700);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
-            result.EvaluatedHand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.HandType.Should().Be(HandType.FullHouse);
+            result.Hand.Value.Should().Be(((int) CardRankType.Six * 3 + (int) CardRankType.Ace * 2) * 6700);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
         }
 
         [Fact]
@@ -1924,11 +1926,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FullHouse);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Six * 2 + (int) CardRankType.Jack * 3) * 6700);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
-            result.EvaluatedHand.Cards[1].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
+            result.Hand.HandType.Should().Be(HandType.FullHouse);
+            result.Hand.Value.Should().Be(((int) CardRankType.Six * 2 + (int) CardRankType.Jack * 3) * 6700);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[0].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
+            result.Hand.Cards[1].SubstitutedCard.Rank.Should().Be(CardRankType.Jack);
         }
 
         #endregion
@@ -1961,9 +1963,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FourOfAKind);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace * 4 + (int) CardRankType.King) * 60000);
-            result.EvaluatedHand.Cards.Should().Contain(x => x.Rank == CardRankType.Ace || x.Rank == CardRankType.King);
+            result.Hand.HandType.Should().Be(HandType.FourOfAKind);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace * 4 + (int) CardRankType.King) * 60000);
+            result.Hand.Cards.Should().Contain(x => x.Rank == CardRankType.Ace || x.Rank == CardRankType.King);
         }
 
         [Fact]
@@ -1989,9 +1991,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -2019,10 +2021,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FourOfAKind);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace * 4 + (int) CardRankType.King) * 60000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
+            result.Hand.HandType.Should().Be(HandType.FourOfAKind);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace * 4 + (int) CardRankType.King) * 60000);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Ace);
         }
 
         [Fact]
@@ -2048,9 +2050,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -2078,11 +2080,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FourOfAKind);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Deuce * 4 + (int) CardRankType.King) * 60000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[2].SubstitutedCard.Rank.Should().Be(CardRankType.Deuce);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Deuce);
+            result.Hand.HandType.Should().Be(HandType.FourOfAKind);
+            result.Hand.Value.Should().Be(((int) CardRankType.Deuce * 4 + (int) CardRankType.King) * 60000);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[2].SubstitutedCard.Rank.Should().Be(CardRankType.Deuce);
+            result.Hand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Deuce);
         }
 
         [Fact]
@@ -2110,11 +2112,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FourOfAKind);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Deuce * 4 + (int) CardRankType.King) * 60000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[2].SubstitutedCard.Rank.Should().Be(CardRankType.Deuce);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Deuce);
+            result.Hand.HandType.Should().Be(HandType.FourOfAKind);
+            result.Hand.Value.Should().Be(((int) CardRankType.Deuce * 4 + (int) CardRankType.King) * 60000);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[2].SubstitutedCard.Rank.Should().Be(CardRankType.Deuce);
+            result.Hand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Deuce);
         }
 
         [Fact]
@@ -2140,9 +2142,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         #endregion
@@ -2177,11 +2179,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.StraightFlush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
                                                     (int) CardRankType.Nine + (int) CardRankType.Ten +
                                                     (int) CardRankType.Jack) * 180000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -2209,11 +2211,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.StraightFlush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Eight + (int) CardRankType.Nine +
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Eight + (int) CardRankType.Nine +
                                                     (int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen) * 180000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -2241,11 +2243,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.StraightFlush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Eight + (int) CardRankType.Nine +
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Eight + (int) CardRankType.Nine +
                                                     (int) CardRankType.Ten + (int) CardRankType.Jack +
                                                     (int) CardRankType.Queen) * 180000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -2271,9 +2273,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -2299,9 +2301,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -2329,11 +2331,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.StraightFlush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
                                                     (int) CardRankType.Nine + (int) CardRankType.Ten +
                                                     (int) CardRankType.Jack) * 180000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -2361,11 +2363,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.StraightFlush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
                                                     (int) CardRankType.Nine + (int) CardRankType.Ten +
                                                     (int) CardRankType.Jack) * 180000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -2393,11 +2395,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.StraightFlush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
                                                     (int) CardRankType.Nine + (int) CardRankType.Ten +
                                                     (int) CardRankType.Jack) * 180000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         #endregion
@@ -2431,11 +2433,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.RoyalFlush);
-            result.EvaluatedHand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
+            result.Hand.HandType.Should().Be(HandType.RoyalFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Ace + (int) CardRankType.King +
                                                     (int) CardRankType.Queen + (int) CardRankType.Jack +
                                                     (int) CardRankType.Ten) * 200000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
         [Fact]
@@ -2463,9 +2465,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(0);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(0);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -2493,9 +2495,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(0);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(0);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         #endregion
@@ -2530,9 +2532,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -2560,10 +2562,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FiveOfAKind);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Seven * 5 * 300000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
+            result.Hand.HandType.Should().Be(HandType.FiveOfAKind);
+            result.Hand.Value.Should().Be((int) CardRankType.Seven * 5 * 300000);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
         }
 
         [Fact]
@@ -2589,9 +2591,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         [Fact]
@@ -2619,11 +2621,11 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FiveOfAKind);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Seven * 5 * 300000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
-            result.EvaluatedHand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
+            result.Hand.HandType.Should().Be(HandType.FiveOfAKind);
+            result.Hand.Value.Should().Be((int) CardRankType.Seven * 5 * 300000);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[3].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
+            result.Hand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
         }
 
         [Fact]
@@ -2651,10 +2653,10 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(true);
-            result.EvaluatedHand.HandType.Should().Be(HandType.FiveOfAKind);
-            result.EvaluatedHand.Value.Should().Be((int) CardRankType.Seven * 5 * 300000);
-            result.EvaluatedHand.Cards.Should().ContainInOrder(expectedResult);
-            result.EvaluatedHand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
+            result.Hand.HandType.Should().Be(HandType.FiveOfAKind);
+            result.Hand.Value.Should().Be((int) CardRankType.Seven * 5 * 300000);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+            result.Hand.Cards[4].SubstitutedCard.Rank.Should().Be(CardRankType.Seven);
         }
 
         [Fact]
@@ -2680,9 +2682,9 @@ namespace PokerHand.BusinessLogic.Tests
 
             // Assert
             result.IsWinningHand.Should().Be(false);
-            result.EvaluatedHand.HandType.Should().Be(HandType.None);
-            result.EvaluatedHand.Value.Should().Be(0);
-            result.EvaluatedHand.Cards.Should().BeNull();
+            result.Hand.HandType.Should().Be(HandType.None);
+            result.Hand.Value.Should().Be(0);
+            result.Hand.Cards.Should().BeNull();
         }
 
         #endregion

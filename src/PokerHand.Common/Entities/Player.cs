@@ -47,6 +47,7 @@ namespace PokerHand.Common.Entities
         [NotMapped] public List<Card> HandCombinationCards { get; set; }
         
         [NotMapped] public bool IsReady { get; set; }
+        [NotMapped] public int NumberOfGamesOnCurrentTable { get; set; }
         
         // Bot
         [NotMapped] public PlayerType Type { get; set; }

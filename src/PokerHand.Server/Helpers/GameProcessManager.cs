@@ -321,6 +321,14 @@ namespace PokerHand.Server.Helpers
                 await RefreshSitAndGoTable(table);
 
             table.ActivePlayers = new List<Player>(table.MaxPlayers);
+            
+            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
+            
+            foreach (var player in table.Players)
+                _logger.LogInformation($"{player.UserName} : {player.PocketCards} : {JsonSerializer.Serialize(player.PocketCards)}");
+            
+            foreach (var player in table.Players.Where(p => p.PocketCards is not null))
+                player.NumberOfGamesOnCurrentTable++;
 
             Thread.Sleep(5000);
 
@@ -705,6 +713,9 @@ namespace PokerHand.Server.Helpers
             await MakeSmallBlindBet(table);
             await MakeBigBlindBet(table);
 
+            if (table.Type is not SitAndGo)
+                await MakeNewPlayersBets(table);
+
             await _hub.Clients.Group(table.Id.ToString())
                 .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
         }
@@ -770,6 +781,42 @@ namespace PokerHand.Server.Helpers
 
             _logger.LogInformation("MakeBigBlindBet. End");
             await ProcessPlayerAction(table, player);
+        }
+
+        private async Task MakeNewPlayersBets(Table table)
+        {
+            _logger.LogInformation("MakeNewPlayersBets. Start");
+
+            foreach (var player in table.ActivePlayers)
+            {
+                _logger.LogInformation($"player: {player.UserName}");
+                _logger.LogInformation($"NumberOfGamesOnCurrentTable: {JsonSerializer.Serialize(player.NumberOfGamesOnCurrentTable)}");
+                _logger.LogInformation(
+                    $"table.BigBlindIndex: {table.BigBlindIndex}. player.IndexNumber: {player.IndexNumber}. {table.BigBlindIndex != player.IndexNumber}");
+                _logger.LogInformation(
+                    $"table.BigBlindIndex: {table.SmallBlindIndex}. player.IndexNumber: {player.IndexNumber}. {table.SmallBlindIndex != player.IndexNumber}");
+
+                if (player.NumberOfGamesOnCurrentTable is 0 && 
+                    table.BigBlindIndex != player.IndexNumber &&
+                    table.SmallBlindIndex != player.IndexNumber)
+                {
+                    var bigBlindAction = new PlayerAction
+                    {
+                        PlayerIndexNumber = player.IndexNumber,
+                        ActionType = PlayerActionType.Raise,
+                        Amount = table.BigBlind
+                    };
+
+                    player.CurrentAction = bigBlindAction;
+
+                    await _hub.Clients.Group(table.Id.ToString())
+                        .ReceivePlayerAction(JsonSerializer.Serialize(bigBlindAction));
+
+                    await ProcessPlayerAction(table, player);
+                }
+            }
+
+            _logger.LogInformation("MakeNewPlayersBets. End");
         }
 
         // Showdown helpers 

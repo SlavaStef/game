@@ -142,7 +142,7 @@ namespace PokerHand.Common.Helpers.Table
                         {"BigBlind", 40},
                         {"MinBuyIn", 50000},
                         {"MaxBuyIn", 50000},
-                        {"MaxPlayers", 5}
+                        {"MaxPlayers", 8}
                     }
                 },
                 {"SunriseCafe", new Dictionary<string, int>

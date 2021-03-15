@@ -208,14 +208,12 @@ namespace PokerHand.BusinessLogic.Services
         private async Task Statistics(Player player)
         {
             await _playerService.IncreaseNumberOfPlayedGamesAsync(player.Id, false);
-            
-            await _playerService.AddLooseExperienceAsync(player.Id);
         }
 
         public void RemoveTableById(Guid tableId) => 
             _allTables.Remove(tableId);
 
-        #region privateHelpers
+        #region Helpers
         
         private static void SetTableOptions(Table table)
         {

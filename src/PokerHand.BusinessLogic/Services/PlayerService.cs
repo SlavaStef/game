@@ -20,7 +20,7 @@ namespace PokerHand.BusinessLogic.Services
         private readonly IMediaService _mediaService;
         private readonly ITablesOnline _allTables;
         private readonly UserManager<Player> _userManager;
-        private readonly ILogger<TableService> _logger;
+        private readonly ILogger<PlayerService> _logger;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
@@ -30,9 +30,10 @@ namespace PokerHand.BusinessLogic.Services
         public PlayerService(
             UserManager<Player> userManager, 
             IMapper mapper, 
-            ILogger<TableService> logger, 
+            ILogger<PlayerService> logger, 
             IUnitOfWork unitOfWork, 
-            ITablesOnline allTables, IMediaService mediaService)
+            ITablesOnline allTables, 
+            IMediaService mediaService)
         {
             _userManager = userManager;
             _mapper = mapper;
@@ -136,7 +137,6 @@ namespace PokerHand.BusinessLogic.Services
         }
 
         // Statistics
-        
         public async Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin)
         {
             await _unitOfWork.Players.IncreaseNumberOfPlayedGamesAsync(playerId, isWin);
@@ -157,14 +157,9 @@ namespace PokerHand.BusinessLogic.Services
             await _unitOfWork.Players.ChangeBiggestWinAsync(playerId, newBiggestWin);
         }
 
-        public async Task AddWinExperienceAsync(Guid playerId)
+        public async Task AddExperienceAsync(Guid playerId, int experience)
         {
-            await _unitOfWork.Players.AddExperienceAsync(playerId, WinExperience);
-        }
-        
-        public async Task AddLooseExperienceAsync(Guid playerId)
-        {
-            await _unitOfWork.Players.AddExperienceAsync(playerId, LooseExperience);
+            await _unitOfWork.Players.AddExperienceAsync(playerId, experience);
         }
     }
 }

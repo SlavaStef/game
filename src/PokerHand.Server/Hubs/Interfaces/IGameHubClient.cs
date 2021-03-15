@@ -4,7 +4,6 @@ namespace PokerHand.Server.Hubs.Interfaces
 {
     public interface IGameHubClient
     {
-        // Methods, used in hub
         Task ReceivePlayerProfile(string playerProfileDto);
         Task ReceivePlayerNotFound();
         Task ReceiveTableInfo(string tableInfo);
@@ -14,21 +13,15 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task OnGameEnd();
         Task ReceivePlayerAction(string actionFromPlayer);
         Task PlayerDisconnected(string tableDto);
-
-        // Media
-        Task ReceiveProfileImage(string image);
-
-        // Methods, used in game process manager
-        Task WaitForPlayers();
-        Task SetDealerAndBlinds(string tableDto);
         Task PrepareForGame(string tableDto);
         Task DealCommunityCards(string cardsList);
         Task ReceiveUpdatedPot(string newPotAmount);
-        Task ReceiveCurrentPlayerIdInWagering(string id);
-        Task ReceiveTableStateAtWageringEnd(string tableDto);
-        Task ReceiveWinners(string playerDtoList);
-        Task EndSitAndGoGame(string place);
+        Task ReceiveCurrentPlayerIdInWagering(string currentPlayerIdJson);
+        Task ReceiveWinners(string playerDtoListJson);
+        Task EndSitAndGoGame(string place); //TODO: serialize
         Task OnLackOfStackMoney();
 
+        // Media
+        Task ReceiveProfileImage(string imageJson);
     }
 }

@@ -19,7 +19,6 @@ namespace PokerHand.BusinessLogic.Interfaces
         Task IncreaseNumberOfSitNGoWinsAsync(Guid playerId);
         Task ChangeBestHandTypeAsync(Guid playerId, int newHandType);
         Task ChangeBiggestWinAsync(Guid playerId, int newBiggestWin);
-        Task AddWinExperienceAsync(Guid playerId);
-        Task AddLooseExperienceAsync(Guid playerId);
+        Task AddExperienceAsync(Guid playerId, int experience);
     }
 }

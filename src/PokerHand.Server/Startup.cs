@@ -15,7 +15,6 @@ using PokerHand.Common.Entities;
 using PokerHand.DataAccess.Context;
 using PokerHand.DataAccess.Interfaces;
 using PokerHand.DataAccess.Repositories;
-using PokerHand.Server.Helpers;
 using PokerHand.Server.Hubs;
 
 namespace PokerHand.Server
@@ -53,13 +52,13 @@ namespace PokerHand.Server
             
             services.AddSignalR();
 
-            services.AddTransient<IGameProcessManager, GameProcessManager>();
             services.AddTransient<IPlayerService, PlayerService>();
             services.AddTransient<ITableService, TableService>();
             services.AddTransient<IBotService, BotService>();
             services.AddTransient<ICardEvaluationService, CardEvaluationService>();
             services.AddTransient<IMediaService, MediaService>();
             services.AddTransient<IDeckService, DeckService>();
+            services.AddTransient<IGameProcessService, GameProcessService>();
             
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -8,85 +9,47 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
-using PokerHand.Common.Entities;
+using PokerHand.Common.Dto;
 using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Table;
-using PokerHand.Server.Helpers;
 using PokerHand.Server.Hubs.Interfaces;
 
 namespace PokerHand.Server.Hubs
 {
     public partial class GameHub : Hub<IGameHubClient>, IGameHub
     {
+        private readonly IGameProcessService _gameProcessService;
         private readonly ITablesOnline _allTables;
         private readonly IPlayersOnline _allPlayers;
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
         private readonly IMediaService _mediaService;
-        private readonly IGameProcessManager _gameProcessManager;
         private readonly ILogger<GameHub> _logger;
         private readonly IMapper _mapper;
 
         public GameHub(
             ITableService tableService,
             IPlayerService playerService,
-            IGameProcessManager gameProcessManager,
             ILogger<GameHub> logger, 
             IPlayersOnline allPlayers, 
             ITablesOnline allTables, 
             IMapper mapper, 
-            IMediaService mediaService)
+            IMediaService mediaService, 
+            IGameProcessService gameProcessService)
         {
             _tableService = tableService;
             _playerService = playerService;
-            _gameProcessManager = gameProcessManager;
             _logger = logger;
             _allPlayers = allPlayers;
             _allTables = allTables;
             _mapper = mapper;
             _mediaService = mediaService;
+            _gameProcessService = gameProcessService;
+
+            RegisterEventHandlers();
         }
         
-        public override async Task OnConnectedAsync()
-        {
-            _logger.LogInformation($"GameHub. Player {Context.ConnectionId} connected");
-        }
-        
-        public async Task RegisterNewPlayer(string userName)
-        {
-            var playerProfileDto = await _playerService.CreatePlayer(userName);
-
-            if (playerProfileDto == null)
-                return;
-            
-            await Clients.Caller
-                .ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
-
-            _allPlayers.Add(playerProfileDto.Id, Context.ConnectionId);
-            
-            _logger.LogInformation($"Player {playerProfileDto.UserName} is registered");
-        } 
-
-        public async Task Authenticate(string playerId)
-        {
-            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
-            
-            var playerProfileDto = await _playerService.Authenticate(playerIdGuid);
-
-            if (playerProfileDto == null)
-            {
-                await Clients.Caller.ReceivePlayerNotFound();
-                return;
-            }
-
-            await Clients.Caller
-                .ReceivePlayerProfile(JsonSerializer.Serialize(playerProfileDto));
-
-            _allPlayers.AddOrUpdate(playerIdGuid, Context.ConnectionId);
-            
-            _logger.LogInformation($"Player {playerProfileDto.UserName} is authenticated");
-        }
-
+        //TODO: change to Json
         public async Task GetTableInfo(string tableTitle)
         {
             var tableInfo = _tableService.GetTableInfo(tableTitle);
@@ -103,6 +66,7 @@ namespace PokerHand.Server.Hubs
                 .ReceiveAllTablesInfo(JsonSerializer.Serialize(allTablesInfo));
         }
         
+        //TODO: change to Json
         public async Task ConnectToTable(string tableTitle, string playerId, string buyInAmount, string autoTop)
         {
             var connectOptions = new TableConnectionOptions 
@@ -124,51 +88,42 @@ namespace PokerHand.Server.Hubs
 
             if (isNewTable)
             {
-                new Thread (() => _gameProcessManager.StartRound(tableDto.Id)).Start();
+                new Thread (() => _gameProcessService.StartRound(tableDto.Id)).Start();
             }
         }
         
-        public async Task ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer)
+        public async Task ReceivePlayerActionFromClient(string actionJson, string tableIdJson)
         {
-            try
-            {
-                _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Start by {Context.ConnectionId}");
+            _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Start by {Context.ConnectionId}");
             
-                var action = JsonSerializer.Deserialize<PlayerAction>(actionFromPlayer);
-                var tableId = JsonSerializer.Deserialize<Guid>(tableIdFromPlayer);
+            var action = JsonSerializer.Deserialize<PlayerAction>(actionJson);
+            var tableId = JsonSerializer.Deserialize<Guid>(tableIdJson);
 
-                var table = _allTables.GetById(tableId);
+            var table = _allTables.GetById(tableId);
             
-                table.ActivePlayers
-                    .First(p => p.IndexNumber == action?.PlayerIndexNumber)
-                    .CurrentAction = action;
+            table.ActivePlayers
+                .First(p => p.IndexNumber == action?.PlayerIndexNumber)
+                .CurrentAction = action;
             
-                table.WaitForPlayerBet.Set();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
-                throw;
-            }
-            
+            table.WaitForPlayerBet.Set();
         }
 
-        public async Task SendPlayerProfile(string playerId)
+        public async Task SendPlayerProfile(string playerIdJson)
         {
-            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
+            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
 
-            var connectionId = _allPlayers.GetValueByKey(playerIdGuid);
+            var connectionId = _allPlayers.GetValueByKey(playerId);
 
             if (connectionId != Context.ConnectionId)
                 return;
             
-            var profileDto = await _playerService.GetPlayerProfile(playerIdGuid);
+            var profileDto = await _playerService.GetPlayerProfile(playerId);
             
             await Clients.Caller
                 .ReceivePlayerProfile(JsonSerializer.Serialize(profileDto));
         }
 
+        //TODO: change to Json
         public void ReceiveActivePlayerStatus(string tableId, string playerId)
         {
             var tableIdGuid = Guid.Parse(tableId);
@@ -177,17 +132,121 @@ namespace PokerHand.Server.Hubs
             _playerService.SetPlayerReady(tableIdGuid, playerIdGuid);
         }
 
-        public async Task AddStackMoney(string tableId, string playerId, string amount)
+        public async Task AddStackMoney(string tableIdJson, string playerIdJson, string amountJson)
         {
-            var tableIdGuid = JsonSerializer.Deserialize<Guid>(tableId);
-            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
-            var amountInt = JsonSerializer.Deserialize<int>(amount);
+            var tableId = JsonSerializer.Deserialize<Guid>(tableIdJson);
+            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
+            var amount = JsonSerializer.Deserialize<int>(amountJson);
 
-            await _playerService.AddStackMoneyFromTotalMoney(tableIdGuid, playerIdGuid, amountInt);
+            await _playerService.AddStackMoneyFromTotalMoney(tableId, playerId, amount);
         }
 
         private void WriteAllPlayersList() =>
             _logger.LogInformation($"AllPlayers: {JsonSerializer.Serialize(_allPlayers.GetAll())}");
+        
+        private void RegisterEventHandlers()
+        {
+            _gameProcessService.OnPrepareForGame += async table =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .PrepareForGame(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+            };
 
+            _gameProcessService.OnDealCommunityCards += async (table, cardsToAdd) =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .DealCommunityCards(JsonSerializer.Serialize(cardsToAdd));
+            };
+
+            _gameProcessService.ReceiveWinners += async (table, sidePotsJson) =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .ReceiveWinners(sidePotsJson);
+            };
+
+            _gameProcessService.ReceiveUpdatedPot += async (table, potJson) =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .ReceiveUpdatedPot(potJson);
+            };
+
+            _gameProcessService.ReceivePlayerAction += async (table, action) =>
+            {
+                await Clients.GroupExcept(table.Id.ToString(), table.CurrentPlayer.ConnectionId)
+                    .ReceivePlayerAction(action);
+            };
+
+            _gameProcessService.ReceiveCurrentPlayerIdInWagering += async (table, currentPlayerIdJson) =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .ReceiveCurrentPlayerIdInWagering(currentPlayerIdJson);
+            };
+            
+                _gameProcessService.BigBlindBetEvent += async (table, bigBlindAction) =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .ReceivePlayerAction(JsonSerializer.Serialize(bigBlindAction));
+            };
+            
+            _gameProcessService.SmallBlindBetEvent += async (table, smallBlindAction) =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .ReceivePlayerAction(JsonSerializer.Serialize(smallBlindAction));
+            };
+            
+            _gameProcessService.NewPlayerBetEvent += async (table, newPlayerBlindAction) =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .ReceivePlayerAction(JsonSerializer.Serialize(newPlayerBlindAction));
+            };
+            
+            _gameProcessService.ReceiveTableState += async tableToSend =>
+            {
+                await Clients.Group(tableToSend.Id.ToString())
+                    .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(tableToSend)));
+            };
+
+            _gameProcessService.OnLackOfStackMoney += async player =>
+            {
+                await Clients.Client(player.ConnectionId)
+                    .OnLackOfStackMoney();
+            };
+
+            _gameProcessService.ReceivePlayerDto += async player =>
+            {
+                await Clients.Client(player.ConnectionId)
+                    .ReceivePlayerDto(JsonSerializer.Serialize(_mapper.Map<PlayerDto>(player)));
+            };
+
+            _gameProcessService.EndSitAndGoGameFirstPlace += async table =>
+            {
+                await Clients.Client(table.ActivePlayers[0].ConnectionId)
+                    .EndSitAndGoGame("1");
+            };
+            
+            _gameProcessService.EndSitAndGoGame += async (player, playersPlace) =>
+            {
+                await Clients.Client(player.ConnectionId)
+                    .EndSitAndGoGame(playersPlace.ToString());
+            };
+
+            _gameProcessService.RemoveFromGroupAsync += async (connectionId, groupName) =>
+            {
+                await Groups
+                    .RemoveFromGroupAsync(connectionId, groupName);
+            };
+
+            _gameProcessService.OnGameEnd += async table =>
+            {
+                await Clients.Group(table.Id.ToString())
+                    .OnGameEnd();
+            };
+
+            _gameProcessService.PlayerDisconnected += async (tableId, tableDtoJson) =>
+            {
+                await Clients.Group(tableId)
+                    .PlayerDisconnected(tableDtoJson);
+            };
+        }
     }
 }

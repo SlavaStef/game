@@ -5,16 +5,22 @@ namespace PokerHand.Server.Hubs.Interfaces
 {
     public interface IGameHub
     {
+        // Login
         Task OnConnectedAsync();
         Task RegisterNewPlayer(string userName);
-        Task Authenticate(string playerId);
+        Task Authenticate(string playerIdJson);
+        
+        // Disconnect
+        Task LeaveTable(string tableIdJson, string playerIdJson);
+        Task OnDisconnectedAsync(Exception exception);
+        
         Task GetTableInfo(string tableTitle);
         Task GetAllTablesInfo();
         Task ConnectToTable(string tableTitle, string playerId, string buyInAmount, string isAutoTop);
-        Task ReceivePlayerActionFromClient(string actionFromPlayer, string tableIdFromPlayer);
+        Task ReceivePlayerActionFromClient(string actionJson, string tableIdJson);
+        Task SendPlayerProfile(string playerIdJson);
         void ReceiveActivePlayerStatus(string tableId, string playerId);
-        Task LeaveTable(string tableId, string playerId);
-        Task OnDisconnectedAsync(Exception exception);
+        Task AddStackMoney(string tableIdJson, string playerIdJson, string amountJson);
         
         // Media
         Task UpdateProfileImage(string imageJson);

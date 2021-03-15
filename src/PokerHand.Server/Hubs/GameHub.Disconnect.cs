@@ -13,28 +13,28 @@ namespace PokerHand.Server.Hubs
 {
     public partial class GameHub
     {
-        public async Task LeaveTable(string tableId, string playerId)
+        public async Task LeaveTable(string tableIdJson, string playerIdJson)
         {
             _logger.LogInformation("LeaveTable. Start");
-            var tableIdGuid = JsonSerializer.Deserialize<Guid>(tableId);
-            var playerIdGuid = JsonSerializer.Deserialize<Guid>(playerId);
+            var tableId = JsonSerializer.Deserialize<Guid>(tableIdJson);
+            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
 
-            var table = _allTables.GetById(tableIdGuid);
-            var player = table?.Players.FirstOrDefault(p => p.Id == playerIdGuid);
+            var table = _allTables.GetById(tableId);
+            var player = table?.Players.FirstOrDefault(p => p.Id == playerId);
 
             _logger.LogInformation( $"LeaveTable. tableId: {table.Id}, playerId: {player.Id}");
             
-            // Remove player if it is his turn how
+            // Remove player if it is his turn now
             if (table.CurrentPlayer?.Id == player.Id)
             {
                 await RemoveCurrentPlayer(player, table);
                 return;
             }
 
-            var tableDto = await _tableService.RemovePlayerFromTable(tableIdGuid, playerIdGuid);
+            var tableDto = await _tableService.RemovePlayerFromTable(tableId, playerId);
 
             if (tableDto != null)
-                await Clients.GroupExcept(JsonSerializer.Deserialize<string>(tableId), Context.ConnectionId)
+                await Clients.GroupExcept(JsonSerializer.Deserialize<string>(tableIdJson), Context.ConnectionId)
                     .PlayerDisconnected(JsonSerializer.Serialize(tableDto));
         }
 

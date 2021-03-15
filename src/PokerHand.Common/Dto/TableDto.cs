@@ -15,7 +15,6 @@ namespace PokerHand.Common.Dto
         public TableType Type { get; set; }
         
         public RoundStageType CurrentStage { get; set; }
-        public Deck Deck { get; set; }
         public List<PlayerDto> Players { get; set; }
         public List<PlayerDto> ActivePlayers { get; set; }
         public List<Card> CommunityCards { get; set; }

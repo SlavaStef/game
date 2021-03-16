@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -67,32 +66,31 @@ namespace PokerHand.Server.Hubs
         }
         
         //TODO: change to Json
-        public async Task ConnectToTable(string tableTitle, string playerId, string buyInAmount, string autoTop)
+        //TODO: should receive one object
+        public async Task ConnectToTable(string tableTitleJson, string playerIdJson, string buyInAmountJson, string isAutoTopJson)
         {
             var connectOptions = new TableConnectionOptions 
             {
-                TableTitle = JsonSerializer.Deserialize<TableTitle>(tableTitle),
-                PlayerId = JsonSerializer.Deserialize<Guid>(playerId),
+                TableTitle = JsonSerializer.Deserialize<TableTitle>(tableTitleJson),
+                PlayerId = JsonSerializer.Deserialize<Guid>(playerIdJson),
                 PlayerConnectionId = Context.ConnectionId,
-                BuyInAmount = JsonSerializer.Deserialize<int>(buyInAmount),
-                IsAutoTop = JsonSerializer.Deserialize<bool>(autoTop)
+                BuyInAmount = JsonSerializer.Deserialize<int>(buyInAmountJson),
+                IsAutoTop = JsonSerializer.Deserialize<bool>(isAutoTopJson)
             };
             
-            var (tableDto, playerDto, isNewTable) = await _tableService.AddPlayerToTable(connectOptions);
+            var connectionResult = await _tableService.AddPlayerToTable(connectOptions);
             
-            await Groups.AddToGroupAsync(Context.ConnectionId, tableDto.Id.ToString());
+            await Groups.AddToGroupAsync(Context.ConnectionId, connectionResult.TableDto.Id.ToString());
             await Clients.Caller
-                .ReceivePlayerDto(JsonSerializer.Serialize(playerDto));
-            await Clients.Group(tableDto.Id.ToString())
-                .ReceiveTableState(JsonSerializer.Serialize(tableDto));
+                .ReceivePlayerDto(JsonSerializer.Serialize(connectionResult.PlayerDto));
+            await Clients.Group(connectionResult.TableDto.Id.ToString())
+                .ReceiveTableState(JsonSerializer.Serialize(connectionResult.TableDto));
 
-            if (isNewTable)
-            {
-                new Thread (() => _gameProcessService.StartRound(tableDto.Id)).Start();
-            }
+            if (connectionResult.IsNewTable)
+                new Thread (() => _gameProcessService.StartRound(connectionResult.TableDto.Id)).Start();
         }
         
-        public async Task ReceivePlayerActionFromClient(string actionJson, string tableIdJson)
+        public void ReceivePlayerActionFromClient(string actionJson, string tableIdJson)
         {
             _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Start by {Context.ConnectionId}");
             

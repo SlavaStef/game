@@ -16,8 +16,8 @@ namespace PokerHand.Server.Hubs.Interfaces
         
         Task GetTableInfo(string tableTitle);
         Task GetAllTablesInfo();
-        Task ConnectToTable(string tableTitle, string playerId, string buyInAmount, string isAutoTop);
-        Task ReceivePlayerActionFromClient(string actionJson, string tableIdJson);
+        Task ConnectToTable(string tableTitleJson, string playerIdJson, string buyInAmountJson, string isAutoTopJson);
+        void ReceivePlayerActionFromClient(string actionJson, string tableIdJson);
         Task SendPlayerProfile(string playerIdJson);
         void ReceiveActivePlayerStatus(string tableId, string playerId);
         Task AddStackMoney(string tableIdJson, string playerIdJson, string amountJson);

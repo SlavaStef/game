@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using PokerHand.BusinessLogic.Services;
-using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 
 namespace PokerHand.BusinessLogic.Interfaces

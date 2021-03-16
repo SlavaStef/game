@@ -26,13 +26,19 @@ namespace PokerHand.BusinessLogic.Services
         private readonly IDeckService _deckService;
         private readonly ILogger<TableService> _logger;
         private readonly IMapper _mapper;
+        
+        public event Action<Table, string> ReceivePlayerAction;
+        public event Action<Player, string> EndSitAndGoGame;
+        public event Action<string, string> PlayerDisconnected;
+        public event Action<string, string> RemoveFromGroupAsync;
 
         public TableService(
             UserManager<Player> userManager,
             ILogger<TableService> logger, 
             IMapper mapper, 
             IPlayerService playerService, 
-            ITablesOnline allTables, IDeckService deckService)
+            ITablesOnline allTables, 
+            IDeckService deckService)
         {
             _userManager = userManager;
             _logger = logger;
@@ -97,24 +103,23 @@ namespace PokerHand.BusinessLogic.Services
             return allTablesInfo;
         }
 
-        public async Task<(TableDto tableDto, PlayerDto playerDto,bool isNewTable)> AddPlayerToTable(TableConnectionOptions options)
+        public async Task<ConnectToTableResultModel> AddPlayerToTable(TableConnectionOptions options)
         {
+            var result = new ConnectToTableResultModel();
+            
             var table = GetFreeTable(options.TableTitle);
-            var isNewTable = false;
 
-            if (table == null) // Create new table if there are no free required tables
+            if (table is null)
             {
                 table = CreateNewTable(options.TableTitle);
-                isNewTable = true;
+                result.IsNewTable = true;
             }
 
-            _logger.LogInformation($"AddPlayerToTable. table: {JsonSerializer.Serialize(table)}");
-            
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == options.PlayerId);
             player.ConnectionId = options.PlayerConnectionId;
-            player.IndexNumber = isNewTable ? 0 : GetFreeSeatIndex(table);
+            player.IndexNumber = result.IsNewTable ? 0 : GetFreeSeatIndex(table);
 
-            if (table.Type == TableType.SitAndGo)
+            if (table.Type is TableType.SitAndGo)
                 await ConfigureSitAndGo(options, player);
             else
             {
@@ -126,116 +131,75 @@ namespace PokerHand.BusinessLogic.Services
                     await _playerService.GetFromTotalMoney(player.Id, options.BuyInAmount);
                     player.StackMoney = options.BuyInAmount;
                 }
-                
-                if (player.StackMoney == 0)
-                    return (null, _mapper.Map<PlayerDto>(player), false);
+
+                if (player.StackMoney is 0)
+                {
+                    result.TableDto = null;
+                    result.PlayerDto = _mapper.Map<PlayerDto>(player);
+                    result.IsNewTable = false;
+                }
             }
 
             table.Players.Add(player);
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
+
+            result.PlayerDto = _mapper.Map<PlayerDto>(player);
+            result.TableDto = _mapper.Map<TableDto>(table);
             
-            var tableDto = _mapper.Map<TableDto>(table);
-            _logger.LogInformation($"AddPlayerToTable. tableDto: {JsonSerializer.Serialize(tableDto)}");
-            var playerDto = _mapper.Map<PlayerDto>(player);
-            
-            return (tableDto, playerDto, isNewTable);
+            return result;
         }
 
-        private async Task ConfigureSitAndGo(TableConnectionOptions connectionOptions, Player player)
+        public async Task<ResultModel<RemoveFromTableResult>> RemovePlayerFromTable(Guid tableId, Guid playerId)
         {
-            player.IsAutoTop = false;
-            player.CurrentBuyIn = TableOptions.Tables[connectionOptions.TableTitle.ToString()]["MinBuyIn"];
+            var table = _allTables.GetById(tableId);
+            if (table is null)
+                return new ResultModel<RemoveFromTableResult> {IsSuccess = false, Message = "Table is null"};
+            
+            var player = table.Players.FirstOrDefault(p => p.Id == playerId);
+            if (player is null)
+                return new ResultModel<RemoveFromTableResult> {IsSuccess = false, Message = "Player is null"};
 
-            await _playerService.GetFromTotalMoney(player.Id, player.CurrentBuyIn);
-            player.StackMoney = TableOptions.Tables[connectionOptions.TableTitle.ToString()]["InitialStack"];
-        }
-
-        public async Task<TableDto> RemovePlayerFromTable(Guid tableId, Guid playerId)
-        {
-            _logger.LogInformation($"RemovePlayerFromTable. player: {playerId}");
-            try
+            if (table.Players.Count(p => p.Type is not PlayerType.Computer) is 1)
             {
-                var table = _allTables.GetById(tableId);
-                var player = table?.Players.FirstOrDefault(p => p.Id == playerId);
-                if (player is null) 
-                    return null;
-            
-                // Deal with player's state on table
-                await Statistics(player);
-                
-                if (player.CurrentBet != 0)
-                    table.Pot.TotalAmount += player.CurrentBet;
-            
-                if (player.StackMoney > 0) 
-                    await _playerService.AddTotalMoney(playerId, player.StackMoney);
-            
-                if (table.ActivePlayers.Contains(player))
-                    table.ActivePlayers.Remove(player); 
-            
-                table.Players.Remove(player);
-            
-                _logger.LogInformation($"Player was removed from table");
-            
-                // Dealing with the state of table if player's removal effects it
-                // Two not ordinary situations:
-                // 1. One player left at table -> end game and wait for a new player to join
-                // 2. No players left at table -> delete this table
-            
-                //TODO: Implement this logics
-                if (table.Players.Count is 1)
-                {
-                    table.WaitForPlayerBet.Set();
-                }
+                await RemovePlayer(player, table);
 
-                if (table.Players.Count(p => p.Type is not PlayerType.Computer) is 0)
+                _allTables.Remove(table.Id);
+
+                return new ResultModel<RemoveFromTableResult>
                 {
-                    _allTables.Remove(table.Id);
-                    _logger.LogInformation("Table was removed from all tables list");
-                    return null;
-                }
-            
-                return _mapper.Map<TableDto>(table);
+                    IsSuccess = true,
+                    Value = new RemoveFromTableResult {WasPlayerRemoved = true, WasTableRemoved = true}
+                };
             }
-            catch (Exception e)
+
+            if (table.CurrentPlayer?.Id == player.Id)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
-                throw;
+                await RemoveCurrentPlayer(player, table);
+
+                return new ResultModel<RemoveFromTableResult>
+                {
+                    IsSuccess = true, 
+                    Value = new RemoveFromTableResult
+                        {WasPlayerRemoved = true, WasTableRemoved = false, TableDto = _mapper.Map<TableDto>(table)}
+                };
             }
             
-        }
+            await RemovePlayer(player, table);
 
-        private async Task Statistics(Player player)
-        {
-            await _playerService.IncreaseNumberOfPlayedGamesAsync(player.Id, false);
+            return new ResultModel<RemoveFromTableResult>
+            {
+                IsSuccess = true, 
+                Value = new RemoveFromTableResult
+                    {WasPlayerRemoved = true, WasTableRemoved = false, TableDto = _mapper.Map<TableDto>(table)}
+            };
         }
-
-        public void RemoveTableById(Guid tableId) => 
-            _allTables.Remove(tableId);
 
         #region Helpers
-        
-        private static void SetTableOptions(Table table)
-        {
-            var tableName = Enum.GetName(typeof(TableTitle), (int) table.Title);
-
-            if (tableName is null)
-                throw new Exception();
-            
-            table.Type = (TableType)TableOptions.Tables[tableName]["TableType"];
-            table.SmallBlind = TableOptions.Tables[tableName]["SmallBlind"];
-            table.BigBlind = TableOptions.Tables[tableName]["BigBlind"];
-            table.MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"];
-            
-            table.MinPlayersToStart = table.Type is TableType.SitAndGo ? 5 : 2;
-        }
-
-        // Get a required table with free seats
         private Table GetFreeTable(TableTitle tableTitle)
         {
-            if (tableTitle == TableTitle.RivieraHotel ||
-                tableTitle == TableTitle.CityDreamsResort ||
-                tableTitle == TableTitle.HeritageBank)
+            if (tableTitle is TableTitle.RivieraHotel ||
+                tableTitle is TableTitle.CityDreamsResort ||
+                tableTitle is TableTitle.HeritageBank)
             {
                 return _allTables
                     .GetManyByTitle(tableTitle)
@@ -267,10 +231,35 @@ namespace PokerHand.BusinessLogic.Services
             table.BigBlindIndex = -1;
             table.SitAndGoRoundCounter = 0;
             table.SidePots = new List<SidePot>(table.MaxPlayers);
+            table.SitAndGoRoundCounter = 0;
             
             _allTables.Add(table);
             
             return table;
+        }
+        
+        private static void SetTableOptions(Table table)
+        {
+            var tableName = Enum.GetName(typeof(TableTitle), (int) table.Title);
+
+            if (tableName is null)
+                throw new Exception();
+            
+            table.Type = (TableType)TableOptions.Tables[tableName]["TableType"];
+            table.SmallBlind = TableOptions.Tables[tableName]["SmallBlind"];
+            table.BigBlind = TableOptions.Tables[tableName]["BigBlind"];
+            table.MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"];
+            
+            table.MinPlayersToStart = table.Type is TableType.SitAndGo ? 5 : 2;
+        }
+        
+        private async Task ConfigureSitAndGo(TableConnectionOptions connectionOptions, Player player)
+        {
+            player.IsAutoTop = false;
+            player.CurrentBuyIn = TableOptions.Tables[connectionOptions.TableTitle.ToString()]["MinBuyIn"];
+
+            await _playerService.GetFromTotalMoney(player.Id, player.CurrentBuyIn);
+            player.StackMoney = TableOptions.Tables[connectionOptions.TableTitle.ToString()]["InitialStack"];
         }
 
         private static int GetFreeSeatIndex(Table table)
@@ -290,6 +279,48 @@ namespace PokerHand.BusinessLogic.Services
             return seatIndex;
         }
         
+        // RemovePlayerFromTable helpers
+        private async Task RemovePlayer(Player player, Table table)
+        {
+            await _playerService.IncreaseNumberOfPlayedGamesAsync(player.Id, false);
+
+            if (player.CurrentBet != 0)
+                table.Pot.TotalAmount += player.CurrentBet;
+
+            if (player.StackMoney > 0)
+                await _playerService.AddTotalMoney(player.Id, player.StackMoney);
+            
+            if (table.Type is TableType.SitAndGo)
+            {
+                var playerPlace = table.Players.Count;
+                _logger.LogInformation($"RemoveCurrentPlayer. playerPlace: {playerPlace}");
+                
+                EndSitAndGoGame?.Invoke(player, playerPlace.ToString());
+            }
+
+            if (table.ActivePlayers.Contains(player))
+                table.ActivePlayers.Remove(player);
+
+            table.Players.Remove(player);
+        }
+
+        private async Task RemoveCurrentPlayer(Player player, Table table)
+        {
+            player.CurrentAction = new PlayerAction
+            {
+                ActionType = PlayerActionType.Fold,
+                PlayerIndexNumber = player.IndexNumber
+            };
+
+            ReceivePlayerAction?.Invoke(table, JsonSerializer.Serialize(table.CurrentPlayer.CurrentAction));
+
+            await RemovePlayer(player, table);
+
+            RemoveFromGroupAsync?.Invoke(player.ConnectionId, table.Id.ToString());
+            PlayerDisconnected?.Invoke(table.Id.ToString(), JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+            
+            table.WaitForPlayerBet.Set();
+        }
         #endregion
     }
 }

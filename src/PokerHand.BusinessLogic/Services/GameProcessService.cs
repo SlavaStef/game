@@ -116,7 +116,7 @@ namespace PokerHand.BusinessLogic.Services
                     break;
                 case RoundStageType.Refresh:
                     if (table.Type is TableType.SitAndGo && table.Players.Count is 1)
-                        _tableService.RemoveTableById(table.Id);
+                        _allTables.Remove(table.Id);
                     if (table.Players.Count > 0)
                         await StartRound(table.Id);
                     break;

@@ -4,7 +4,7 @@ using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.CardEvaluation;
 
-namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
+namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic
 {
     public class HighCard : IRules
     {
@@ -26,10 +26,10 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 .OrderByDescending(c => (int)c.Rank)
                 .ToList();
 
-            for (var index = 0; index < 5; index++)
+            foreach (var card in allCards.TakeWhile(card => result.Hand.Cards.Count is not 5))
             {
-                result.Hand.Cards.Add(allCards[index]);
-                result.Hand.Value += (int)allCards[index].Rank;
+                result.Hand.Cards.Add(card);
+                result.Hand.Value += (int)card.Rank;
             }
             
             return result;

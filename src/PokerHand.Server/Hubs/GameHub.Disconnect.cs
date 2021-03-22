@@ -21,6 +21,8 @@ namespace PokerHand.Server.Hubs
 
             var table = _allTables.GetById(tableId);
             var player = table?.Players.FirstOrDefault(p => p.Id == playerId);
+            if (player is null)
+                return;
 
             _logger.LogInformation( $"LeaveTable. tableId: {table.Id}, playerId: {player.Id}");
 

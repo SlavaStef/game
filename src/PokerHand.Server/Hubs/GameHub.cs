@@ -130,13 +130,16 @@ namespace PokerHand.Server.Hubs
             _playerService.SetPlayerReady(tableIdGuid, playerIdGuid);
         }
 
-        public async Task AddStackMoney(string tableIdJson, string playerIdJson, string amountJson)
+        public async Task ReceiveNewBuyIn(string tableIdJson, string playerIdJson, string amountJson, string isAutoTopJson)
         {
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdJson);
             var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
             var amount = JsonSerializer.Deserialize<int>(amountJson);
+            var isAutoTop = JsonSerializer.Deserialize<bool>(isAutoTopJson);
 
             await _playerService.AddStackMoneyFromTotalMoney(tableId, playerId, amount);
+
+            _playerService.ChangeAutoTop(tableId, playerId, isAutoTop);
         }
 
         private void WriteAllPlayersList() =>
@@ -170,8 +173,10 @@ namespace PokerHand.Server.Hubs
 
             _gameProcessService.ReceivePlayerAction += async (table, action) =>
             {
+                _logger.LogInformation($"action: {action} : {JsonSerializer.Serialize(action)}");
+                
                 await Clients.GroupExcept(table.Id.ToString(), table.CurrentPlayer.ConnectionId)
-                    .ReceivePlayerAction(action);
+                    .ReceivePlayerAction(JsonSerializer.Serialize(action));
             };
 
             _gameProcessService.ReceiveCurrentPlayerIdInWagering += async (table, currentPlayerIdJson) =>
@@ -183,19 +188,19 @@ namespace PokerHand.Server.Hubs
                 _gameProcessService.BigBlindBetEvent += async (table, bigBlindAction) =>
             {
                 await Clients.Group(table.Id.ToString())
-                    .ReceivePlayerAction(JsonSerializer.Serialize(bigBlindAction));
+                    .ReceivePlayerAction(bigBlindAction);
             };
             
             _gameProcessService.SmallBlindBetEvent += async (table, smallBlindAction) =>
             {
                 await Clients.Group(table.Id.ToString())
-                    .ReceivePlayerAction(JsonSerializer.Serialize(smallBlindAction));
+                    .ReceivePlayerAction(smallBlindAction);
             };
             
             _gameProcessService.NewPlayerBetEvent += async (table, newPlayerBlindAction) =>
             {
                 await Clients.Group(table.Id.ToString())
-                    .ReceivePlayerAction(JsonSerializer.Serialize(newPlayerBlindAction));
+                    .ReceivePlayerAction(newPlayerBlindAction);
             };
             
             _gameProcessService.ReceiveTableState += async tableToSend =>

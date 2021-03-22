@@ -20,7 +20,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         void ReceivePlayerActionFromClient(string actionJson, string tableIdJson);
         Task SendPlayerProfile(string playerIdJson);
         void ReceiveActivePlayerStatus(string tableId, string playerId);
-        Task AddStackMoney(string tableIdJson, string playerIdJson, string amountJson);
+        Task ReceiveNewBuyIn(string tableIdJson, string playerIdJson, string amountJson, string isAutoTopJson);
         
         // Media
         Task UpdateProfileImage(string imageJson);

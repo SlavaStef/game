@@ -5,7 +5,7 @@ using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 
-namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
+namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic
 {
     public class FullHouse : IRules
     {

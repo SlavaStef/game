@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands;
+using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.Entities;
@@ -23,7 +24,16 @@ namespace PokerHand.BusinessLogic.Services
 
         public Player EvaluatePlayerHand(List<Card> communityCards, Player player)
         {
-            return EvaluatePlayersHands(communityCards, new List<Player> {player}).First();
+            try
+            {
+                return EvaluatePlayersHands(communityCards, new List<Player> {player}).First();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
 
         public List<SidePot> CalculateSidePotsWinners(Table table)
@@ -45,12 +55,12 @@ namespace PokerHand.BusinessLogic.Services
                     }
                 };
             }
-            
+
             // 1. Evaluate players' cards => get a list of players with HandValue
             var playersWithEvaluatedHands = EvaluatePlayersHands(table.CommunityCards, table.ActivePlayers);
             _logger.LogInformation(
                 $"CalculateSidePotsWinners. Players: {JsonSerializer.Serialize(playersWithEvaluatedHands)}");
-                    
+
             // 2. Get a list of sidePots with Type, Players, AmountOfOneBet, TotalAmount
             var sidePots = CreateSidePots(table);
             _logger.LogInformation($"CalculateSidePotsWinners. SidePots: {JsonSerializer.Serialize(sidePots)}");
@@ -59,7 +69,7 @@ namespace PokerHand.BusinessLogic.Services
             var finalSidePots = GetSidePotsWithWinners(sidePots, playersWithEvaluatedHands);
             _logger.LogInformation(
                 $"CalculateSidePotsWinners. SidePots: {JsonSerializer.Serialize(finalSidePots)}");
-            
+
             return finalSidePots;
         }
 
@@ -126,7 +136,10 @@ namespace PokerHand.BusinessLogic.Services
 
                 DefineWinnersInSidePot(players, sidePot);
 
-                sidePot.WinningAmountPerPlayer = sidePot.TotalAmount / sidePot.Winners.Count;
+                if (sidePot.Winners.Count is not 0)
+                    sidePot.WinningAmountPerPlayer = sidePot.TotalAmount / sidePot.Winners.Count;
+                else
+                    sidePot.WinningAmountPerPlayer = sidePot.TotalAmount;
             }
 
             _logger.LogInformation($"GetSidePotsWithWinners. SidePots: {JsonSerializer.Serialize(sidePots)}");
@@ -135,10 +148,10 @@ namespace PokerHand.BusinessLogic.Services
 
         private static void DefineWinnersInSidePot(List<Player> players, SidePot sidePot)
         {
-            for (var handTypeIndex = (int)HandType.FiveOfAKind; handTypeIndex > (int)HandType.None; handTypeIndex--)
+            for (var handTypeIndex = (int) HandType.FiveOfAKind; handTypeIndex > (int) HandType.None; handTypeIndex--)
             {
                 var playersWithCurrentHand = players
-                    .Where(p => (int)p.Hand == handTypeIndex)
+                    .Where(p => (int) p.Hand == handTypeIndex)
                     .ToList();
 
                 switch (playersWithCurrentHand.Count)
@@ -152,7 +165,7 @@ namespace PokerHand.BusinessLogic.Services
                         for (var cardIndex = 0; cardIndex < 5; cardIndex++)
                         {
                             SubstituteJokers(playersWithCurrentHand, cardIndex);
-                            
+
                             var currentMaxRank = playersWithCurrentHand
                                 .Select(player => (int) player.HandCombinationCards[cardIndex].Rank)
                                 .Prepend(0)
@@ -204,54 +217,72 @@ namespace PokerHand.BusinessLogic.Services
 
         private List<Player> EvaluatePlayersHands(List<Card> communityCards, List<Player> players)
         {
-            foreach (var player in players)
+            try
             {
-                var result = FindCombination(player.PocketCards, communityCards);
+                foreach (var player in players)
+                {
+                    var result = FindCombination(player.PocketCards, communityCards);
 
-                player.Hand = result.HandType;
-                player.HandValue = result.Value;
-                player.HandCombinationCards = result.Cards;
+                    player.Hand = result.HandType;
+                    player.HandValue = result.Value;
+                    player.HandCombinationCards = result.Cards;
+                }
+
+                return players;
             }
-
-            return players;
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
 
         private Hand FindCombination(List<Card> playerHand, List<Card> tableCards)
         {
-            var result = new Hand();
-            
-            var listRules = new List<IRules>
+            try
             {
-                new FiveOfAKind(), // +++
-                new RoyalFlush(), // + no joker logic
-                new StraightFlush(), // + no joker logic
-                new FourOfAKind(), // +++
-                new FullHouse(), // +++
-                new Flush(), // +++
-                new Straight(), // +++
-                new ThreeOfAKind(), // +++
-                new TwoPairs(), // ++
-                new OnePair(), // ++
-                new HighCard() // +
-            };
-                
-            foreach (var rule in listRules)
-            {
-                //TODO: remove isJokerGame
-                var evaluationResult = rule.Check(playerHand, tableCards);
+                var result = new Hand();
 
-                if (evaluationResult.IsWinningHand is false) 
-                    continue;
-                
-                // TODO: create mapping rule
-                result.Value = evaluationResult.Hand.Value;
-                result.HandType = evaluationResult.Hand.HandType;
-                result.Cards = evaluationResult.Hand.Cards;
+                var listRules = new List<IRules>
+                {
+                    new FiveOfAKind(), // +++
+                    new RoyalFlush(), // + no joker logic
+                    new StraightFlush(), // + no joker logic
+                    new FourOfAKind(), // +++
+                    new FullHouse(), // +++
+                    new Flush(), // +++
+                    new Straight(), // +++
+                    new ThreeOfAKind(), // +++
+                    new TwoPairs(), // ++
+                    new OnePair(), // ++
+                    new HighCard() // +
+                };
 
-                break;
+                foreach (var rule in listRules)
+                {
+                    //TODO: remove isJokerGame
+                    var evaluationResult = rule.Check(playerHand, tableCards);
+
+                    if (evaluationResult.IsWinningHand is false)
+                        continue;
+
+                    // TODO: create mapping rule
+                    result.Value = evaluationResult.Hand.Value;
+                    result.HandType = evaluationResult.Hand.HandType;
+                    result.Cards = evaluationResult.Hand.Cards;
+
+                    break;
+                }
+
+                return result;
             }
-            
-            return result;
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
     }
 }

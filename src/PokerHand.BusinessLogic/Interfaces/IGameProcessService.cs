@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers.GameProcess;
 
 namespace PokerHand.BusinessLogic.Interfaces
 {
@@ -12,7 +13,7 @@ namespace PokerHand.BusinessLogic.Interfaces
         event Action<Player> ReceivePlayerDto;
         event Action<Table, string> ReceiveWinners;
         event Action<Table, string> ReceiveUpdatedPot;
-        event Action<Table, string> ReceivePlayerAction;
+        event Action<Table, PlayerAction> ReceivePlayerAction;
         event Action<Table, string> ReceiveCurrentPlayerIdInWagering;
         event Action<Player> OnLackOfStackMoney;
         event Action<Table> ReceiveTableState;

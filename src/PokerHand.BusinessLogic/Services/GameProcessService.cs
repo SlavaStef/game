@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers.Bot;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
@@ -28,13 +30,17 @@ namespace PokerHand.BusinessLogic.Services
         private readonly ILogger<GameProcessService> _logger;
         private readonly IMapper _mapper;
 
+        private const bool isGameWithBots = true;
+        private IConfiguration Configuration { get; }
+
         #region Events
+
         public event Action<Table> OnPrepareForGame;
         public event Action<Table, List<Card>> OnDealCommunityCards;
         public event Action<Table, string> ReceiveWinners;
         public event Action<Table, string> ReceiveUpdatedPot;
         public event Action<Player> ReceivePlayerDto;
-        public event Action<Table, string> ReceivePlayerAction;
+        public event Action<Table, PlayerAction> ReceivePlayerAction;
         public event Action<Table, string> ReceiveCurrentPlayerIdInWagering;
         public event Action<Player> OnLackOfStackMoney;
         public event Action<Table> ReceiveTableState;
@@ -46,6 +52,7 @@ namespace PokerHand.BusinessLogic.Services
         public event Action<string, string> RemoveFromGroupAsync;
         public event Action<Table> OnGameEnd;
         public event Action<string, string> PlayerDisconnected;
+
         #endregion
 
         public GameProcessService(
@@ -56,7 +63,7 @@ namespace PokerHand.BusinessLogic.Services
             ITableService tableService,
             IBotService botService,
             ICardEvaluationService cardEvaluationService,
-            ITablesOnline allTables)
+            ITablesOnline allTables, IConfiguration configuration)
         {
             _logger = logger;
             _mapper = mapper;
@@ -66,22 +73,32 @@ namespace PokerHand.BusinessLogic.Services
             _botService = botService;
             _cardEvaluationService = cardEvaluationService;
             _allTables = allTables;
+            Configuration = configuration;
         }
 
         public async Task StartRound(Guid tableId)
         {
-            _logger.LogInformation("StartRound. Start");
-            var table = _allTables.GetById(tableId);
-            _logger.LogInformation($"table: {JsonSerializer.Serialize(table)}");
-            table.CurrentStage = RoundStageType.NotStarted;
+            try
+            {
+                _logger.LogInformation("StartRound. Start");
+                var table = _allTables.GetById(tableId);
+                if (table is null)
+                    return;
+                
+                table.CurrentStage = RoundStageType.NotStarted;
 
-            _logger.LogInformation($"Start round. Before autoTop");
-            await HandlePlayersWithEmptyStackMoney(table);
-            _logger.LogInformation($"Start round. After autoTop");
+                await HandlePlayersWithEmptyStackMoney(table);
 
-            await WaitForPlayers(table);
+                await WaitForPlayers(table);
 
-            await RunNextStage(table);
+                await RunNextStage(table);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
 
         private async Task RunNextStage(Table table)
@@ -126,198 +143,222 @@ namespace PokerHand.BusinessLogic.Services
         // Preparation
         private async Task PrepareForGame(Table table)
         {
-            table.CurrentStage = RoundStageType.PrepareTable;
+            try
+            {
+                table.CurrentStage = RoundStageType.PrepareTable;
 
-            SetDealerAndBlinds(table);
-            DealPocketCards(table);
+                SetDealerAndBlinds(table);
+                DealPocketCards(table);
 
-            OnPrepareForGame?.Invoke(table);
+                OnPrepareForGame?.Invoke(table);
 
-            await Task.Delay(1000);
+                await Task.Delay(1000);
 
-            await RunNextStage(table);
+                await RunNextStage(table);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
 
         // Game
         private async Task DealCommunityCards(Table table, int numberOfCards)
         {
-            _logger.LogInformation("DealCommunityCards. Start");
+            try
+            {
+                _logger.LogInformation("DealCommunityCards. Start");
 
-            var cardsToAdd = _deckService.GetRandomCardsFromDeck(table.Deck, numberOfCards);
-            table.CommunityCards.AddRange(cardsToAdd);
+                var cardsToAdd = _deckService.GetRandomCardsFromDeck(table.Deck, numberOfCards);
+                table.CommunityCards.AddRange(cardsToAdd);
 
-            OnDealCommunityCards?.Invoke(table, cardsToAdd);
+                OnDealCommunityCards?.Invoke(table, cardsToAdd);
 
-            await Task.Delay(numberOfCards * 300);
+                await Task.Delay(numberOfCards * 300);
 
-            _logger.LogInformation("DealCommunityCards. End");
+                _logger.LogInformation("DealCommunityCards. End");
 
-            if (table.ActivePlayers.Count > 1 && !table.IsEndDueToAllIn)
-                await StartWagering(table);
-            else
-                await Showdown(table);
+                if (table.ActivePlayers.Count > 1 && !table.IsEndDueToAllIn)
+                    await StartWagering(table);
+                else
+                    await Showdown(table);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
 
         private async Task StartWagering(Table table)
         {
             _logger.LogInformation("StartWagering. Start");
 
-            ChooseCurrentStage(table);
-            if (table.CurrentStage is RoundStageType.WageringPreFlopRound)
-                await MakeBlindBets(table);
+                ChooseCurrentStage(table);
+                if (table.CurrentStage is RoundStageType.WageringPreFlopRound)
+                    await MakeBlindBets(table);
 
-            // Counter is used to make sure all players acted at least one time
-            var actionCounter = table.ActivePlayers.Count(p => p.StackMoney > 0);
+                // Counter is used to make sure all players acted at least one time
+                var actionCounter = table.ActivePlayers.Count(p => p.StackMoney > 0);
 
-            // Players make choices
-            do
-            {
-                if (table.ActivePlayers.Count < 1)
+                // Players make choices
+                do
+                {
+                    if (table.ActivePlayers.Count < 1)
+                    {
+                        await Showdown(table);
+                        return;
+                    }
+
+                    // Choose next player to make choice
+                    SetCurrentPlayer(table);
+                    var currentPlayerId = table.CurrentPlayer.Id;
+
+                    ReceiveCurrentPlayerIdInWagering?.Invoke(table, JsonSerializer.Serialize(currentPlayerId));
+
+                    _logger.LogInformation(
+                        $"StartWagering. Table after setting current player: {JsonSerializer.Serialize(table)}");
+                    if (table.CurrentPlayer.Type is PlayerType.Computer)
+                    {
+                        var action = _botService.Act(table.CurrentPlayer, table);
+
+                        _logger.LogInformation($"StartWagering. bot action: {JsonSerializer.Serialize(action)}");
+                        table.CurrentPlayer.CurrentAction = action;
+
+                        await Task.Delay(new Random().Next(1, 5) * 1000);
+                    }
+                    else
+                    {
+                        //TODO: Handle player's leaving during WaitOne
+                        //TODO: Make timer
+                        _logger.LogInformation($"StartWagering. Waiting");
+                        table.WaitForPlayerBet.WaitOne();
+                    }
+
+                    if (table.ActivePlayers.Any(p => p.Id == currentPlayerId))
+                    {
+                        _logger.LogInformation($"StartWagering. Inside IF");
+                        await ProcessPlayerAction(table, table.CurrentPlayer);
+
+                        ReceivePlayerAction?.Invoke(table, table.CurrentPlayer.CurrentAction);
+                    }
+
+                    _logger.LogInformation($"StartWagering. Outside IF");
+
+                    // Check if one of two players folded
+                    if (table.ActivePlayers.Count is 1)
+                    {
+                        await Showdown(table);
+                        return;
+                    }
+
+                    ReceiveTableState?.Invoke(table);
+
+                    actionCounter--;
+                } while (!CheckForWageringEnd(table, actionCounter));
+
+                await Task.Delay(1000);
+
+                foreach (var player in table.ActivePlayers)
+                    player.CurrentBet = 0;
+
+                // Check for end due to all in
+                if (table.ActivePlayers.Count(p => p.StackMoney is not 0) <= 1)
+                {
+                    ReceiveUpdatedPot?.Invoke(table, JsonSerializer.Serialize(table.Pot));
+
+                    await Task.Delay(table.ActivePlayers.Count * 300);
+
+                    table.IsEndDueToAllIn = true;
+                    await DealCommunityCards(table, 5 - table.CommunityCards.Count);
+                    return;
+                }
+
+                // If at least one action was taken
+                if (table.CurrentMaxBet > 0)
+                {
+                    ReceiveUpdatedPot?.Invoke(table, JsonSerializer.Serialize(table.Pot));
+
+                    await Task.Delay(table.ActivePlayers.Count * 300);
+
+                    table.CurrentMaxBet = 0;
+                }
+
+                table.CurrentPlayer = null;
+
+                if (table.ActivePlayers.Count is 1)
                 {
                     await Showdown(table);
                     return;
                 }
 
-                // Choose next player to make choice
-                SetCurrentPlayer(table);
-                var currentPlayerId = table.CurrentPlayer.Id;
-
-                ReceiveCurrentPlayerIdInWagering?.Invoke(table, JsonSerializer.Serialize(currentPlayerId));
-
-                _logger.LogInformation(
-                    $"StartWagering. Table after setting current player: {JsonSerializer.Serialize(table)}");
-                if (table.CurrentPlayer.Type is PlayerType.Computer)
-                {
-                    PlayerAction action;
-                    _logger.LogInformation("Bot is chosen to act");
-                    try
-                    {
-                        action = _botService.Act(table.CurrentPlayer, table);
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogError($"{e.Message}");
-                        _logger.LogError($"{e.StackTrace}");
-                        throw;
-                    }
-
-
-                    _logger.LogInformation($"StartWagering. bot action: {JsonSerializer.Serialize(action)}");
-                    table.CurrentPlayer.CurrentAction = action;
-
-                    await Task.Delay(new Random().Next(1, 5) * 1000);
-                }
-                else
-                {
-                    //TODO: Handle player's leaving during WaitOne
-                    //TODO: Make timer
-                    _logger.LogInformation($"StartWagering. Waiting");
-                    table.WaitForPlayerBet.WaitOne();
-                }
-
-                if (table.ActivePlayers.Any(p => p.Id == currentPlayerId))
-                {
-                    _logger.LogInformation($"StartWagering. Inside IF");
-                    await ProcessPlayerAction(table, table.CurrentPlayer);
-
-                    ReceivePlayerAction?.Invoke(table, JsonSerializer.Serialize(table.CurrentPlayer.CurrentAction));
-                }
-
-                _logger.LogInformation($"StartWagering. Outside IF");
-
-                // Check if one of two players folded
-                if (table.ActivePlayers.Count == 1)
-                {
-                    await Showdown(table);
-                    return;
-                }
-
-                ReceiveTableState?.Invoke(table);
-
-                actionCounter--;
-            } while (!CheckForWageringEnd(table, actionCounter));
-
-            await Task.Delay(1000);
-
-            foreach (var player in table.ActivePlayers)
-                player.CurrentBet = 0;
-
-            // Check for end due to all in
-            if (table.ActivePlayers.Count(p => p.StackMoney is not 0) <= 1)
-            {
-                ReceiveUpdatedPot?.Invoke(table, JsonSerializer.Serialize(table.Pot));
-
-                await Task.Delay(table.ActivePlayers.Count * 300);
-
-                table.IsEndDueToAllIn = true;
-                await DealCommunityCards(table, 5 - table.CommunityCards.Count);
-                return;
-            }
-
-            // If at least one action was taken
-            if (table.CurrentMaxBet > 0)
-            {
-                ReceiveUpdatedPot?.Invoke(table, JsonSerializer.Serialize(table.Pot));
-
-                await Task.Delay(table.ActivePlayers.Count * 300);
-
-                table.CurrentMaxBet = 0;
-            }
-
-            table.CurrentPlayer = null;
-
-            if (table.ActivePlayers.Count is 1)
-            {
-                await Showdown(table);
-                return;
-            }
-
-            await Task.Delay(2500);
-            await RunNextStage(table);
+                await Task.Delay(2500);
+                await RunNextStage(table);
         }
 
         // End
         private async Task Showdown(Table table)
         {
-            _logger.LogInformation("Showdown. Start");
-            table.CurrentStage = RoundStageType.Showdown;
+            try
+            {
+                _logger.LogInformation("Showdown. Start");
+                table.CurrentStage = RoundStageType.Showdown;
 
-            table.SidePots = _cardEvaluationService.CalculateSidePotsWinners(table);
+                table.SidePots = _cardEvaluationService.CalculateSidePotsWinners(table);
 
-            GiveMoneyToWinners(table.SidePots);
+                GiveMoneyToWinners(table.SidePots);
 
-            ReceiveWinners?.Invoke(table, JsonSerializer.Serialize(_mapper.Map<List<SidePotDto>>(table.SidePots)));
+                ReceiveWinners?.Invoke(table, JsonSerializer.Serialize(_mapper.Map<List<SidePotDto>>(table.SidePots)));
 
-            ReceiveTableState?.Invoke(table);
+                ReceiveTableState?.Invoke(table);
 
-            await Task.Delay(5000 + (table.ActivePlayers.Count * 500));
+                await Task.Delay(5000 + (table.ActivePlayers.Count * 500));
 
-            _logger.LogInformation("Showdown. End");
-            await RunNextStage(table);
+                _logger.LogInformation("Showdown. End");
+                await RunNextStage(table);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
 
         // CleanUp
         private async Task RefreshTableState(Table table)
         {
-            table.CurrentStage = RoundStageType.Refresh;
+            try
+            {
+                table.CurrentStage = RoundStageType.Refresh;
 
-            await UpdatePlayersStatistics(table);
+                await UpdatePlayersStatistics(table);
 
-            if (table.Type is TableType.SitAndGo)
-                await RefreshSitAndGoTable(table);
+                if (table.Type is TableType.SitAndGo)
+                    await RefreshSitAndGoTable(table);
 
-            RefreshTable(table);
+                RefreshTable(table);
 
-            foreach (var player in table.Players.Where(p => p.PocketCards is not null))
-                player.NumberOfGamesOnCurrentTable++;
+                foreach (var player in table.Players.Where(p => p.PocketCards is not null))
+                    player.NumberOfGamesOnCurrentTable++;
 
-            RefreshPlayers(table);
+                RefreshPlayers(table);
 
-            await Task.Delay(4000);
+                await Task.Delay(4000);
 
-            OnGameEnd?.Invoke(table);
+                OnGameEnd?.Invoke(table);
 
-            await RunNextStage(table);
+                await RunNextStage(table);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
 
         #region Helpers
@@ -330,6 +371,7 @@ namespace PokerHand.BusinessLogic.Services
 
             var playersForAutoTop = table
                 .Players
+                .Where(p => p.Type is PlayerType.Human)
                 .Where(player => player.StackMoney is 0 && player.IsAutoTop && player.TotalMoney >= minBuyIn);
 
             foreach (var player in playersForAutoTop)
@@ -349,6 +391,12 @@ namespace PokerHand.BusinessLogic.Services
                 }
             }
 
+            foreach (var bot in table.Players.Where(p => p.Type is PlayerType.Computer))
+            {
+                if (bot.StackMoney is 0)
+                    bot.StackMoney = bot.CurrentBuyIn;
+            }
+
             _logger.LogInformation("AutoTop. End");
 
             foreach (var player in table.Players.Where(p => p.StackMoney is 0))
@@ -361,22 +409,18 @@ namespace PokerHand.BusinessLogic.Services
 
         private async Task WaitForPlayers(Table table)
         {
-            _logger.LogInformation("StartRound. Waiting for players");
-            _logger.LogInformation($"StartRound. MinPlayersToStart: {table.MinPlayersToStart}");
+            _logger.LogInformation("WaitForPlayers. Start");
+            _logger.LogInformation($"WaitForPlayers. MinPlayersToStart: {table.MinPlayersToStart}");
 
-            // if (table.Players.Count(p => p.StackMoney > 0) < 2 &&
-            //     table.Type is not SitAndGo)
-            // {
-            //     var bot = _botService.Create(table, BotComplexity.Hard);
-            //
-            //     table.Players.Add(bot);
-            //
-            //     await _hub.Clients.Group(table.Id.ToString())
-            //         .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-            // }
+            if (isGameWithBots)
+                ManageBots(table);
+
+            _logger.LogInformation($"WaitForPlayers. Table after managing bots: {JsonSerializer.Serialize(table)}");
 
             while (table.Players.Count(p => p.StackMoney > 0) < table.MinPlayersToStart)
                 await Task.Delay(1000);
+
+            _logger.LogInformation("WaitForPlayers. Number of players is enough to start");
 
             foreach (var player in table.Players.Where(p => p.StackMoney > 0))
             {
@@ -384,9 +428,62 @@ namespace PokerHand.BusinessLogic.Services
                 table.Pot.Bets.Add(player.Id, 0);
             }
 
+            _logger.LogInformation("WaitForPlayers. Players are added to Active Players");
+
             while (table.ActivePlayers.Any(p => p.IsReady is not true))
                 await Task.Delay(500);
-            _logger.LogInformation("StartRound. Game starts");
+            _logger.LogInformation("WaitForPlayers. End");
+        }
+
+        private void ManageBots(Table table)
+        {
+            try
+            {
+                if (table.Type is TableType.SitAndGo)
+                    return;
+
+                var maxNumberOfBots = table.MaxPlayers switch {8 => 3, _ => 2};
+                var currentNumberOfBots = table.Players.Count(p => p.Type is PlayerType.Computer);
+
+                // Remove bot if there are too much players
+                if (table.Players.Count == table.MaxPlayers &&
+                    currentNumberOfBots > 0)
+                {
+                    var botToRemove = table.Players.First(p => p.Type is PlayerType.Computer);
+
+                    if (table.ActivePlayers.Contains(botToRemove))
+                        table.ActivePlayers.Remove(botToRemove);
+
+                    table.Players.Remove(botToRemove);
+
+                    ReceiveTableState?.Invoke(table);
+                }
+
+                if (currentNumberOfBots < maxNumberOfBots &&
+                    table.Players.Count + 2 <= table.MaxPlayers)
+                {
+                    var numberOfBotsToAdd =
+                        table.MaxPlayers - 1 - table.Players.Count(p => p.Type is PlayerType.Human);
+
+                    if (numberOfBotsToAdd > maxNumberOfBots)
+                        numberOfBotsToAdd = maxNumberOfBots;
+
+                    while (table.Players.Count(p => p.Type is PlayerType.Computer) < numberOfBotsToAdd)
+                    {
+                        var bot = _botService.Create(table, BotComplexity.Hard);
+
+                        table.Players.Add(bot);
+
+                        ReceiveTableState?.Invoke(table);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
         }
 
         // PrepareForGame helpers
@@ -456,7 +553,7 @@ namespace PokerHand.BusinessLogic.Services
                             .FirstOrDefault(p => p.IndexNumber > table.DealerIndex && p.StackMoney > 0);
 
                         if (possibleDealer is null)
-                            table.SmallBlindIndex = table.ActivePlayers
+                            table.DealerIndex = table.ActivePlayers
                                 .First(p => p.StackMoney > 0).IndexNumber;
                         else
                             table.DealerIndex = possibleDealer.IndexNumber;
@@ -500,7 +597,7 @@ namespace PokerHand.BusinessLogic.Services
                 _ => table.CurrentStage
             };
         }
-        
+
         private bool CheckForWageringEnd(Table table, int actionCounter)
         {
             if (table.ActivePlayers.Count < 2)
@@ -530,7 +627,7 @@ namespace PokerHand.BusinessLogic.Services
         {
             var result = table
                 .ActivePlayers
-                .All(player => player.CurrentAction.ActionType == PlayerActionType.Fold ||
+                .All(player => player.CurrentAction.ActionType is PlayerActionType.Fold ||
                                player.CurrentBet == table.CurrentMaxBet);
             return result;
         }
@@ -540,7 +637,7 @@ namespace PokerHand.BusinessLogic.Services
             // if round starts and there is no current player
             if (table.CurrentPlayer is null)
             {
-                table.CurrentPlayer = table.CurrentStage == RoundStageType.WageringPreFlopRound
+                table.CurrentPlayer = table.CurrentStage is RoundStageType.WageringPreFlopRound
                     ? GetNextPlayer(table, table.BigBlindIndex)
                     : GetNextPlayer(table, table.DealerIndex);
             }
@@ -551,32 +648,49 @@ namespace PokerHand.BusinessLogic.Services
                 table.CurrentPlayer = GetNextPlayer(table, table.CurrentPlayer.IndexNumber);
             }
 
-            static Player GetNextPlayer(Table table, int currentPlayerIndex) =>
-                table.ActivePlayers
-                    .FirstOrDefault(p => p.IndexNumber > currentPlayerIndex && p.StackMoney > 0)
-                ?? table.ActivePlayers.First(p => p.StackMoney > 0);
+            Player GetNextPlayer(Table table, int currentPlayerIndex)
+            {
+                _logger.LogInformation("Players before next player is chosen:");
+
+                foreach (var player in table.ActivePlayers)
+                {
+                    _logger.LogInformation(
+                        $"{player.UserName}, index: {player.IndexNumber}, stack: {player.StackMoney}");
+                }
+                
+                var activePlayer = table.ActivePlayers
+                    .FirstOrDefault(p => p.IndexNumber > currentPlayerIndex && p.StackMoney > 0);
+                
+                if (activePlayer is null)
+                    activePlayer = table.ActivePlayers.First(p => p.StackMoney > 0);
+
+                _logger.LogInformation($"New active player: {activePlayer.UserName}");
+                return activePlayer;
+            }
+                
+                
         }
-        
+
         private async Task ProcessPlayerAction(Table table, Player player)
         {
             switch (player.CurrentAction.ActionType)
             {
                 case PlayerActionType.Fold:
-                     if (table.Type is TableType.DashPoker)
-                     {
-                         await _tableService.RemovePlayerFromTable(table.Id, player.Id);
-                         RemoveFromGroupAsync?.Invoke(player.ConnectionId, table.Id.ToString());
+                    if (table.Type is TableType.DashPoker)
+                    {
+                        await _tableService.RemovePlayerFromTable(table.Id, player.Id);
+                        RemoveFromGroupAsync?.Invoke(player.ConnectionId, table.Id.ToString());
 
-                         PlayerDisconnected?.Invoke(table.Id.ToString(),
-                             JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-                     }
-                     else
-                     {
-                         table.ActivePlayers.Remove(player);
-                         _logger.LogInformation("Player was removed from activePlayers");
-                     }
+                        PlayerDisconnected?.Invoke(table.Id.ToString(),
+                            JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
+                    }
+                    else
+                    {
+                        table.ActivePlayers.Remove(player);
+                        _logger.LogInformation("Player was removed from activePlayers");
+                    }
 
-                     break;
+                    break;
 
                 // Check - If no one has yet opened the betting round (equivalent to betting zero)
                 case PlayerActionType.Check:
@@ -646,7 +760,7 @@ namespace PokerHand.BusinessLogic.Services
 
             ReceiveTableState?.Invoke(table);
         }
-        
+
         private async Task MakeBigBlindBet(Table table)
         {
             _logger.LogInformation("MakeBigBlindBet. Start");
@@ -742,7 +856,7 @@ namespace PokerHand.BusinessLogic.Services
         // CleanUp helpers
         private async Task UpdatePlayersStatistics(Table table)
         {
-            foreach (var player in table.ActivePlayers)
+            foreach (var player in table.ActivePlayers.Where(p => p.Type is PlayerType.Human))
             {
                 var isWinner = table.SidePots
                     .First(sp => sp.Type is SidePotType.Main)

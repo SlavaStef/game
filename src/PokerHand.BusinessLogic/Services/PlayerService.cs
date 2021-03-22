@@ -10,6 +10,7 @@ using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.CardEvaluation;
+using PokerHand.Common.Helpers.Player;
 using PokerHand.DataAccess.Interfaces;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -23,9 +24,6 @@ namespace PokerHand.BusinessLogic.Services
         private readonly ILogger<PlayerService> _logger;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-
-        private const int WinExperience = 10;
-        private const int LooseExperience = 5;
 
         public PlayerService(
             UserManager<Player> userManager, 
@@ -47,6 +45,7 @@ namespace PokerHand.BusinessLogic.Services
         {
             var newPlayer = new Player
             {
+                Type = PlayerType.Human,
                 UserName = playerName,
                 Country = "",
                 RegistrationDate = DateTime.Now,
@@ -134,6 +133,15 @@ namespace PokerHand.BusinessLogic.Services
                 .Players
                 .First(p => p.Id == playerId)
                 .IsReady = true;
+        }
+
+        public void ChangeAutoTop(Guid tableId, Guid playerId, bool isAutoTop)
+        {
+            _allTables
+                .GetById(tableId)
+                .Players
+                .First(p => p.Id == playerId)
+                .IsAutoTop = isAutoTop;
         }
 
         // Statistics

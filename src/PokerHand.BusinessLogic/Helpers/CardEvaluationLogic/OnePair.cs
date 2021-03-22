@@ -5,7 +5,7 @@ using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 
-namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
+namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic
 {
     public class OnePair : IRules
     {
@@ -77,7 +77,10 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
             value += (int)cards[0].Rank * 2 * Rate;
 
             for (var index = 2; index < 5; index++)
-                value += (int) cards[index].Rank;
+            {
+                if (cards.Count >= index + 1)
+                    value += (int) cards[index].Rank;
+            }
 
             return value;
         }
@@ -91,8 +94,11 @@ namespace PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Hands
                 .ToList();
 
             for (var i = 0; i < 3; i++)
-                sideCards.Add(cards[i]);
-
+            {
+                if (cards.Count >= i + 1)
+                    sideCards.Add(cards[i]);
+            }
+            
             return sideCards;
         }
     }

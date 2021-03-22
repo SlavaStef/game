@@ -14,6 +14,7 @@ namespace PokerHand.BusinessLogic.Interfaces
         Task AddTotalMoney(Guid playerId, int amountToAdd);
         Task<PlayerProfileDto> GetPlayerProfile(Guid playerId);
         void SetPlayerReady(Guid tableId, Guid playerId);
+        void ChangeAutoTop(Guid tableId, Guid playerId, bool isAutoTop);
 
         Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin);
         Task IncreaseNumberOfSitNGoWinsAsync(Guid playerId);

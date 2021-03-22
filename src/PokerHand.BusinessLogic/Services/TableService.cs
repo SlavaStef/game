@@ -90,7 +90,7 @@ namespace PokerHand.BusinessLogic.Services
                     MaxPlayers = table.Value["MaxPlayers"]
                 };
 
-                if (table.Value["TableType"] == (int)TableType.SitAndGo)
+                if (table.Value["TableType"] is (int)TableType.SitAndGo)
                 {
                     tableInfoDto.InitialStack = table.Value["InitialStack"];
                     tableInfoDto.FirstPlacePrize = table.Value["FirstPlacePrize"];
@@ -158,12 +158,22 @@ namespace PokerHand.BusinessLogic.Services
             var player = table.Players.FirstOrDefault(p => p.Id == playerId);
             if (player is null)
                 return new ResultModel<RemoveFromTableResult> {IsSuccess = false, Message = "Player is null"};
+            
+            _logger.LogInformation($"RemovePlayerFromTable. count: {table.Players.Count(p => p.Type is PlayerType.Human)}");
 
+            foreach (var tablePlayer in table.Players)
+            {
+                _logger.LogInformation($"{tablePlayer.UserName} : {JsonSerializer.Serialize(tablePlayer.Type)}");
+            }
             if (table.Players.Count(p => p.Type is not PlayerType.Computer) is 1)
             {
+                _logger.LogInformation("RemovePlayerFromTable. One human player");
                 await RemovePlayer(player, table);
+                _logger.LogInformation("RemovePlayerFromTable. One human player. player removed");
 
                 _allTables.Remove(table.Id);
+                
+                _logger.LogInformation("RemovePlayerFromTable. One human player. table removed");
 
                 return new ResultModel<RemoveFromTableResult>
                 {
@@ -174,6 +184,7 @@ namespace PokerHand.BusinessLogic.Services
 
             if (table.CurrentPlayer?.Id == player.Id)
             {
+                _logger.LogInformation("RemovePlayerFromTable. second If");
                 await RemoveCurrentPlayer(player, table);
 
                 return new ResultModel<RemoveFromTableResult>
@@ -184,6 +195,7 @@ namespace PokerHand.BusinessLogic.Services
                 };
             }
             
+            _logger.LogInformation("RemovePlayerFromTable. just remove");
             await RemovePlayer(player, table);
 
             return new ResultModel<RemoveFromTableResult>

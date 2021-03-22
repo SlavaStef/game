@@ -9,7 +9,7 @@ namespace PokerHand.Server.Hubs
     {
         public override async Task OnConnectedAsync()
         {
-            _logger.LogInformation($"GameHub. Player {Context.ConnectionId} connected");
+            await base.OnConnectedAsync();
         }
         
         //TODO: need to receive Json

@@ -7,7 +7,7 @@ using PokerHand.BusinessLogic.Services;
 using PokerHand.Common.Helpers.Media;
 using Xunit;
 
-namespace PokerHand.BusinessLogic.Tests
+namespace PokerHand.BusinessLogic.Tests.Services
 {
     public class MediaServiceTests
     {

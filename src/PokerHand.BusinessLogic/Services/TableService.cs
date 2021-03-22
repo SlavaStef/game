@@ -103,21 +103,28 @@ namespace PokerHand.BusinessLogic.Services
             return allTablesInfo;
         }
 
-        public async Task<ConnectToTableResultModel> AddPlayerToTable(TableConnectionOptions options)
+        public async Task<ResultModel<ConnectToTableResult>> AddPlayerToTable(TableConnectionOptions options)
         {
-            var result = new ConnectToTableResultModel();
+            var result = new ResultModel<ConnectToTableResult>();
             
-            var table = GetFreeTable(options.TableTitle);
-
+            var table = GetFreeTable(options.TableTitle, options.CurrentTableId);
+ 
             if (table is null)
             {
                 table = CreateNewTable(options.TableTitle);
-                result.IsNewTable = true;
+                result.Value.IsNewTable = true;
             }
 
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == options.PlayerId);
+            if (player is null)
+            {
+                result.IsSuccess = false;
+                result.Message = "Player not found";
+                return result;
+            }
+            
             player.ConnectionId = options.PlayerConnectionId;
-            player.IndexNumber = result.IsNewTable ? 0 : GetFreeSeatIndex(table);
+            player.IndexNumber = result.Value.IsNewTable ? 0 : GetFreeSeatIndex(table);
 
             if (table.Type is TableType.SitAndGo)
                 await ConfigureSitAndGo(options, player);
@@ -134,17 +141,18 @@ namespace PokerHand.BusinessLogic.Services
 
                 if (player.StackMoney is 0)
                 {
-                    result.TableDto = null;
-                    result.PlayerDto = _mapper.Map<PlayerDto>(player);
-                    result.IsNewTable = false;
+                    result.Value.TableDto = null;
+                    result.Value.PlayerDto = _mapper.Map<PlayerDto>(player);
+                    result.Value.IsNewTable = false;
                 }
             }
 
             table.Players.Add(player);
             table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
 
-            result.PlayerDto = _mapper.Map<PlayerDto>(player);
-            result.TableDto = _mapper.Map<TableDto>(table);
+            result.IsSuccess = true;
+            result.Value.PlayerDto = _mapper.Map<PlayerDto>(player);
+            result.Value.TableDto = _mapper.Map<TableDto>(table);
             
             return result;
         }
@@ -207,7 +215,7 @@ namespace PokerHand.BusinessLogic.Services
         }
 
         #region Helpers
-        private Table GetFreeTable(TableTitle tableTitle)
+        private Table GetFreeTable(TableTitle tableTitle, Guid? currentTableId)
         {
             if (tableTitle is TableTitle.RivieraHotel ||
                 tableTitle is TableTitle.CityDreamsResort ||
@@ -220,7 +228,7 @@ namespace PokerHand.BusinessLogic.Services
             
             return _allTables
                 .GetManyByTitle(tableTitle)
-                .FirstOrDefault(t => t.Players.Count < t.MaxPlayers);
+                .FirstOrDefault(t => t.Players.Count < t.MaxPlayers && t.Id != currentTableId);
         }
 
         private Table CreateNewTable(TableTitle tableTitle)

@@ -4,9 +4,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using PokerHand.Common.Dto;
-using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.Server.Hubs
@@ -36,6 +33,29 @@ namespace PokerHand.Server.Hubs
             if (removeResult.Value.WasTableRemoved is false)
                 await Clients.GroupExcept(JsonSerializer.Deserialize<string>(tableIdJson), Context.ConnectionId)
                     .PlayerDisconnected(JsonSerializer.Serialize(removeResult.Value.TableDto));
+        }
+
+        public async Task SwitchTable(string currentTableIdJson, string connectionOptionsJson)
+        {
+            var currentTableId = JsonSerializer.Deserialize<Guid>(currentTableIdJson);
+            var connectionOptions = JsonSerializer.Deserialize<TableConnectionOptions>(connectionOptionsJson);
+
+            if (connectionOptions is null)
+                return;
+
+            await _tableService.RemovePlayerFromTable(currentTableId, connectionOptions.PlayerId);
+
+            var connectionResult = await _tableService.AddPlayerToTable(connectionOptions);
+            if (connectionResult.IsSuccess is false)
+            {
+                _logger.LogError($"SwitchTable Error: {connectionResult.Message}");
+                return;
+            }
+            
+            await AddPlayerToTableGroup(connectionResult);
+
+            if (connectionResult.Value.IsNewTable is true) 
+                StartGameOnNewTable(connectionResult.Value.TableDto.Id);
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)

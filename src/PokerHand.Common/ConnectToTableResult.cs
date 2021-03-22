@@ -2,7 +2,7 @@
 
 namespace PokerHand.Common
 {
-    public class ConnectToTableResultModel
+    public class ConnectToTableResult
     {
         public TableDto TableDto { get; set; }
         public PlayerDto PlayerDto { get; set; }

@@ -5,7 +5,6 @@ using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Table;
-using Table = Microsoft.EntityFrameworkCore.Metadata.Internal.Table;
 
 namespace PokerHand.BusinessLogic.Interfaces
 {
@@ -18,7 +17,7 @@ namespace PokerHand.BusinessLogic.Interfaces
         
         TableInfoDto GetTableInfo(string tableName);
         List<TableInfoDto> GetAllTablesInfo();
-        Task<ConnectToTableResultModel> AddPlayerToTable(TableConnectionOptions options);
+        Task<ResultModel<ConnectToTableResult>> AddPlayerToTable(TableConnectionOptions options);
         Task<ResultModel<RemoveFromTableResult>> RemovePlayerFromTable(Guid tableId, Guid playerId);
     }
 }

@@ -35,15 +35,28 @@ namespace PokerHand.Server.Hubs
                     .PlayerDisconnected(JsonSerializer.Serialize(removeResult.Value.TableDto));
         }
 
-        public async Task SwitchTable(string currentTableIdJson, string connectionOptionsJson)
+        public async Task SwitchTable(string tableTitleJson, string playerIdJson,  string currentTableIdJson, string buyInJson, string isAutoTopJson)
         {
-            var currentTableId = JsonSerializer.Deserialize<Guid>(currentTableIdJson);
-            var connectionOptions = JsonSerializer.Deserialize<TableConnectionOptions>(connectionOptionsJson);
+            var connectionOptions = new TableConnectionOptions
+            {
+                TableTitle = JsonSerializer.Deserialize<TableTitle>(tableTitleJson),
+                PlayerId = JsonSerializer.Deserialize<Guid>(playerIdJson),
+                PlayerConnectionId = Context.ConnectionId,
+                CurrentTableId = JsonSerializer.Deserialize<Guid>(currentTableIdJson),
+                BuyInAmount = JsonSerializer.Deserialize<int>(buyInJson),
+                IsAutoTop = JsonSerializer.Deserialize<bool>(isAutoTopJson)
+            };
 
-            if (connectionOptions is null)
+            var validationResult = await new TableConnectionOptionsValidator().ValidateAsync(connectionOptions);
+            if (validationResult.IsValid is not true)
+            {
+                foreach (var error in validationResult.Errors)
+                    _logger.LogError($"{error.ErrorMessage}");
+
                 return;
+            }
 
-            await _tableService.RemovePlayerFromTable(currentTableId, connectionOptions.PlayerId);
+            await _tableService.RemovePlayerFromTable((Guid)connectionOptions.CurrentTableId, connectionOptions.PlayerId);
 
             var connectionResult = await _tableService.AddPlayerToTable(connectionOptions);
             if (connectionResult.IsSuccess is false)
@@ -54,7 +67,7 @@ namespace PokerHand.Server.Hubs
             
             await AddPlayerToTableGroup(connectionResult);
 
-            if (connectionResult.Value.IsNewTable is true) 
+            //if (connectionResult.Value.IsNewTable is true) 
                 StartGameOnNewTable(connectionResult.Value.TableDto.Id);
         }
 

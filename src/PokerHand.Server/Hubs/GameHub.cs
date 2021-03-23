@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
@@ -64,14 +65,27 @@ namespace PokerHand.Server.Hubs
                 .ReceiveAllTablesInfo(JsonSerializer.Serialize(allTablesInfo));
         }
         
-        //TODO: change to Json
         //TODO: should receive one object
-        public async Task ConnectToTable(string connectionOptionsJson)
+        public async Task ConnectToTable(string tableTitleJson, string playerIdJson, string buyInJson, string isAutoTopJson)
         {
-            var connectionOptions = JsonSerializer.Deserialize<TableConnectionOptions>(connectionOptionsJson);
-            if (connectionOptions is null)
+            var connectionOptions = new TableConnectionOptions
+            {
+                TableTitle = JsonSerializer.Deserialize<TableTitle>(tableTitleJson),
+                PlayerId = JsonSerializer.Deserialize<Guid>(playerIdJson),
+                PlayerConnectionId = Context.ConnectionId,
+                BuyInAmount = JsonSerializer.Deserialize<int>(buyInJson),
+                IsAutoTop = JsonSerializer.Deserialize<bool>(isAutoTopJson)
+            };
+
+            var validationResult = await new TableConnectionOptionsValidator().ValidateAsync(connectionOptions);
+            if (validationResult.IsValid is not true)
+            {
+                foreach (var error in validationResult.Errors)
+                    _logger.LogError($"{error.ErrorMessage}");
+
                 return;
-            
+            }
+
             var connectionResult = await _tableService.AddPlayerToTable(connectionOptions);
             if (connectionResult.IsSuccess is false)
             {

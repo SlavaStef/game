@@ -105,56 +105,67 @@ namespace PokerHand.BusinessLogic.Services
 
         public async Task<ResultModel<ConnectToTableResult>> AddPlayerToTable(TableConnectionOptions options)
         {
-            var result = new ResultModel<ConnectToTableResult>();
+            try
+            {
+                _logger.LogInformation($"{JsonSerializer.Serialize(options)}");
+                var result = new ResultModel<ConnectToTableResult>(new ConnectToTableResult());
             
-            var table = GetFreeTable(options.TableTitle, options.CurrentTableId);
+                var table = GetFreeTable(options.TableTitle, options.CurrentTableId);
  
-            if (table is null)
-            {
-                table = CreateNewTable(options.TableTitle);
-                result.Value.IsNewTable = true;
-            }
+                if (table is null)
+                {
+                    table = CreateNewTable(options.TableTitle);
+                    result.Value.IsNewTable = true;
+                }
 
-            var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == options.PlayerId);
-            if (player is null)
-            {
-                result.IsSuccess = false;
-                result.Message = "Player not found";
+                var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == options.PlayerId);
+                if (player is null)
+                {
+                    result.IsSuccess = false;
+                    result.Message = "Player not found";
+                    return result;
+                }
+            
+                player.ConnectionId = options.PlayerConnectionId;
+                player.IndexNumber = result.Value.IsNewTable ? 0 : GetFreeSeatIndex(table);
+
+                if (table.Type is TableType.SitAndGo)
+                    await ConfigureSitAndGo(options, player);
+                else
+                {
+                    player.IsAutoTop = options.IsAutoTop;
+                    player.CurrentBuyIn = options.BuyInAmount;
+                
+                    if (player.TotalMoney >= options.BuyInAmount)
+                    {
+                        await _playerService.GetFromTotalMoney(player.Id, options.BuyInAmount);
+                        player.StackMoney = options.BuyInAmount;
+                    }
+
+                    if (player.StackMoney is 0)
+                    {
+                        result.Value.TableDto = null;
+                        result.Value.PlayerDto = _mapper.Map<PlayerDto>(player);
+                        result.Value.IsNewTable = false;
+                    }
+                }
+
+                table.Players.Add(player);
+                table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
+
+                result.IsSuccess = true;
+                result.Value.PlayerDto = _mapper.Map<PlayerDto>(player);
+                result.Value.TableDto = _mapper.Map<TableDto>(table);
+            
                 return result;
             }
-            
-            player.ConnectionId = options.PlayerConnectionId;
-            player.IndexNumber = result.Value.IsNewTable ? 0 : GetFreeSeatIndex(table);
-
-            if (table.Type is TableType.SitAndGo)
-                await ConfigureSitAndGo(options, player);
-            else
+            catch (Exception e)
             {
-                player.IsAutoTop = options.IsAutoTop;
-                player.CurrentBuyIn = options.BuyInAmount;
-                
-                if (player.TotalMoney >= options.BuyInAmount)
-                {
-                    await _playerService.GetFromTotalMoney(player.Id, options.BuyInAmount);
-                    player.StackMoney = options.BuyInAmount;
-                }
-
-                if (player.StackMoney is 0)
-                {
-                    result.Value.TableDto = null;
-                    result.Value.PlayerDto = _mapper.Map<PlayerDto>(player);
-                    result.Value.IsNewTable = false;
-                }
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
             }
-
-            table.Players.Add(player);
-            table.Players = table.Players.OrderBy(p => p.IndexNumber).ToList();
-
-            result.IsSuccess = true;
-            result.Value.PlayerDto = _mapper.Map<PlayerDto>(player);
-            result.Value.TableDto = _mapper.Map<TableDto>(table);
             
-            return result;
         }
 
         public async Task<ResultModel<RemoveFromTableResult>> RemovePlayerFromTable(Guid tableId, Guid playerId)
@@ -217,18 +228,29 @@ namespace PokerHand.BusinessLogic.Services
         #region Helpers
         private Table GetFreeTable(TableTitle tableTitle, Guid? currentTableId)
         {
-            if (tableTitle is TableTitle.RivieraHotel ||
-                tableTitle is TableTitle.CityDreamsResort ||
-                tableTitle is TableTitle.HeritageBank)
+            try
             {
+                if (tableTitle is TableTitle.RivieraHotel ||
+                    tableTitle is TableTitle.CityDreamsResort ||
+                    tableTitle is TableTitle.HeritageBank)
+                {
+                    return _allTables
+                        .GetManyByTitle(tableTitle)
+                        .FirstOrDefault(t => t.CurrentStage is RoundStageType.NotStarted);
+                }
+            
                 return _allTables
                     .GetManyByTitle(tableTitle)
-                    .FirstOrDefault(t => t.CurrentStage is RoundStageType.NotStarted);
+                    .FirstOrDefault(t => t.Players.Count < t.MaxPlayers && t.Id != currentTableId);
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
             }
             
-            return _allTables
-                .GetManyByTitle(tableTitle)
-                .FirstOrDefault(t => t.Players.Count < t.MaxPlayers && t.Id != currentTableId);
         }
 
         private Table CreateNewTable(TableTitle tableTitle)

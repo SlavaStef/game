@@ -12,12 +12,14 @@ namespace PokerHand.Server.Hubs.Interfaces
         
         // Disconnect
         Task LeaveTable(string tableIdJson, string playerIdJson);
-        Task SwitchTable(string currentTableIdJson, string connectionOptionsJson);
+
+        Task SwitchTable(string tableTitleJson, string playerIdJson, string currentTableIdJson, string buyInJson,
+            string isAutoTopJson);
         Task OnDisconnectedAsync(Exception exception);
         
         Task GetTableInfo(string tableTitle);
         Task GetAllTablesInfo();
-        Task ConnectToTable(string connectionOptions);
+        Task ConnectToTable(string tableTitleJson, string playerIdJson, string buyInJson, string isAutoTopJson);
         void ReceivePlayerActionFromClient(string actionJson, string tableIdJson);
         Task SendPlayerProfile(string playerIdJson);
         void ReceiveActivePlayerStatus(string tableId, string playerId);

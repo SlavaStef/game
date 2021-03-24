@@ -26,6 +26,9 @@ namespace PokerHand.BusinessLogic.Services
 
         public List<Card> GetRandomCardsFromDeck(Deck deck, int numberOfCards)
         {
+            if (numberOfCards > deck.Cards.Count || numberOfCards < 0)
+                return null;
+            
             var resultCards = new List<Card>(numberOfCards);
             var random = new Random();
 
@@ -60,67 +63,45 @@ namespace PokerHand.BusinessLogic.Services
                 case TableType.SitAndGo:
                 case TableType.DashPoker:
                 case TableType.LawballPoker:
-                    newDeck = new List<Card>(MaxCardNumberTexasPoker);
-
-                    for (var rankType = 2; rankType < 15; rankType++)
-                    {
-                        for (var suitType = 0; suitType < 4; suitType++)
-                        {
-                            var newCard = new Card
-                            {
-                                Rank = (CardRankType) rankType,
-                                Suit = (CardSuitType) suitType
-                            };
-
-                            newDeck.Add(newCard);
-                        }
-                    }
-
+                    newDeck = GenerateDeck(MaxCardNumberTexasPoker);
                     break;
                 case TableType.RoyalPoker:
-                    newDeck = new List<Card>(MaxCardNumberRoyalPoker);
-
-                    for (var rankType = 10; rankType < 15; rankType++)
-                    {
-                        for (var suitType = 0; suitType < 4; suitType++)
-                        {
-                            var newCard = new Card
-                            {
-                                Rank = (CardRankType) rankType,
-                                Suit = (CardSuitType) suitType
-                            };
-
-                            newDeck.Add(newCard);
-                        }
-                    }
-
+                    newDeck = GenerateDeck(MaxCardNumberRoyalPoker);
                     break;
                 case TableType.JokerPoker:
-                    newDeck = new List<Card>(MaxCardNumberJokerPoker);
-
-                    for (var rankType = 2; rankType < 15; rankType++)
-                    {
-                        for (var suitType = 0; suitType < 4; suitType++)
-                        {
-                            var newCard = new Card
-                            {
-                                Rank = (CardRankType) rankType,
-                                Suit = (CardSuitType) suitType
-                            };
-
-                            newDeck.Add(newCard);
-                        }
-                    }
+                    newDeck = GenerateDeck(MaxCardNumberJokerPoker);
 
                     newDeck.Add(new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Red});
                     newDeck.Add(new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Black});
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(tableType), tableType, null);
+                    throw new ArgumentOutOfRangeException(nameof(tableType), tableType, "Wrong table type");
             }
 
             return newDeck;
+
+            static List<Card> GenerateDeck(int maxCardsNumber)
+            {
+                var deck = new List<Card>(maxCardsNumber);
+                var lowestRank = maxCardsNumber is MaxCardNumberRoyalPoker ? 10 : 2;
+
+                for (var rankType = lowestRank; rankType < 15; rankType++)
+                {
+                    for (var suitType = 0; suitType < 4; suitType++)
+                    {
+                        var newCard = new Card
+                        {
+                            Rank = (CardRankType) rankType,
+                            Suit = (CardSuitType) suitType
+                        };
+
+                        deck.Add(newCard);
+                    }
+                }
+
+                return deck;
+            }
         }
 
         #endregion

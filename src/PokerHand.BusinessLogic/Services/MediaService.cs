@@ -118,9 +118,6 @@ namespace PokerHand.BusinessLogic.Services
             var path = Path.Combine(AppContext.BaseDirectory, "wwwroot", "profileImages",
                 $"{playerId}.jpg");
 
-            if (_fileSystem.File.Exists(path) is false)
-                return;
-            
             _fileSystem.File.Delete(path);
         }
 

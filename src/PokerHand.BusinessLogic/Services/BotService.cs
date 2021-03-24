@@ -16,9 +16,8 @@ namespace PokerHand.BusinessLogic.Services
     public class BotService : IBotService
     {
         private readonly ICardEvaluationService _cardEvaluationService;
-        
-        private static readonly Random Random = new();
         private readonly ILogger<BotService> _logger;
+        private static readonly Random Random = new();
 
         public BotService(
             ICardEvaluationService cardEvaluationService, 
@@ -86,16 +85,7 @@ namespace PokerHand.BusinessLogic.Services
                         break;
                     case BotComplexity.Hard:
                         _logger.LogInformation("BotService. Act. Inside Hard logic");
-                        try
-                        {
-                            action = new HardBotLogic(_cardEvaluationService, new Random(), _logger).Act(bot, table);
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError($"{e.Message}");
-                            _logger.LogError($"{e.StackTrace}");
-                            throw;
-                        }
+                        action = new HardBotLogic(_cardEvaluationService, new Random(), _logger).Act(bot, table);
                         _logger.LogInformation($"BotService. Act. action: {JsonSerializer.Serialize(action)}");
                         break;
                 }

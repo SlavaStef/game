@@ -7,8 +7,11 @@ namespace PokerHand.Server.Hubs.Interfaces
     {
         // Login
         Task OnConnectedAsync();
-        Task RegisterNewPlayer(string userName);
         Task Authenticate(string playerIdJson);
+        Task RegisterAsGuest(string userNameJson, string genderJson, string handsSpriteJson);
+        Task RegisterWithExternalProvider(string userNameJson, string genderJson, string handsSpriteJson, 
+            string providerNameJson, string providerKeyJson, string image);
+        Task TryAuthenticateWithExternalProvider(string providerKeyJson);
         
         // Disconnect
         Task LeaveTable(string tableIdJson, string playerIdJson);

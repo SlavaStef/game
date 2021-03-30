@@ -10,7 +10,7 @@ namespace PokerHand.BusinessLogic.Interfaces
 {
     public interface ITableService
     {
-        public event Action<Common.Entities.Table, string> ReceivePlayerAction;
+        public event Action<Table, string> ReceivePlayerAction;
         public event Action<Player, string> EndSitAndGoGame;
         public event Action<string, string> PlayerDisconnected;
         public event Action<string, string> RemoveFromGroupAsync;

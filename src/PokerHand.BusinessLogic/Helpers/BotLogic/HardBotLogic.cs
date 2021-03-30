@@ -7,6 +7,7 @@ using PokerHand.BusinessLogic.Services;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
+using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.BusinessLogic.Helpers.BotLogic
 {

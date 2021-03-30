@@ -22,11 +22,9 @@ namespace PokerHand.BusinessLogic.Services
             _fileSystem = fileSystem;
         }
         
-        public async Task<ResultModel<byte[]>> GetProfileImage(string playerIdJson)
+        public async Task<ResultModel<byte[]>> GetProfileImage(Guid playerId)
         {
             var result = new ResultModel<byte[]>();
-            
-            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
 
             var path = Path.Combine(AppContext.BaseDirectory, "wwwroot", "profileImages",
                 $"{playerId.ToString()}.jpg");
@@ -74,11 +72,10 @@ namespace PokerHand.BusinessLogic.Services
             return result;
         }
 
-        public async Task<ResultModel<byte[]>> SetDefaultProfileImage(string playerIdJson)
+        public async Task<ResultModel<byte[]>> SetDefaultProfileImage(Guid playerId)
         {
             var result = new ResultModel<byte[]>();
             
-            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
             if (playerId == Guid.Empty)
             {
                 result.IsSuccess = false;

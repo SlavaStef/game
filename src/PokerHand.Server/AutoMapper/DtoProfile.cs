@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers.Table;
 
 namespace PokerHand.Server.AutoMapper
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 using PokerHand.Common.Helpers.Bot;
+using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
@@ -12,8 +13,10 @@ namespace PokerHand.Common.Entities
     public class Player : IdentityUser<Guid>
     {
         // Properties to store in db
-        public string Country { get; set; }
+        public Gender Gender { get; set; }
+        public CountryName Country { get; set; }
         public DateTime RegistrationDate { get; set; }
+        public HandsSpriteType HandsSprite { get; set; }
         public int TotalMoney { get; set; }
         public int CoinsAmount { get; set; }
         public int Experience { get; set; }
@@ -22,6 +25,8 @@ namespace PokerHand.Common.Entities
         public int GamesWon { get; set; }
         public int BiggestWin { get; set; }
         public int SitAndGoWins { get; set; }
+
+        public ICollection<ExternalLogin> PlayerLogins { get; set; }
         
         // Game properties
         [NotMapped] public string ConnectionId { get; set; }

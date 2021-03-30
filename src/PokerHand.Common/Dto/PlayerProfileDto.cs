@@ -1,5 +1,6 @@
 ﻿using System;
 using PokerHand.Common.Helpers.CardEvaluation;
+using PokerHand.Common.Helpers.Player;
 
 namespace PokerHand.Common.Dto
 {
@@ -12,9 +13,11 @@ namespace PokerHand.Common.Dto
     public class PlayerProfileDto
     {
         public Guid Id { get; set; }
+        public Gender Gender { get; set; }
+        public CountryName Country { get; set; }
+        public HandsSpriteType HandsSprite { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
-        public string Country { get; set; }
         public DateTime RegistrationDate { get; set; }
         public int Experience { get; set; }
         public int TotalMoney { get; set; }

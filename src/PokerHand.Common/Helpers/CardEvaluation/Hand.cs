@@ -6,7 +6,7 @@ namespace PokerHand.Common.Helpers.CardEvaluation
     {
         public int Value { get; set; }
         public HandType HandType { get; set; }
-        public List<Entities.Card> Cards { get; set; }
+        public List<Card.Card> Cards { get; set; }
         
         public Hand()
         {

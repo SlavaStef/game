@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
 using PokerHand.Common.Dto;
+using PokerHand.Common.Helpers.Player;
 
 namespace PokerHand.BusinessLogic.Interfaces
 {
     public interface IPlayerService
     {
-        Task<PlayerProfileDto> CreatePlayer(string playerName);
+        Task<PlayerProfileDto> CreatePlayer(string playerName, Gender gender, HandsSpriteType handsSprite);
         Task<PlayerProfileDto> Authenticate(Guid playerId);
 
         Task<bool> GetFromTotalMoney(Guid playerId, int amount);

@@ -3,15 +3,31 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers.Authorization;
+using PokerHand.Common.Helpers.CardEvaluation;
+using PokerHand.Common.Helpers.Player;
 using PokerHand.DataAccess.Configurations;
 
 namespace PokerHand.DataAccess.Context
 {
     public class ApplicationContext : IdentityDbContext<Player, IdentityRole<Guid>, Guid>
     {
-        public DbSet<Player> Players { get; set; }
+        public virtual DbSet<Player> Players { get; set; }
+        public virtual DbSet<ExternalLogin> ExternalLogins { get; set; }
 
+        static ApplicationContext()
+        {
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<ExternalProviderName>();
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<Gender>();
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<CountryName>();
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<HandsSpriteType>();
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<HandType>();
+        }
+
+        // public ApplicationContext() { }
+        
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
             Database.EnsureCreated();
@@ -19,8 +35,15 @@ namespace PokerHand.DataAccess.Context
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.HasPostgresEnum<ExternalProviderName>();
+            builder.HasPostgresEnum<Gender>();
+            builder.HasPostgresEnum<CountryName>();
+            builder.HasPostgresEnum<HandsSpriteType>();
+            builder.HasPostgresEnum<HandType>();
+
             builder.ApplyConfiguration(new PlayerConfiguration());
-            
+            builder.ApplyConfiguration(new ExternalLoginConfiguration());
+
             base.OnModelCreating(builder);
         }
         

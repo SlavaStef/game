@@ -9,14 +9,24 @@ namespace PokerHand.DataAccess.Configurations
         public void Configure(EntityTypeBuilder<Player> builder)
         {
             builder
+                .HasKey(p => p.Id);
+
+            builder
+                .Property(p => p.Gender)
+                .IsRequired();
+
+            builder
                 .Property(p => p.Country)
-                .HasMaxLength(20)
                 .IsRequired();
 
             builder
                 .Property(p => p.RegistrationDate)
                 .IsRequired();
 
+            builder
+                .Property(p => p.HandsSprite)
+                .IsRequired();
+            
             builder
                 .Property(p => p.Experience)
                 .IsRequired();

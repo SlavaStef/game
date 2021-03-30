@@ -9,6 +9,7 @@ using PokerHand.BusinessLogic.Services;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.GameProcess;
+using PokerHand.Common.Helpers.Table;
 using Xunit;
 
 namespace PokerHand.BusinessLogic.Tests.Helpers.BotLogic

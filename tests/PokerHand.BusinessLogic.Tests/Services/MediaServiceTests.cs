@@ -17,7 +17,7 @@ namespace PokerHand.BusinessLogic.Tests.Services
             // Arrange
             var mockFileSystem = new MockFileSystem();
 
-            var playerId = Guid.NewGuid().ToString();
+            var playerId = Guid.NewGuid();
             
             var path = Path.Combine(AppContext.BaseDirectory, "wwwroot", "profileImages",
                 $"{playerId}.jpg");
@@ -28,7 +28,7 @@ namespace PokerHand.BusinessLogic.Tests.Services
             var sut = new MediaService(mockFileSystem);
 
             // Act
-            var result = await sut.GetProfileImage(JsonSerializer.Serialize(playerId));
+            var result = await sut.GetProfileImage(playerId);
             
             // Assert
             result.IsSuccess.Should().BeTrue();
@@ -41,12 +41,12 @@ namespace PokerHand.BusinessLogic.Tests.Services
             // Arrange
             var mockFileSystem = new MockFileSystem();
 
-            var playerId = Guid.NewGuid().ToString();
+            var playerId = Guid.NewGuid();
 
             var sut = new MediaService(mockFileSystem);
 
             // Act
-            var result = await sut.GetProfileImage(JsonSerializer.Serialize(playerId));
+            var result = await sut.GetProfileImage(playerId);
             
             // Assert
             result.IsSuccess.Should().BeFalse();
@@ -130,7 +130,7 @@ namespace PokerHand.BusinessLogic.Tests.Services
             var sut = new MediaService(mockFileSystem);
 
             // Act
-            var result = await sut.SetDefaultProfileImage(JsonSerializer.Serialize(playerId));
+            var result = await sut.SetDefaultProfileImage(playerId);
             
             // Assert
             result.IsSuccess.Should().BeTrue();
@@ -146,7 +146,7 @@ namespace PokerHand.BusinessLogic.Tests.Services
             var sut = new MediaService(mockFileSystem);
 
             // Act
-            var result = await sut.SetDefaultProfileImage(JsonSerializer.Serialize(Guid.NewGuid()));
+            var result = await sut.SetDefaultProfileImage(Guid.NewGuid());
             
             // Assert
             result.IsSuccess.Should().BeFalse();
@@ -160,7 +160,7 @@ namespace PokerHand.BusinessLogic.Tests.Services
             var sut = new MediaService();
 
             // Act
-            var result = await sut.SetDefaultProfileImage(JsonSerializer.Serialize(Guid.Empty));
+            var result = await sut.SetDefaultProfileImage(Guid.Empty);
             
             // Assert
             result.IsSuccess.Should().BeFalse();

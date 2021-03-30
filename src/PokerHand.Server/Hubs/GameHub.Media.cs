@@ -24,12 +24,13 @@ namespace PokerHand.Server.Hubs
 
         public async Task GetProfileImage(string playerIdJson)
         {
-            var getResult = await _mediaService.GetProfileImage(playerIdJson);
+            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
+            var getResult = await _mediaService.GetProfileImage(playerId);
 
             if (getResult.IsSuccess is false)
             {
                 _logger.LogError(
-                    $"RemoveProfileImage. {getResult.Message} PlayerId: {JsonSerializer.Deserialize<Guid>(playerIdJson)}");
+                    $"RemoveProfileImage. {getResult.Message} PlayerId: {playerId}");
                 return;
             }
             
@@ -38,12 +39,13 @@ namespace PokerHand.Server.Hubs
 
         public async Task RemoveProfileImage(string playerIdJson)
         {
-            var removeResult = await _mediaService.SetDefaultProfileImage(playerIdJson);
+            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
+            var removeResult = await _mediaService.SetDefaultProfileImage(playerId);
 
             if (removeResult.IsSuccess is false)
             {
                 _logger.LogError(
-                    $"RemoveProfileImage. {removeResult.Message} PlayerId: {JsonSerializer.Deserialize<Guid>(playerIdJson)}");
+                    $"RemoveProfileImage. {removeResult.Message} PlayerId: {playerId}");
                 return;
             }
             

@@ -30,12 +30,16 @@ namespace PokerHand.DataAccess.Repositories
 
         public async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await _context.Set<TEntity>().AnyAsync(predicate);
+            return await _context
+                .Set<TEntity>()
+                .AnyAsync(predicate);
         }
 
         public async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await _context.Set<TEntity>().Where(predicate).ToListAsync();
+            return await _context.Set<TEntity>()
+                .Where(predicate)
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<TEntity>> GetAllAsync()

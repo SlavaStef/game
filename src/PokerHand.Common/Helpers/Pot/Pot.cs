@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace PokerHand.Common.Entities
+namespace PokerHand.Common.Helpers.Pot
 {
     public class Pot
     {

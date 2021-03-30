@@ -10,12 +10,13 @@ namespace PokerHand.DataAccess.Repositories
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
-        private  ApplicationContext _context;
+        private readonly ApplicationContext _context;
         private readonly ILogger<UnitOfWork> _logger;
-        private bool disposed = false;
+        private bool _disposed = false;
         private SafeHandle handle = new SafeFileHandle(IntPtr.Zero, true);
         
         public IPlayerRepository Players { get; private set; }
+        public IExternalLoginRepository ExternalLogins { get; private set; }
 
         public UnitOfWork(
             ApplicationContext context, 
@@ -25,6 +26,7 @@ namespace PokerHand.DataAccess.Repositories
             _logger = logger;
 
             Players = new PlayerRepository(_context, _logger);
+            ExternalLogins = new ExternalLoginRepository(_context, _logger);
         }
         
         public async Task<int> CompleteAsync()
@@ -45,7 +47,7 @@ namespace PokerHand.DataAccess.Repositories
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
                 return;
 
             if (disposing)
@@ -53,7 +55,7 @@ namespace PokerHand.DataAccess.Repositories
                 handle.Dispose();
             }
 
-            disposed = true;
+            _disposed = true;
         }
     }
 }

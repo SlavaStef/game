@@ -41,13 +41,15 @@ namespace PokerHand.BusinessLogic.Services
             _mediaService = mediaService;
         }
 
-        public async Task<PlayerProfileDto> CreatePlayer(string playerName)
+        public async Task<PlayerProfileDto> CreatePlayer(string playerName, Gender gender, HandsSpriteType handsSprite)
         {
             var newPlayer = new Player
             {
+                HandsSprite = handsSprite,
+                Gender = gender,
                 Type = PlayerType.Human,
                 UserName = playerName,
-                Country = "",
+                Country = (CountryName) new Random().Next(1, 31),
                 RegistrationDate = DateTime.Now,
                 Experience = 0,
                 TotalMoney = 100000000,
@@ -64,12 +66,10 @@ namespace PokerHand.BusinessLogic.Services
             if (!createResult.Succeeded)
                 return null;
 
-            var setImageResult = await _mediaService.SetDefaultProfileImage(JsonSerializer.Serialize(newPlayer.Id));
+            var setImageResult = await _mediaService.SetDefaultProfileImage(newPlayer.Id);
             if (setImageResult.IsSuccess is false)
-            {
                 _logger.LogError($"CreatePlayer. {setImageResult.Message} playerId: {newPlayer.Id}");
-            }
-            
+
             _logger.LogInformation($"New player {newPlayer.UserName} registered");
             return _mapper.Map<PlayerProfileDto>(newPlayer);
         }

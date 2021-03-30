@@ -5,18 +5,16 @@
 
         <IsPackable>false</IsPackable>
 
-        <LangVersion>9</LangVersion>
+        <AssemblyName>PokerHand.DataAccess.Tests</AssemblyName>
+
+        <RootNamespace>PokerHand.DataAccess.Tests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="5.10.3" />
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.4" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="5.0.4" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="5.0.4" />
-        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="5.0.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="5.0.4" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.1" />
         <PackageReference Include="Moq" Version="4.16.1" />
-        <PackageReference Include="SignalR.UnitTestingSupport.xUnit" Version="2.0.0" />
         <PackageReference Include="xunit" Version="2.4.1" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,7 +27,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\PokerHand.Server\PokerHand.Server.csproj" />
+      <ProjectReference Include="..\..\src\PokerHand.Common\PokerHand.Common.csproj" />
+      <ProjectReference Include="..\..\src\PokerHand.DataAccess\PokerHand.DataAccess.csproj" />
     </ItemGroup>
 
 </Project>

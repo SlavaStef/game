@@ -36,7 +36,6 @@ namespace PokerHand.BusinessLogic.Services
             
             var fakeUser = new Faker<Player>()
                 .RuleFor(o => o.RegistrationDate, f => f.Date.Past(0, DateTime.Now))
-                .RuleFor(o => o.Country, f => f.Address.Country())
                 .RuleFor(o => o.UserName, f => f.Name.FullName())
                 .Generate();
             
@@ -51,7 +50,7 @@ namespace PokerHand.BusinessLogic.Services
                 StackMoney = Random.Next(minBuyIn / 100, maxBuyIn / 100) * 100,
                 CurrentBuyIn = maxBuyIn,
                 
-                Country = fakeUser.Country,
+                Country = (PokerHand.Common.Helpers.Player.CountryName)Random.Next(1, 31),
                 RegistrationDate = fakeUser.RegistrationDate,
                 CoinsAmount = Random.Next(0, 100),
                 Experience = Random.Next(50, 500),

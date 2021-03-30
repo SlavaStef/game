@@ -23,6 +23,7 @@ namespace PokerHand.Server.Hubs
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
         private readonly IMediaService _mediaService;
+        private readonly ILoginService _loginService;
         private readonly ILogger<GameHub> _logger;
         private readonly IMapper _mapper;
 
@@ -34,7 +35,7 @@ namespace PokerHand.Server.Hubs
             ITablesOnline allTables, 
             IMapper mapper, 
             IMediaService mediaService, 
-            IGameProcessService gameProcessService)
+            IGameProcessService gameProcessService, ILoginService loginService)
         {
             _tableService = tableService;
             _playerService = playerService;
@@ -44,8 +45,14 @@ namespace PokerHand.Server.Hubs
             _mapper = mapper;
             _mediaService = mediaService;
             _gameProcessService = gameProcessService;
+            _loginService = loginService;
 
             RegisterEventHandlers();
+        }
+
+        public async Task Test(string message)
+        {
+            await Clients.Caller.ReceiveTestMessage(message);
         }
         
         //TODO: change to Json

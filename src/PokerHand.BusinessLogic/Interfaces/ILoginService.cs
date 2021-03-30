@@ -9,7 +9,8 @@ namespace PokerHand.BusinessLogic.Interfaces
 {
     public interface ILoginService
     {
-        Task<ResultModel<PlayerProfileDto>> TryAuthenticate(string providerKey);
+        Task<PlayerProfileDto> AuthenticateWithPlayerId(Guid playerId);
+        Task<ResultModel<PlayerProfileDto>> TryAuthenticateWithExternalProvider(string providerKey);
         Task CreateExternalLogin(Guid playerId, ExternalProviderName providerName, string providerKey);
         Task DeleteExternalLogin(Guid playerId);
     }

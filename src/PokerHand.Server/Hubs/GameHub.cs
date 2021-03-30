@@ -121,22 +121,7 @@ namespace PokerHand.Server.Hubs
             
             table.WaitForPlayerBet.Set();
         }
-
-        public async Task SendPlayerProfile(string playerIdJson)
-        {
-            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
-
-            var connectionId = _allPlayers.GetValueByKey(playerId);
-
-            if (connectionId != Context.ConnectionId)
-                return;
-            
-            var profileDto = await _playerService.GetPlayerProfile(playerId);
-            
-            await Clients.Caller
-                .ReceivePlayerProfile(JsonSerializer.Serialize(profileDto));
-        }
-
+        
         //TODO: change to Json
         public void ReceiveActivePlayerStatus(string tableId, string playerId)
         {
@@ -156,116 +141,6 @@ namespace PokerHand.Server.Hubs
             await _playerService.AddStackMoneyFromTotalMoney(tableId, playerId, amount);
 
             _playerService.ChangeAutoTop(tableId, playerId, isAutoTop);
-        }
-
-        private void WriteAllPlayersList() =>
-            _logger.LogInformation($"AllPlayers: {JsonSerializer.Serialize(_allPlayers.GetAll())}");
-        
-        private void RegisterEventHandlers()
-        {
-            _gameProcessService.OnPrepareForGame += async table =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .PrepareForGame(JsonSerializer.Serialize(_mapper.Map<TableDto>(table)));
-            };
-
-            _gameProcessService.OnDealCommunityCards += async (table, cardsToAdd) =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .DealCommunityCards(JsonSerializer.Serialize(cardsToAdd));
-            };
-
-            _gameProcessService.ReceiveWinners += async (table, sidePotsJson) =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .ReceiveWinners(sidePotsJson);
-            };
-
-            _gameProcessService.ReceiveUpdatedPot += async (table, potJson) =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .ReceiveUpdatedPot(potJson);
-            };
-
-            _gameProcessService.ReceivePlayerAction += async (table, action) =>
-            {
-                _logger.LogInformation($"action: {action} : {JsonSerializer.Serialize(action)}");
-                
-                await Clients.GroupExcept(table.Id.ToString(), table.CurrentPlayer.ConnectionId)
-                    .ReceivePlayerAction(JsonSerializer.Serialize(action));
-            };
-
-            _gameProcessService.ReceiveCurrentPlayerIdInWagering += async (table, currentPlayerIdJson) =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .ReceiveCurrentPlayerIdInWagering(currentPlayerIdJson);
-            };
-            
-                _gameProcessService.BigBlindBetEvent += async (table, bigBlindAction) =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .ReceivePlayerAction(bigBlindAction);
-            };
-            
-            _gameProcessService.SmallBlindBetEvent += async (table, smallBlindAction) =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .ReceivePlayerAction(smallBlindAction);
-            };
-            
-            _gameProcessService.NewPlayerBetEvent += async (table, newPlayerBlindAction) =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .ReceivePlayerAction(newPlayerBlindAction);
-            };
-            
-            _gameProcessService.ReceiveTableState += async tableToSend =>
-            {
-                await Clients.Group(tableToSend.Id.ToString())
-                    .ReceiveTableState(JsonSerializer.Serialize(_mapper.Map<TableDto>(tableToSend)));
-            };
-
-            _gameProcessService.OnLackOfStackMoney += async player =>
-            {
-                await Clients.Client(player.ConnectionId)
-                    .OnLackOfStackMoney();
-            };
-
-            _gameProcessService.ReceivePlayerDto += async player =>
-            {
-                await Clients.Client(player.ConnectionId)
-                    .ReceivePlayerDto(JsonSerializer.Serialize(_mapper.Map<PlayerDto>(player)));
-            };
-
-            _gameProcessService.EndSitAndGoGameFirstPlace += async table =>
-            {
-                await Clients.Client(table.ActivePlayers[0].ConnectionId)
-                    .EndSitAndGoGame("1");
-            };
-            
-            _gameProcessService.EndSitAndGoGame += async (player, playersPlace) =>
-            {
-                await Clients.Client(player.ConnectionId)
-                    .EndSitAndGoGame(playersPlace.ToString());
-            };
-
-            _gameProcessService.RemoveFromGroupAsync += async (connectionId, groupName) =>
-            {
-                await Groups
-                    .RemoveFromGroupAsync(connectionId, groupName);
-            };
-
-            _gameProcessService.OnGameEnd += async table =>
-            {
-                await Clients.Group(table.Id.ToString())
-                    .OnGameEnd();
-            };
-
-            _gameProcessService.PlayerDisconnected += async (tableId, tableDtoJson) =>
-            {
-                await Clients.Group(tableId)
-                    .PlayerDisconnected(tableDtoJson);
-            };
         }
     }
 }

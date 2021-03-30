@@ -228,33 +228,8 @@ namespace PokerHand.BusinessLogic.Services
         }
 
         #region Helpers
-        private Table GetFreeTable(TableTitle tableTitle, Guid? currentTableId)
-        {
-            try
-            {
-                if (tableTitle is TableTitle.RivieraHotel ||
-                    tableTitle is TableTitle.CityDreamsResort ||
-                    tableTitle is TableTitle.HeritageBank)
-                {
-                    return _allTables
-                        .GetManyByTitle(tableTitle)
-                        .FirstOrDefault(t => t.CurrentStage is RoundStageType.NotStarted);
-                }
-            
-                return _allTables
-                    .GetManyByTitle(tableTitle)
-                    .FirstOrDefault(t => t.Players.Count < t.MaxPlayers && t.Id != currentTableId);
-
-            }
-            catch (Exception e)
-            {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
-                throw;
-            }
-            
-        }
-
+        
+        // AddPlayerToTable helpers
         private Table CreateNewTable(TableTitle tableTitle)
         {
             var table = new Table();
@@ -295,6 +270,33 @@ namespace PokerHand.BusinessLogic.Services
             table.MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"];
             
             table.MinPlayersToStart = table.Type is TableType.SitAndGo ? 5 : 2;
+        }
+        
+        private Table GetFreeTable(TableTitle tableTitle, Guid? currentTableId)
+        {
+            try
+            {
+                if (tableTitle is TableTitle.RivieraHotel ||
+                    tableTitle is TableTitle.CityDreamsResort ||
+                    tableTitle is TableTitle.HeritageBank)
+                {
+                    return _allTables
+                        .GetManyByTitle(tableTitle)
+                        .FirstOrDefault(t => t.CurrentStage is RoundStageType.NotStarted);
+                }
+            
+                return _allTables
+                    .GetManyByTitle(tableTitle)
+                    .FirstOrDefault(t => t.Players.Count < t.MaxPlayers && t.Id != currentTableId);
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"{e.Message}");
+                _logger.LogError($"{e.StackTrace}");
+                throw;
+            }
+            
         }
         
         private async Task ConfigureSitAndGo(TableConnectionOptions connectionOptions, Player player)

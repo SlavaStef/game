@@ -29,16 +29,19 @@ namespace PokerHand.BusinessLogic.Services
             _mapper = mapper;
             _logger = logger;
         }
-
-        public async Task<ResultModel<PlayerProfileDto>> TryAuthenticate(string providerKey)
+        
+        public async Task<PlayerProfileDto> AuthenticateWithPlayerId(Guid playerId)
         {
-            _logger.LogInformation($"TryAuthenticate. provider key: {providerKey}");
+            var player = await _unitOfWork.Players.GetPlayerAsync(playerId);
 
-            _logger.LogInformation($"unit of work: {_unitOfWork}");
-            _logger.LogInformation($"unit of work. ex: {_unitOfWork.ExternalLogins}");
+            return player is null 
+                ? null
+                : _mapper.Map<PlayerProfileDto>(player);
+        }
+
+        public async Task<ResultModel<PlayerProfileDto>> TryAuthenticateWithExternalProvider(string providerKey)
+        {
             var playerId = await _unitOfWork.ExternalLogins.GetByProviderKey(providerKey);
-
-            _logger.LogInformation($"TryAuthenticate. playerId: {playerId}");
                 
             if (playerId == Guid.Empty)
                 return new ResultModel<PlayerProfileDto> { IsSuccess = false };

@@ -21,7 +21,7 @@ namespace PokerHand.Server.Hubs
         {
             var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
             
-            var playerProfileDto = await _playerService.Authenticate(playerId);
+            var playerProfileDto = await _loginService.AuthenticateWithPlayerId(playerId);
 
             if (playerProfileDto is null)
             {
@@ -78,7 +78,7 @@ namespace PokerHand.Server.Hubs
         {
             _logger.LogInformation($"provider key: {providerKeyJson}");
             var authenticateResult = await _loginService
-                .TryAuthenticate(JsonSerializer.Deserialize<string>(providerKeyJson));
+                .TryAuthenticateWithExternalProvider(JsonSerializer.Deserialize<string>(providerKeyJson));
 
             if (authenticateResult.IsSuccess is false)
             {

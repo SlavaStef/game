@@ -26,8 +26,6 @@ namespace PokerHand.Common.Entities
         public int BiggestWin { get; set; }
         public int SitAndGoWins { get; set; }
 
-        public ICollection<ExternalLogin> PlayerLogins { get; set; }
-        
         // Game properties
         [NotMapped] public string ConnectionId { get; set; }
         [NotMapped] public bool IsAutoTop { get; set; }
@@ -43,8 +41,9 @@ namespace PokerHand.Common.Entities
         [NotMapped] public bool IsReady { get; set; }
         [NotMapped] public int NumberOfGamesOnCurrentTable { get; set; }
         
-        // Bot
         [NotMapped] public PlayerType Type { get; set; }
         [NotMapped] public BotComplexity Complexity { get; set; }
+        
+        public ICollection<ExternalLogin> PlayerLogins { get; set; }
     }
 }

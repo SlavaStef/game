@@ -380,16 +380,13 @@ namespace PokerHand.BusinessLogic.Services
             {
                 _logger.LogInformation($"AutoTop. Player: {JsonSerializer.Serialize(player)}");
 
-                var isEnoughTotalMoney = await _playerService.GetFromTotalMoney(player.Id, minBuyIn);
-                _logger.LogInformation($"AutoTop. wasEnoughMoney: {isEnoughTotalMoney}");
+                var currentTotalMoney = await _playerService.GetTotalMoney(player.Id);
 
-                if (isEnoughTotalMoney)
+                if (currentTotalMoney >= minBuyIn)
                 {
-                    player.StackMoney += minBuyIn;
+                    await _playerService.AddStackMoneyFromTotalMoney(table.Id, player.Id, minBuyIn);
 
                     ReceivePlayerDto?.Invoke(player);
-
-                    _logger.LogInformation("AutoTop. Player profile is sent");
                 }
             }
 

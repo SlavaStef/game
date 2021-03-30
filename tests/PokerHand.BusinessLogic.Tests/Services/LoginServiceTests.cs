@@ -39,7 +39,7 @@ namespace PokerHand.BusinessLogic.Tests.Services
 
             var expected = new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = null};
 
-            var result = await _sut.TryAuthenticate(providerKey);
+            var result = await _sut.TryAuthenticateWithExternalProvider(providerKey);
             
             result.Should().BeEquivalentTo(expected);
         }
@@ -60,7 +60,7 @@ namespace PokerHand.BusinessLogic.Tests.Services
 
             var expected = new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = "Player not found"};
 
-            var result = await _sut.TryAuthenticate(providerKey);
+            var result = await _sut.TryAuthenticateWithExternalProvider(providerKey);
             
             result.Should().BeEquivalentTo(expected);
         }
@@ -84,7 +84,7 @@ namespace PokerHand.BusinessLogic.Tests.Services
                 .Setup(x => x.Map<PlayerProfileDto>(player))
                 .Returns(new PlayerProfileDto {Id = playerId});
 
-            var result = await _sut.TryAuthenticate(providerKey);
+            var result = await _sut.TryAuthenticateWithExternalProvider(providerKey);
 
             result.IsSuccess.Should().BeTrue();
             result.Message.Should().BeNullOrEmpty();

@@ -53,45 +53,79 @@ namespace PokerHand.Server.Hubs
         public async Task RegisterWithExternalProvider(string userNameJson, string genderJson, string handsSpriteJson, 
             string providerNameJson, string providerKeyJson, string image)
         {
-            _logger.LogInformation("RegisterWithExternalProvider. 1");
-            _logger.LogInformation($"image: {image}");
-            var newPlayerProfileDto =
-                await _playerService.CreatePlayer(JsonSerializer.Deserialize<string>(userNameJson),
-                    JsonSerializer.Deserialize<Gender>(genderJson),
-                    JsonSerializer.Deserialize<HandsSpriteType>(handsSpriteJson));
+            try
+            {
+                _logger.LogInformation("RegisterWithExternalProvider. Start");
+                _logger.LogInformation($"RegisterWithExternalProvider. username: {userNameJson}");
+                _logger.LogInformation($"RegisterWithExternalProvider. genderJson: {genderJson}");
+                _logger.LogInformation($"RegisterWithExternalProvider. handsSpriteJson: {handsSpriteJson}");
+                _logger.LogInformation($"RegisterWithExternalProvider. providerNameJson: {providerNameJson}");
+                _logger.LogInformation($"RegisterWithExternalProvider. providerKeyJson: {providerKeyJson}");
+                _logger.LogInformation($"RegisterWithExternalProvider. image: {image}");
+                
+                var newPlayerProfileDto =
+                    await _playerService.CreatePlayer(JsonSerializer.Deserialize<string>(userNameJson),
+                        JsonSerializer.Deserialize<Gender>(genderJson),
+                        JsonSerializer.Deserialize<HandsSpriteType>(handsSpriteJson));
 
-            _logger.LogInformation("RegisterWithExternalProvider. 2");
+                if (newPlayerProfileDto is null)
+                {
+                    _logger.LogInformation($"RegisterWithExternalProvider. newPlayerProfileDto is null");
+                    return;
+                }
+                
+                _logger.LogInformation($"RegisterWithExternalProvider. newPlayerProfileDto: {newPlayerProfileDto}");
+                
+                await _loginService.CreateExternalLogin(newPlayerProfileDto.Id,
+                    JsonSerializer.Deserialize<ExternalProviderName>(providerNameJson),
+                    JsonSerializer.Deserialize<string>(providerKeyJson));
             
-            await _loginService.CreateExternalLogin(newPlayerProfileDto.Id,
-                JsonSerializer.Deserialize<ExternalProviderName>(providerNameJson),
-                JsonSerializer.Deserialize<string>(providerKeyJson));
+                _logger.LogInformation("RegisterWithExternalProvider. 3");
             
-            _logger.LogInformation("RegisterWithExternalProvider. 3");
-            
-            await Clients.Caller
-                .ReceivePlayerProfile(JsonSerializer.Serialize(newPlayerProfileDto));
+                await Clients.Caller
+                    .ReceivePlayerProfile(JsonSerializer.Serialize(newPlayerProfileDto));
 
-            await SendProfileImage(newPlayerProfileDto.Id);
+                await SendProfileImage(newPlayerProfileDto.Id);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+            
         }
 
         public async Task TryAuthenticateWithExternalProvider(string providerKeyJson)
         {
-            _logger.LogInformation($"provider key: {providerKeyJson}");
-            var authenticateResult = await _loginService
-                .TryAuthenticateWithExternalProvider(JsonSerializer.Deserialize<string>(providerKeyJson));
-
-            if (authenticateResult.IsSuccess is false)
+            try
             {
-                await Clients.Caller
-                    .ContinueRegistration();
-                
-                return;
-            }
+                _logger.LogInformation($"TryAuthenticateWithExternalProvider. Provider key: {providerKeyJson}");
+                var authenticateResult = await _loginService
+                    .TryAuthenticateWithExternalProvider(JsonSerializer.Deserialize<string>(providerKeyJson));
 
-            await Clients.Caller
+                _logger.LogInformation(
+                    $"TryAuthenticateWithExternalProvider. Authentication result: {authenticateResult.IsSuccess}");
+                if (authenticateResult.IsSuccess is false)
+                {
+                    _logger.LogInformation($"TryAuthenticateWithExternalProvider. Calling Continue registration");
+                    await Clients.Caller
+                        .ContinueRegistration();
+                
+                    return;
+                }
+
+                await Clients.Caller
                     .ReceivePlayerProfile(JsonSerializer.Serialize(authenticateResult.Value));
 
-            await SendProfileImage(authenticateResult.Value.Id);
+                await SendProfileImage(authenticateResult.Value.Id);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation(e.Message);
+                _logger.LogInformation(e.StackTrace);
+                throw;
+            }
+            
         }
 
         #region Helpers

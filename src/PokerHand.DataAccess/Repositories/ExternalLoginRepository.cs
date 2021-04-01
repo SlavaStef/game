@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -39,15 +40,27 @@ namespace PokerHand.DataAccess.Repositories
         
         public async Task<Guid> GetByProviderKey(string providerKey)
         {
-            _logger.LogInformation($"GetByProviderKey. providerKey: {providerKey}");
-            var login = await _context.ExternalLogins
-                .FirstOrDefaultAsync(l => l.ProviderKey == providerKey);
+            try
+            {
+                _logger.LogInformation($"ExternalLoginRepository.GetByProviderKey. ProviderKey: {providerKey}");
+                var login = await _context.ExternalLogins
+                    .FirstOrDefaultAsync(l => l.ProviderKey == providerKey);
 
-            _logger.LogInformation($"GetByProviderKey. login: {login}");
+                if (login is null)
+                {
+                    _logger.LogInformation("ExternalLoginRepository. Login not found");
+                    return Guid.Empty;
+                }
             
-            return login is null 
-                ? Guid.Empty 
-                : login.PlayerId;
+                _logger.LogInformation($"ExternalLoginRepository. {JsonSerializer.Serialize(login)}");
+                return login.PlayerId;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message);
+                _logger.LogError(e.StackTrace);
+                throw;
+            }
         }
         
         public async Task RemoveByPlayerId(Guid playerId)

@@ -17,11 +17,9 @@ namespace PokerHand.Common.Dto
         public CountryName Country { get; set; }
         public HandsSpriteType HandsSprite { get; set; }
         public string UserName { get; set; }
-        public string Email { get; set; }
         public DateTime RegistrationDate { get; set; }
         public int Experience { get; set; }
         public int TotalMoney { get; set; }
-        public int CoinsAmount { get; set; }
         public int GamesPlayed { get; set; }
         public HandType BestHandType { get; set; }
         public int GamesWon { get; set; }

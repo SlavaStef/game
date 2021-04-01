@@ -64,7 +64,15 @@ namespace PokerHand.BusinessLogic.Services
             var createResult = await _userManager.CreateAsync(newPlayer);
 
             if (!createResult.Succeeded)
+            {
+                _logger.LogError($"CreateAsync Errors:");
+                createResult.Errors.ToList().ForEach(error =>
+                {
+                    _logger.LogError($"{error.Description}");
+                    _logger.LogError($"{error.Code}");
+                });
                 return null;
+            }
 
             var setImageResult = await _mediaService.SetDefaultProfileImage(newPlayer.Id);
             if (setImageResult.IsSuccess is false)

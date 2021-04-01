@@ -119,7 +119,7 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
             try
             {
                 var betAmount = table.CurrentMaxBet - bot.CurrentBet;
-                var reached75 = false;
+                var isFourOfSameSuits = false;
 
                 var groups = bot.PocketCards
                     .Select(c => (int) c.Suit)
@@ -128,12 +128,12 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
 
                 foreach (var group in groups)
                     if (group.Count() is 4)
-                        reached75 = true;
+                        isFourOfSameSuits = true;
 
                 if (bot.Hand is HandType.ThreeOfAKind || bot.Hand is HandType.TwoPairs)
-                    reached75 = true;
+                    isFourOfSameSuits = true;
 
-                if (reached75)
+                if (isFourOfSameSuits)
                 {
                     if (betAmount is 0)
                         return new PlayerAction
@@ -211,7 +211,7 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
                 }
 
                 if (betAmount > 0 && betAmount < bot.StackMoney * 0.1f)
-                    return new PlayerAction {ActionType = PlayerActionType.Check, PlayerIndexNumber = bot.IndexNumber};
+                    return new PlayerAction {ActionType = PlayerActionType.Call, PlayerIndexNumber = bot.IndexNumber};
 
                 return new PlayerAction {ActionType = PlayerActionType.Fold, PlayerIndexNumber = bot.IndexNumber};
             }
@@ -417,7 +417,7 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
                 }
 
                 if (betAmount > 0 && betAmount < bot.StackMoney * 0.1f)
-                    return new PlayerAction {ActionType = PlayerActionType.Check, PlayerIndexNumber = bot.IndexNumber};
+                    return new PlayerAction {ActionType = PlayerActionType.Call, PlayerIndexNumber = bot.IndexNumber};
 
                 return new PlayerAction {ActionType = PlayerActionType.Fold, PlayerIndexNumber = bot.IndexNumber};
             }

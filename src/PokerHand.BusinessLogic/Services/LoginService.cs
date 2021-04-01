@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
@@ -41,21 +42,40 @@ namespace PokerHand.BusinessLogic.Services
 
         public async Task<ResultModel<PlayerProfileDto>> TryAuthenticateWithExternalProvider(string providerKey)
         {
-            var playerId = await _unitOfWork.ExternalLogins.GetByProviderKey(providerKey);
-                
-            if (playerId == Guid.Empty)
-                return new ResultModel<PlayerProfileDto> { IsSuccess = false };
-
-            var player = await _unitOfWork.Players.GetPlayerAsync(playerId);
-
-            if (player is null)
-                return new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = "Player not found"};
-
-            return new ResultModel<PlayerProfileDto>
+            try
             {
-                IsSuccess = true,
-                Value = _mapper.Map<PlayerProfileDto>(player)
-            };
+                _logger.LogInformation($"TryAuthenticateWithExternalProvider. providerKey: {providerKey}");
+                var playerId = await _unitOfWork.ExternalLogins.GetByProviderKey(providerKey);
+
+                if (playerId == Guid.Empty)
+                {
+                    _logger.LogInformation("TryAuthenticateWithExternalProvider. playerId is empty");
+                    return new ResultModel<PlayerProfileDto> { IsSuccess = false };
+                }
+
+                _logger.LogInformation("TryAuthenticateWithExternalProvider. Try to get player by Id");
+                var player = await _unitOfWork.Players.GetPlayerAsync(playerId);
+
+                if (player is null)
+                {
+                    _logger.LogInformation("TryAuthenticateWithExternalProvider. Player not found");
+                    return new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = "Player not found"};
+                }
+                
+                _logger.LogInformation($"TryAuthenticateWithExternalProvider. player: {JsonSerializer.Serialize(player)}");
+                return new ResultModel<PlayerProfileDto>
+                {
+                    IsSuccess = true,
+                    Value = _mapper.Map<PlayerProfileDto>(player)
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation(e.Message);
+                _logger.LogInformation(e.StackTrace);
+                throw;
+            }
+            
         }
 
         public async Task CreateExternalLogin(Guid playerId, ExternalProviderName providerName, string providerKey)

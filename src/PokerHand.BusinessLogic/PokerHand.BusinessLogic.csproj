@@ -18,8 +18,4 @@
       <PackageReference Include="System.IO.Abstractions" Version="13.2.28" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Helpers\GameProcessLogic" />
-    </ItemGroup>
-
 </Project>

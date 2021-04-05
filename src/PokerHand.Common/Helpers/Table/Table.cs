@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.GameProcess;
 
 namespace PokerHand.Common.Helpers.Table

@@ -3,9 +3,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
+using Serilog;
 
 namespace PokerHand.Server.Hubs
 {
@@ -24,7 +24,7 @@ namespace PokerHand.Server.Hubs
             new Thread(() => _gameProcessService.StartRound(id)).Start();
         
         private void WriteAllPlayersList() =>
-            _logger.LogInformation($"AllPlayers: {JsonSerializer.Serialize(_allPlayers.GetAll())}");
+            Log.Information($"AllPlayers: {JsonSerializer.Serialize(_allPlayers.GetAll())}");
         
         private void RegisterEventHandlers()
         {
@@ -54,7 +54,7 @@ namespace PokerHand.Server.Hubs
 
             _gameProcessService.ReceivePlayerAction += async (table, action) =>
             {
-                _logger.LogInformation($"action: {action} : {JsonSerializer.Serialize(action)}");
+                Log.Information($"action: {action} : {JsonSerializer.Serialize(action)}");
                 
                 await Clients.GroupExcept(table.Id.ToString(), table.CurrentPlayer.ConnectionId)
                     .ReceivePlayerAction(JsonSerializer.Serialize(action));

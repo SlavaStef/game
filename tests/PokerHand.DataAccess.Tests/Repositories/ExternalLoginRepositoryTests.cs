@@ -4,12 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Moq;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Authorization;
 using PokerHand.DataAccess.Context;
-using PokerHand.DataAccess.Interfaces;
 using PokerHand.DataAccess.Repositories;
 using Xunit;
 
@@ -18,7 +16,6 @@ namespace PokerHand.DataAccess.Tests.Repositories
     public class ExternalLoginRepositoryTests
     {
         private readonly Mock<ApplicationContext> _contextMock = new Mock<ApplicationContext>();
-        private readonly Mock<ILogger<UnitOfWork>> _loggerMock = new Mock<ILogger<UnitOfWork>>();
 
         private DbSet<T> CreateDbSet<T>(IQueryable<T> collection) where T:class
         {
@@ -47,7 +44,7 @@ namespace PokerHand.DataAccess.Tests.Repositories
                 .Setup(o => o.ExternalLogins)
                 .Returns(dbSet);
 
-            var sut = new ExternalLoginRepository(_contextMock.Object, _loggerMock.Object);
+            var sut = new ExternalLoginRepository(_contextMock.Object);
 
             var result = await sut.GetByProviderKey(providerKey);
 
@@ -71,7 +68,7 @@ namespace PokerHand.DataAccess.Tests.Repositories
                 .Setup(o => o.ExternalLogins)
                 .Returns(dbSet);
 
-            var sut = new ExternalLoginRepository(_contextMock.Object, _loggerMock.Object);
+            var sut = new ExternalLoginRepository(_contextMock.Object);
 
             var result = await sut.GetByProviderKey("6789");
 

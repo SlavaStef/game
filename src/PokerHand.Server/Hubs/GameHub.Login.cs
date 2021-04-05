@@ -2,9 +2,9 @@
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.Player;
+using Serilog;
 
 namespace PokerHand.Server.Hubs
 {
@@ -32,7 +32,7 @@ namespace PokerHand.Server.Hubs
 
             _allPlayers.AddOrUpdate(playerId, Context.ConnectionId);
             
-            _logger.LogInformation($"Player {playerProfileDto.UserName} is authenticated");
+            Log.Information($"Player {playerProfileDto.UserName} is authenticated");
         }
         
         public async Task RegisterAsGuest(string userNameJson, string genderJson, string handsSpriteJson)
@@ -54,13 +54,13 @@ namespace PokerHand.Server.Hubs
         {
             try
             {
-                _logger.LogInformation("RegisterWithExternalProvider. Start");
-                _logger.LogInformation($"RegisterWithExternalProvider. username: {userNameJson}");
-                _logger.LogInformation($"RegisterWithExternalProvider. genderJson: {genderJson}");
-                _logger.LogInformation($"RegisterWithExternalProvider. handsSpriteJson: {handsSpriteJson}");
-                _logger.LogInformation($"RegisterWithExternalProvider. providerNameJson: {providerNameJson}");
-                _logger.LogInformation($"RegisterWithExternalProvider. providerKeyJson: {providerKeyJson}");
-                _logger.LogInformation($"RegisterWithExternalProvider. image: {image}");
+                Log.Information("RegisterWithExternalProvider. Start");
+                Log.Information($"RegisterWithExternalProvider. username: {userNameJson}");
+                Log.Information($"RegisterWithExternalProvider. genderJson: {genderJson}");
+                Log.Information($"RegisterWithExternalProvider. handsSpriteJson: {handsSpriteJson}");
+                Log.Information($"RegisterWithExternalProvider. providerNameJson: {providerNameJson}");
+                Log.Information($"RegisterWithExternalProvider. providerKeyJson: {providerKeyJson}");
+                Log.Information($"RegisterWithExternalProvider. image: {image}");
                 
                 var newPlayerProfileDto =
                     await _playerService.CreatePlayer(JsonSerializer.Deserialize<string>(userNameJson),
@@ -70,17 +70,17 @@ namespace PokerHand.Server.Hubs
 
                 if (newPlayerProfileDto is null)
                 {
-                    _logger.LogInformation($"RegisterWithExternalProvider. newPlayerProfileDto is null");
+                    Log.Information($"RegisterWithExternalProvider. newPlayerProfileDto is null");
                     return;
                 }
                 
-                _logger.LogInformation($"RegisterWithExternalProvider. newPlayerProfileDto: {newPlayerProfileDto}");
+                Log.Information($"RegisterWithExternalProvider. newPlayerProfileDto: {newPlayerProfileDto}");
                 
                 await _loginService.CreateExternalLogin(newPlayerProfileDto.Id,
                     JsonSerializer.Deserialize<ExternalProviderName>(providerNameJson),
                     JsonSerializer.Deserialize<string>(providerKeyJson));
             
-                _logger.LogInformation("RegisterWithExternalProvider. 3");
+                Log.Information("RegisterWithExternalProvider. 3");
             
                 await Clients.Caller
                     .ReceivePlayerProfile(JsonSerializer.Serialize(newPlayerProfileDto));
@@ -99,15 +99,15 @@ namespace PokerHand.Server.Hubs
         {
             try
             {
-                _logger.LogInformation($"TryAuthenticateWithExternalProvider. Provider key: {providerKeyJson}");
+                Log.Information($"TryAuthenticateWithExternalProvider. Provider key: {providerKeyJson}");
                 var authenticateResult = await _loginService
                     .TryAuthenticateWithExternalProvider(JsonSerializer.Deserialize<string>(providerKeyJson));
 
-                _logger.LogInformation(
+                Log.Information(
                     $"TryAuthenticateWithExternalProvider. Authentication result: {authenticateResult.IsSuccess}");
                 if (authenticateResult.IsSuccess is false)
                 {
-                    _logger.LogInformation($"TryAuthenticateWithExternalProvider. Calling Continue registration");
+                    Log.Information($"TryAuthenticateWithExternalProvider. Calling Continue registration");
                     await Clients.Caller
                         .ContinueRegistration();
                 
@@ -121,8 +121,8 @@ namespace PokerHand.Server.Hubs
             }
             catch (Exception e)
             {
-                _logger.LogInformation(e.Message);
-                _logger.LogInformation(e.StackTrace);
+                Log.Information(e.Message);
+                Log.Information(e.StackTrace);
                 throw;
             }
             
@@ -145,7 +145,7 @@ namespace PokerHand.Server.Hubs
 
             if (getImageResult.IsSuccess is false)
             {
-                _logger.LogInformation($"{getImageResult.Message}");
+                Log.Information($"{getImageResult.Message}");
                 return;
             }
 

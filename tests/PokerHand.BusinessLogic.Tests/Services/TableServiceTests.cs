@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
-using Microsoft.Extensions.Logging;
 using Moq;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
-using PokerHand.Server.Hubs;
 using Xunit;
 
 namespace PokerHand.BusinessLogic.Tests.Services
@@ -12,7 +10,6 @@ namespace PokerHand.BusinessLogic.Tests.Services
     {
         private readonly Mock<ITableService> _tableServiceMock = new();
         private readonly Mock<IPlayerService> _playerServiceMock = new();
-        private readonly Mock<ILogger<GameHub>> _loggerMock = new();
         private readonly Mock<IPlayersOnline> _playersOnlineMock = new();
         private readonly Mock<ITablesOnline> _tablesOnlineMock = new();
         private readonly Mock<IMapper> _mapperMock = new();

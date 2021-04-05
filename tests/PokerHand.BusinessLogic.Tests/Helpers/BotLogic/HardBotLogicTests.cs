@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using PokerHand.BusinessLogic.Helpers.BotLogic;
 using PokerHand.BusinessLogic.Interfaces;
-using PokerHand.BusinessLogic.Services;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.GameProcess;
@@ -44,8 +42,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.BotLogic
             evaluationService.EvaluatePlayerHand(table.CommunityCards, bot).Returns(bot);
 
             var random = Substitute.For<Random>();
-            var logger = Substitute.For<ILogger<BotService>>();
-            var sut = new HardBotLogic(evaluationService, random, logger);
+            var sut = new HardBotLogic(evaluationService, random);
 
             // Act
             var result = sut.Act(bot, table);
@@ -83,9 +80,8 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.BotLogic
             evaluationService.EvaluatePlayerHand(table.CommunityCards, bot).Returns(bot);
             
             var random = Substitute.For<Random>();
-            var logger = Substitute.For<ILogger<BotService>>();
             random.Next(1, 100).Returns(10);
-            var sut = new HardBotLogic(evaluationService, random, logger);
+            var sut = new HardBotLogic(evaluationService, random);
 
             // Act
             var result = sut.Act(bot, table);
@@ -124,9 +120,8 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.BotLogic
             evaluationService.EvaluatePlayerHand(table.CommunityCards, bot).Returns(bot);
             
             var random = Substitute.For<Random>();
-            var logger = Substitute.For<ILogger<BotService>>();
             random.Next(1, 100).Returns(30);
-            var sut = new HardBotLogic(evaluationService, random, logger);
+            var sut = new HardBotLogic(evaluationService, random);
 
             // Act
             var result = sut.Act(bot, table);

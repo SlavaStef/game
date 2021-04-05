@@ -1,30 +1,27 @@
 ﻿using System;
 using System.Linq;
-using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Helpers.BotLogic.Interfaces;
 using PokerHand.BusinessLogic.Interfaces;
-using PokerHand.BusinessLogic.Services;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Table;
+using Serilog;
 
 namespace PokerHand.BusinessLogic.Helpers.BotLogic
 {
     public class HardBotLogic : IBotLogic
     {
         private readonly ICardEvaluationService _cardEvaluationService;
-        private readonly ILogger<BotService> _logger;
 
         private static Random _random;
         private static bool _isStep3GoodCombination;
         private static PlayerActionType _thirdRoundChoice;
 
-        public HardBotLogic(ICardEvaluationService cardEvaluationService, Random random, ILogger<BotService> logger)
+        public HardBotLogic(ICardEvaluationService cardEvaluationService, Random random)
         {
             _cardEvaluationService = cardEvaluationService;
             _random = random;
-            _logger = logger;
         }
 
         public PlayerAction Act(Player bot, Table table)
@@ -43,8 +40,8 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }
@@ -108,8 +105,8 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }
@@ -217,8 +214,8 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }
@@ -310,8 +307,8 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }
@@ -423,8 +420,8 @@ namespace PokerHand.BusinessLogic.Helpers.BotLogic
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }

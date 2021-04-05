@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.AspNetCore.Identity;
 using PokerHand.Common.Helpers.Authorization;
 
 namespace PokerHand.Common.Entities

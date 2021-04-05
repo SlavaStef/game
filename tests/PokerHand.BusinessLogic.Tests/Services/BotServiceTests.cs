@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Bogus;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using Moq;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.BusinessLogic.Services;
@@ -19,13 +18,12 @@ namespace PokerHand.BusinessLogic.Tests.Services
         private IBotService _sut;
         
         private readonly Mock<ICardEvaluationService> _cardEvaluationServiceMock = new();
-        private readonly Mock<ILogger<BotService>> _loggerMock = new();
         private readonly Mock<IRuleSet<Player>> _faker = new();
         private readonly Random _random = new();
 
         public BotServiceTests()
         {
-            _sut = new BotService(_cardEvaluationServiceMock.Object, _loggerMock.Object);
+            _sut = new BotService(_cardEvaluationServiceMock.Object);
         }
         
         [Fact]

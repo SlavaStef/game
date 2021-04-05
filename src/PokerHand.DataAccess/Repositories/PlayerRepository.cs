@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.DataAccess.Context;
@@ -11,13 +10,9 @@ namespace PokerHand.DataAccess.Repositories
 {
     public class PlayerRepository : Repository<Player>, IPlayerRepository
     {
-        private readonly ILogger<UnitOfWork> _logger;
         
-        public PlayerRepository(
-            ApplicationContext context, 
-            ILogger<UnitOfWork> logger) : base(context)
+        public PlayerRepository(ApplicationContext context) : base(context)
         {
-            _logger = logger;
         }
 
         public async Task<Player> GetPlayerAsync(Guid playerId)

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using PokerHand.Common.Helpers.Media;
+using Serilog;
 
 namespace PokerHand.Server.Hubs
 {
@@ -10,24 +10,24 @@ namespace PokerHand.Server.Hubs
     {
         public async Task UpdateProfileImage(string imageJson, string playerIdJson)
         {
-            _logger.LogInformation("UpdateProfileImage. Start");
-            _logger.LogInformation($"UpdateProfileImage. imageJson: {imageJson}");
+            Log.Information("UpdateProfileImage. Start");
+            Log.Information($"UpdateProfileImage. imageJson: {imageJson}");
             var image = new Image
             {
                 BinaryImage = JsonSerializer.Deserialize<byte[]>(imageJson),
                 PlayerId = JsonSerializer.Deserialize<Guid>(playerIdJson)
             };
             var updateResult = await _mediaService.UpdateProfileImage(JsonSerializer.Serialize(image));
-            _logger.LogInformation($"UpdateProfileImage. updateResult: {updateResult}");
+            Log.Information($"UpdateProfileImage. updateResult: {updateResult}");
             if (updateResult.IsSuccess is false)
             {
-                _logger.LogError(
+                Log.Error(
                     $"RemoveProfileImage. {updateResult.Message} PlayerId: {JsonSerializer.Deserialize<Image>(imageJson).PlayerId}");
                 return;
             }
 
             await Clients.Caller.ReceiveProfileImage(JsonSerializer.Serialize(updateResult.Value));
-            _logger.LogInformation("UpdateProfileImage. End");
+            Log.Information("UpdateProfileImage. End");
         }
 
         public async Task GetProfileImage(string playerIdJson)
@@ -37,7 +37,7 @@ namespace PokerHand.Server.Hubs
 
             if (getResult.IsSuccess is false)
             {
-                _logger.LogError(
+                Log.Error(
                     $"RemoveProfileImage. {getResult.Message} PlayerId: {playerId}");
                 return;
             }
@@ -52,7 +52,7 @@ namespace PokerHand.Server.Hubs
 
             if (removeResult.IsSuccess is false)
             {
-                _logger.LogError(
+                Log.Error(
                     $"RemoveProfileImage. {removeResult.Message} PlayerId: {playerId}");
                 return;
             }

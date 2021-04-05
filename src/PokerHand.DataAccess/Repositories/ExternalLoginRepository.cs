@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using PokerHand.Common;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Authorization;
 using PokerHand.DataAccess.Context;
@@ -17,12 +12,9 @@ namespace PokerHand.DataAccess.Repositories
 {
     public class ExternalLoginRepository : Repository<ExternalLogin>, IExternalLoginRepository
     {
-        private readonly ILogger<UnitOfWork> _logger;
-        public ExternalLoginRepository(ApplicationContext context, ILogger<UnitOfWork> logger) : base(context)
+        public ExternalLoginRepository(ApplicationContext context) : base(context)
         {
-            _logger = logger;
         }
-
         
         public async Task Add(Player player, ExternalProviderName externalProvider, string providerKey)
         {
@@ -42,23 +34,23 @@ namespace PokerHand.DataAccess.Repositories
         {
             try
             {
-                _logger.LogInformation($"ExternalLoginRepository.GetByProviderKey. ProviderKey: {providerKey}");
+                Log.Information($"ExternalLoginRepository.GetByProviderKey. ProviderKey: {providerKey}");
                 var login = await _context.ExternalLogins
                     .FirstOrDefaultAsync(l => l.ProviderKey == providerKey);
 
                 if (login is null)
                 {
-                    _logger.LogInformation("ExternalLoginRepository. Login not found");
+                    Log.Information("ExternalLoginRepository. Login not found");
                     return Guid.Empty;
                 }
             
-                _logger.LogInformation($"ExternalLoginRepository. {JsonSerializer.Serialize(login)}");
+                Log.Information($"ExternalLoginRepository. {JsonSerializer.Serialize(login)}");
                 return login.PlayerId;
             }
             catch (Exception e)
             {
-                _logger.LogError(e.Message);
-                _logger.LogError(e.StackTrace);
+                Log.Error(e.Message);
+                Log.Error(e.StackTrace);
                 throw;
             }
         }

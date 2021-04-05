@@ -3,8 +3,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using PokerHand.Common.Helpers.Table;
+using Serilog;
 
 namespace PokerHand.Server.Hubs
 {
@@ -12,7 +12,7 @@ namespace PokerHand.Server.Hubs
     {
         public async Task LeaveTable(string tableIdJson, string playerIdJson)
         {
-            _logger.LogInformation("LeaveTable. Start");
+            Log.Information("LeaveTable. Start");
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdJson);
             var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
 
@@ -21,12 +21,12 @@ namespace PokerHand.Server.Hubs
             if (player is null)
                 return;
 
-            _logger.LogInformation( $"LeaveTable. tableId: {table.Id}, playerId: {player.Id}");
+            Log.Information( $"LeaveTable. tableId: {table.Id}, playerId: {player.Id}");
 
             var removeResult = await _tableService.RemovePlayerFromTable(tableId, playerId);
             if (removeResult.IsSuccess is false)
             {
-                _logger.LogError($"{removeResult.Message}");
+                Log.Error($"{removeResult.Message}");
                 return;
             }
             
@@ -51,7 +51,7 @@ namespace PokerHand.Server.Hubs
             if (validationResult.IsValid is not true)
             {
                 foreach (var error in validationResult.Errors)
-                    _logger.LogError($"{error.ErrorMessage}");
+                    Log.Error($"{error.ErrorMessage}");
 
                 return;
             }
@@ -61,7 +61,7 @@ namespace PokerHand.Server.Hubs
             var connectionResult = await _tableService.AddPlayerToTable(connectionOptions);
             if (connectionResult.IsSuccess is false)
             {
-                _logger.LogError($"SwitchTable Error: {connectionResult.Message}");
+                Log.Error($"SwitchTable Error: {connectionResult.Message}");
                 return;
             }
             
@@ -73,14 +73,14 @@ namespace PokerHand.Server.Hubs
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            _logger.LogInformation($"GameHub.OnDisconnectedAsync. Start from player {Context.ConnectionId}");
+            Log.Information($"GameHub.OnDisconnectedAsync. Start from player {Context.ConnectionId}");
             WriteAllPlayersList();
             
             var playerId = _allPlayers.GetKeyByValue(Context.ConnectionId);
             var table = _allTables.GetByPlayerId(playerId);
             if (table is null)
             {
-                _logger.LogInformation($"No table found for player {playerId}");
+                Log.Information($"No table found for player {playerId}");
                 _allPlayers.Remove(playerId);
                 return;
             }
@@ -88,7 +88,7 @@ namespace PokerHand.Server.Hubs
             var removeResult = await _tableService.RemovePlayerFromTable(table.Id, playerId);
             if (removeResult.IsSuccess is false)
             {
-                _logger.LogError($"{removeResult.Message}");
+                Log.Error($"{removeResult.Message}");
                 return;
             }
             
@@ -99,7 +99,7 @@ namespace PokerHand.Server.Hubs
             _allPlayers.Remove(playerId);
             
             WriteAllPlayersList();
-            _logger.LogInformation($"GameHub.OnDisconnectedAsync. Player {playerId} : {Context.ConnectionId} removed from table");
+            Log.Information($"GameHub.OnDisconnectedAsync. Player {playerId} : {Context.ConnectionId} removed from table");
         }
     }
 }

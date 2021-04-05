@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
@@ -17,6 +16,7 @@ using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Pot;
 using PokerHand.Common.Helpers.Table;
+using Serilog;
 
 namespace PokerHand.BusinessLogic.Services
 {
@@ -26,7 +26,6 @@ namespace PokerHand.BusinessLogic.Services
         private readonly UserManager<Player> _userManager;
         private readonly IPlayerService _playerService;
         private readonly IDeckService _deckService;
-        private readonly ILogger<TableService> _logger;
         private readonly IMapper _mapper;
         
         public event Action<Table, string> ReceivePlayerAction;
@@ -36,14 +35,12 @@ namespace PokerHand.BusinessLogic.Services
 
         public TableService(
             UserManager<Player> userManager,
-            ILogger<TableService> logger, 
             IMapper mapper, 
             IPlayerService playerService, 
             ITablesOnline allTables, 
             IDeckService deckService)
         {
             _userManager = userManager;
-            _logger = logger;
             _mapper = mapper;
             _playerService = playerService;
             _allTables = allTables;
@@ -109,7 +106,7 @@ namespace PokerHand.BusinessLogic.Services
         {
             try
             {
-                _logger.LogInformation($"{JsonSerializer.Serialize(options)}");
+                Log.Information($"{JsonSerializer.Serialize(options)}");
                 var result = new ResultModel<ConnectToTableResult>(new ConnectToTableResult());
             
                 var table = GetFreeTable(options.TableTitle, options.CurrentTableId);
@@ -163,8 +160,8 @@ namespace PokerHand.BusinessLogic.Services
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
             
@@ -180,21 +177,21 @@ namespace PokerHand.BusinessLogic.Services
             if (player is null)
                 return new ResultModel<RemoveFromTableResult> {IsSuccess = false, Message = "Player is null"};
             
-            _logger.LogInformation($"RemovePlayerFromTable. count: {table.Players.Count(p => p.Type is PlayerType.Human)}");
+            Log.Information($"RemovePlayerFromTable. count: {table.Players.Count(p => p.Type is PlayerType.Human)}");
 
             foreach (var tablePlayer in table.Players)
             {
-                _logger.LogInformation($"{tablePlayer.UserName} : {JsonSerializer.Serialize(tablePlayer.Type)}");
+                Log.Information($"{tablePlayer.UserName} : {JsonSerializer.Serialize(tablePlayer.Type)}");
             }
             if (table.Players.Count(p => p.Type is not PlayerType.Computer) is 1)
             {
-                _logger.LogInformation("RemovePlayerFromTable. One human player");
+                Log.Information("RemovePlayerFromTable. One human player");
                 await RemovePlayer(player, table);
-                _logger.LogInformation("RemovePlayerFromTable. One human player. player removed");
+                Log.Information("RemovePlayerFromTable. One human player. player removed");
 
                 _allTables.Remove(table.Id);
                 
-                _logger.LogInformation("RemovePlayerFromTable. One human player. table removed");
+                Log.Information("RemovePlayerFromTable. One human player. table removed");
 
                 return new ResultModel<RemoveFromTableResult>
                 {
@@ -205,7 +202,7 @@ namespace PokerHand.BusinessLogic.Services
 
             if (table.CurrentPlayer?.Id == player.Id)
             {
-                _logger.LogInformation("RemovePlayerFromTable. second If");
+                Log.Information("RemovePlayerFromTable. second If");
                 await RemoveCurrentPlayer(player, table);
 
                 return new ResultModel<RemoveFromTableResult>
@@ -216,7 +213,7 @@ namespace PokerHand.BusinessLogic.Services
                 };
             }
             
-            _logger.LogInformation("RemovePlayerFromTable. just remove");
+            Log.Information("RemovePlayerFromTable. just remove");
             await RemovePlayer(player, table);
 
             return new ResultModel<RemoveFromTableResult>
@@ -292,8 +289,8 @@ namespace PokerHand.BusinessLogic.Services
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
             
@@ -339,7 +336,7 @@ namespace PokerHand.BusinessLogic.Services
             if (table.Type is TableType.SitAndGo)
             {
                 var playerPlace = table.Players.Count;
-                _logger.LogInformation($"RemoveCurrentPlayer. playerPlace: {playerPlace}");
+                Log.Information($"RemoveCurrentPlayer. playerPlace: {playerPlace}");
                 
                 EndSitAndGoGame?.Invoke(player, playerPlace.ToString());
             }

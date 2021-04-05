@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
-using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Authorization;
 
 namespace PokerHand.BusinessLogic.Interfaces

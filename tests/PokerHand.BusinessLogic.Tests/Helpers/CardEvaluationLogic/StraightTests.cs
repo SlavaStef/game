@@ -2,7 +2,6 @@
 using System.Linq;
 using FluentAssertions;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic;
-using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 using Xunit;

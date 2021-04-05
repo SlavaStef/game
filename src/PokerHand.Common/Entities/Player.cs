@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
-using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.Bot;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;

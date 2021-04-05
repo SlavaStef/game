@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic;
 using PokerHand.BusinessLogic.Helpers.CardEvaluationLogic.Interfaces;
 using PokerHand.BusinessLogic.Interfaces;
@@ -10,18 +9,12 @@ using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.Table;
+using Serilog;
 
 namespace PokerHand.BusinessLogic.Services
 {
     public class CardEvaluationService : ICardEvaluationService
     {
-        private readonly ILogger<CardEvaluationService> _logger;
-
-        public CardEvaluationService(ILogger<CardEvaluationService> logger)
-        {
-            _logger = logger;
-        }
-
         public Player EvaluatePlayerHand(List<Card> communityCards, Player player)
         {
             try
@@ -30,15 +23,15 @@ namespace PokerHand.BusinessLogic.Services
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }
 
         public List<SidePot> CalculateSidePotsWinners(Table table)
         {
-            _logger.LogInformation($"CalculateSidePotsWinners. Table: {JsonSerializer.Serialize(table)}");
+            Log.Information($"CalculateSidePotsWinners. Table: {JsonSerializer.Serialize(table)}");
 
             if (table.ActivePlayers.Count is 1)
             {
@@ -58,16 +51,16 @@ namespace PokerHand.BusinessLogic.Services
 
             // 1. Evaluate players' cards => get a list of players with HandValue
             var playersWithEvaluatedHands = EvaluatePlayersHands(table.CommunityCards, table.ActivePlayers);
-            _logger.LogInformation(
+            Log.Information(
                 $"CalculateSidePotsWinners. Players: {JsonSerializer.Serialize(playersWithEvaluatedHands)}");
 
             // 2. Get a list of sidePots with Type, Players, AmountOfOneBet, TotalAmount
             var sidePots = CreateSidePots(table);
-            _logger.LogInformation($"CalculateSidePotsWinners. SidePots: {JsonSerializer.Serialize(sidePots)}");
+            Log.Information($"CalculateSidePotsWinners. SidePots: {JsonSerializer.Serialize(sidePots)}");
 
             // 3.Get final sidePots
             var finalSidePots = GetSidePotsWithWinners(sidePots, playersWithEvaluatedHands);
-            _logger.LogInformation(
+            Log.Information(
                 $"CalculateSidePotsWinners. SidePots: {JsonSerializer.Serialize(finalSidePots)}");
 
             return finalSidePots;
@@ -76,7 +69,7 @@ namespace PokerHand.BusinessLogic.Services
         private List<SidePot> CreateSidePots(Table table)
         {
             var bets = table.Pot.Bets;
-            _logger.LogInformation($"CreateSidePots. Bets: {JsonSerializer.Serialize(bets)}");
+            Log.Information($"CreateSidePots. Bets: {JsonSerializer.Serialize(bets)}");
 
             var finalSidePotsList = new List<SidePot>();
 
@@ -89,13 +82,13 @@ namespace PokerHand.BusinessLogic.Services
                     .Select(bet => bet.Value)
                     .Min();
 
-                _logger.LogInformation($"CreateSidePots. minBet: {JsonSerializer.Serialize(minBet)}");
+                Log.Information($"CreateSidePots. minBet: {JsonSerializer.Serialize(minBet)}");
 
                 // Find all players with bet equal or greater than minBet => add them to current sidePot
                 foreach (var (playerId, bet) in bets.Where(b => b.Value >= minBet))
                 {
-                    _logger.LogInformation($"CreateSidePots. playerId: {JsonSerializer.Serialize(playerId)}");
-                    _logger.LogInformation($"CreateSidePots. table: {JsonSerializer.Serialize(table)}");
+                    Log.Information($"CreateSidePots. playerId: {JsonSerializer.Serialize(playerId)}");
+                    Log.Information($"CreateSidePots. table: {JsonSerializer.Serialize(table)}");
 
                     var player = table
                         .ActivePlayers
@@ -106,7 +99,7 @@ namespace PokerHand.BusinessLogic.Services
 
                     sidePot.TotalAmount += minBet;
                     bets[playerId] -= minBet;
-                    _logger.LogInformation($"CreateSidePots. player: {JsonSerializer.Serialize(player)}");
+                    Log.Information($"CreateSidePots. player: {JsonSerializer.Serialize(player)}");
                 }
 
                 sidePot.Type = finalSidePotsList.Count == 0
@@ -114,16 +107,16 @@ namespace PokerHand.BusinessLogic.Services
                     : SidePotType.Side;
 
                 finalSidePotsList.Add(sidePot);
-                _logger.LogInformation($"CreateSidePots. new SidePot: {JsonSerializer.Serialize(sidePot)}");
+                Log.Information($"CreateSidePots. new SidePot: {JsonSerializer.Serialize(sidePot)}");
             }
 
-            _logger.LogInformation($"CreateSidePots. finalSidePotsList: {JsonSerializer.Serialize(finalSidePotsList)}");
+            Log.Information($"CreateSidePots. finalSidePotsList: {JsonSerializer.Serialize(finalSidePotsList)}");
             return finalSidePotsList;
         }
 
         private List<SidePot> GetSidePotsWithWinners(List<SidePot> sidePots, List<Player> players)
         {
-            _logger.LogInformation("GetSidePotsWithWinners. Start");
+            Log.Information("GetSidePotsWithWinners. Start");
 
             foreach (var sidePot in sidePots)
             {
@@ -142,7 +135,7 @@ namespace PokerHand.BusinessLogic.Services
                     sidePot.WinningAmountPerPlayer = sidePot.TotalAmount;
             }
 
-            _logger.LogInformation($"GetSidePotsWithWinners. SidePots: {JsonSerializer.Serialize(sidePots)}");
+            Log.Information($"GetSidePotsWithWinners. SidePots: {JsonSerializer.Serialize(sidePots)}");
             return sidePots;
         }
 
@@ -232,8 +225,8 @@ namespace PokerHand.BusinessLogic.Services
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }
@@ -279,8 +272,8 @@ namespace PokerHand.BusinessLogic.Services
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }

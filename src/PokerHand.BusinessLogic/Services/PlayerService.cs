@@ -6,16 +6,14 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
-using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.DataAccess.Interfaces;
-using JsonSerializer = System.Text.Json.JsonSerializer;
+using Serilog;
 
 namespace PokerHand.BusinessLogic.Services
 {
@@ -24,21 +22,18 @@ namespace PokerHand.BusinessLogic.Services
         private readonly IMediaService _mediaService;
         private readonly ITablesOnline _allTables;
         private readonly UserManager<Player> _userManager;
-        private readonly ILogger<PlayerService> _logger;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
 
         public PlayerService(
             UserManager<Player> userManager,
             IMapper mapper,
-            ILogger<PlayerService> logger,
             IUnitOfWork unitOfWork,
             ITablesOnline allTables,
             IMediaService mediaService)
         {
             _userManager = userManager;
             _mapper = mapper;
-            _logger = logger;
             _unitOfWork = unitOfWork;
             _allTables = allTables;
             _mediaService = mediaService;
@@ -52,20 +47,20 @@ namespace PokerHand.BusinessLogic.Services
 
             if (!createResult.Succeeded)
             {
-                _logger.LogError($"CreateAsync Errors:");
+                Log.Error($"CreateAsync Errors:");
                 createResult.Errors.ToList().ForEach(error =>
                 {
-                    _logger.LogError($"{error.Description}");
-                    _logger.LogError($"{error.Code}");
+                    Log.Error($"{error.Description}");
+                    Log.Error($"{error.Code}");
                 });
                 return null;
             }
 
             var setImageResult = await _mediaService.SetDefaultProfileImage(newPlayer.Id);
             if (setImageResult.IsSuccess is false)
-                _logger.LogError($"CreatePlayer. {setImageResult.Message} playerId: {newPlayer.Id}");
+                Log.Error($"CreatePlayer. {setImageResult.Message} playerId: {newPlayer.Id}");
 
-            _logger.LogInformation($"New player {newPlayer.UserName} registered");
+            Log.Information($"New player {newPlayer.UserName} registered");
             return _mapper.Map<PlayerProfileDto>(newPlayer);
         }
 

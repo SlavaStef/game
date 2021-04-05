@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text.Json;
 using Bogus;
-using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Helpers.BotLogic;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.Entities;
@@ -10,21 +9,18 @@ using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Table;
+using Serilog;
 
 namespace PokerHand.BusinessLogic.Services
 {
     public class BotService : IBotService
     {
         private readonly ICardEvaluationService _cardEvaluationService;
-        private readonly ILogger<BotService> _logger;
         private static readonly Random Random = new();
 
-        public BotService(
-            ICardEvaluationService cardEvaluationService, 
-            ILogger<BotService> logger)
+        public BotService(ICardEvaluationService cardEvaluationService)
         {
             _cardEvaluationService = cardEvaluationService;
-            _logger = logger;
         }
 
         public Player Create(Table table, BotComplexity complexity)
@@ -36,7 +32,7 @@ namespace PokerHand.BusinessLogic.Services
             
             var fakeUser = new Faker<Player>()
                 .RuleFor(o => o.RegistrationDate, f => f.Date.Past(0, DateTime.Now))
-                .RuleFor(o => o.UserName, f => f.Name.FullName())
+                .RuleFor(o => o.UserName, f => f.Internet.UserName())
                 .Generate();
             
             return new Player
@@ -71,7 +67,7 @@ namespace PokerHand.BusinessLogic.Services
         {
             try
             {
-                _logger.LogInformation("BotService. Act. Start");
+                Log.Information("BotService. Act. Start");
                 var action = new PlayerAction();
             
                 switch (bot.Complexity)
@@ -83,9 +79,9 @@ namespace PokerHand.BusinessLogic.Services
                         action = new MediumBotLogic(_cardEvaluationService).Act(bot, table);
                         break;
                     case BotComplexity.Hard:
-                        _logger.LogInformation("BotService. Act. Inside Hard logic");
-                        action = new HardBotLogic(_cardEvaluationService, new Random(), _logger).Act(bot, table);
-                        _logger.LogInformation($"BotService. Act. action: {JsonSerializer.Serialize(action)}");
+                        Log.Information("BotService. Act. Inside Hard logic");
+                        action = new HardBotLogic(_cardEvaluationService, new Random()).Act(bot, table);
+                        Log.Information($"BotService. Act. action: {JsonSerializer.Serialize(action)}");
                         break;
                 }
             
@@ -93,8 +89,8 @@ namespace PokerHand.BusinessLogic.Services
             }
             catch (Exception e)
             {
-                _logger.LogError($"{e.Message}");
-                _logger.LogError($"{e.StackTrace}");
+                Log.Error($"{e.Message}");
+                Log.Error($"{e.StackTrace}");
                 throw;
             }
         }

@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Moq;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
@@ -30,7 +29,6 @@ namespace PokerHand.Server.Tests.Hub
 
         private readonly Mock<ITableService> _tableServiceMock = new();
         private readonly Mock<IPlayerService> _playerServiceMock = new();
-        private readonly Mock<ILogger<GameHub>> _loggerMock = new();
         private readonly Mock<IPlayersOnline> _playersOnlineMock = new();
         private readonly Mock<ITablesOnline> _tablesOnlineMock = new();
         private readonly Mock<IMapper> _mapperMock = new();
@@ -41,9 +39,9 @@ namespace PokerHand.Server.Tests.Hub
 
         public GameHubTests()
         {
-            _hub = new GameHub(_tableServiceMock.Object, _playerServiceMock.Object, _loggerMock.Object,
-                _playersOnlineMock.Object, _tablesOnlineMock.Object, _mapperMock.Object, _mediaServiceMock.Object,
-                _gameProcessServiceMock.Object, _loginServiceMock.Object, _presentServiceMock.Object);
+            _hub = new GameHub(_tableServiceMock.Object, _playerServiceMock.Object, _playersOnlineMock.Object,
+                _tablesOnlineMock.Object, _mapperMock.Object, _mediaServiceMock.Object, _gameProcessServiceMock.Object,
+                _loginServiceMock.Object, _presentServiceMock.Object);
         }
 
         [Fact]

@@ -4,12 +4,12 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Table;
 using PokerHand.Server.Hubs.Interfaces;
+using Serilog;
 
 namespace PokerHand.Server.Hubs
 {
@@ -23,13 +23,11 @@ namespace PokerHand.Server.Hubs
         private readonly IMediaService _mediaService;
         private readonly ILoginService _loginService;
         private readonly IPresentService _presentService;
-        private readonly ILogger<GameHub> _logger;
         private readonly IMapper _mapper;
 
         public GameHub(
             ITableService tableService,
             IPlayerService playerService,
-            ILogger<GameHub> logger, 
             IPlayersOnline allPlayers, 
             ITablesOnline allTables, 
             IMapper mapper, 
@@ -40,7 +38,6 @@ namespace PokerHand.Server.Hubs
         {
             _tableService = tableService;
             _playerService = playerService;
-            _logger = logger;
             _allPlayers = allPlayers;
             _allTables = allTables;
             _mapper = mapper;
@@ -90,7 +87,7 @@ namespace PokerHand.Server.Hubs
             if (validationResult.IsValid is not true)
             {
                 foreach (var error in validationResult.Errors)
-                    _logger.LogError($"{error.ErrorMessage}");
+                    Log.Error($"{error.ErrorMessage}");
 
                 return;
             }
@@ -98,7 +95,7 @@ namespace PokerHand.Server.Hubs
             var connectionResult = await _tableService.AddPlayerToTable(connectionOptions);
             if (connectionResult.IsSuccess is false)
             {
-                _logger.LogError($"ConnectToTable Error: {connectionResult.Message}");
+                Log.Error($"ConnectToTable Error: {connectionResult.Message}");
                 return;
             }
             
@@ -110,7 +107,7 @@ namespace PokerHand.Server.Hubs
 
         public void ReceivePlayerActionFromClient(string actionJson, string tableIdJson)
         {
-            _logger.LogInformation($"GameHub.ReceivePlayerActionFromClient. Start by {Context.ConnectionId}");
+            Log.Information($"GameHub.ReceivePlayerActionFromClient. Start by {Context.ConnectionId}");
             
             var action = JsonSerializer.Deserialize<PlayerAction>(actionJson);
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdJson);

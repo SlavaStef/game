@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
@@ -21,16 +18,14 @@ namespace PokerHand.BusinessLogic.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<Player> _userManager;
         private readonly IMapper _mapper;
-        private readonly ILogger<LoginService> _logger;
 
         public LoginService(
             IUnitOfWork unitOfWork,
-            IMapper mapper, 
-            ILogger<LoginService> logger, UserManager<Player> userManager)
+            IMapper mapper,
+            UserManager<Player> userManager)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _logger = logger;
             _userManager = userManager;
         }
         
@@ -47,21 +42,21 @@ namespace PokerHand.BusinessLogic.Services
         {
             try
             {
-                _logger.LogInformation($"TryAuthenticateWithExternalProvider. providerKey: {providerKey}");
+                Log.Information($"TryAuthenticateWithExternalProvider. providerKey: {providerKey}");
                 var playerId = await _unitOfWork.ExternalLogins.GetByProviderKey(providerKey);
 
                 if (playerId == Guid.Empty)
                 {
-                    _logger.LogInformation("TryAuthenticateWithExternalProvider. playerId is empty");
+                    Log.Information("TryAuthenticateWithExternalProvider. playerId is empty");
                     return new ResultModel<PlayerProfileDto> { IsSuccess = false };
                 }
 
-                _logger.LogInformation("TryAuthenticateWithExternalProvider. Try to get player by Id");
+                Log.Information("TryAuthenticateWithExternalProvider. Try to get player by Id");
                 var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
 
                 if (player is null)
                 {
-                    _logger.LogInformation("TryAuthenticateWithExternalProvider. Player not found");
+                    Log.Information("TryAuthenticateWithExternalProvider. Player not found");
                     return new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = "Player not found"};
                 }
                 
@@ -73,8 +68,8 @@ namespace PokerHand.BusinessLogic.Services
             }
             catch (Exception e)
             {
-                _logger.LogInformation(e.Message);
-                _logger.LogInformation(e.StackTrace);
+                Log.Information(e.Message);
+                Log.Information(e.StackTrace);
                 throw;
             }
             
@@ -86,7 +81,7 @@ namespace PokerHand.BusinessLogic.Services
 
             if (player is null)
             {
-                _logger.LogInformation($"Player {playerId} doesn't exist");
+                Log.Information($"Player {playerId} doesn't exist");
                 return;
             }
 

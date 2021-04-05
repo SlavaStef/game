@@ -36,5 +36,8 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task UpdateProfileImage(string imageJson, string playerIdJson);
         Task GetProfileImage(string playerIdJson);
         Task RemoveProfileImage(string playerIdJson);
+        
+        // QuickChat
+        Task SendQuickMessage(string quickMessageJson, string tableIdString);
     }
 }

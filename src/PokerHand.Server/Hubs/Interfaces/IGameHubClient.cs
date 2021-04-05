@@ -28,5 +28,8 @@ namespace PokerHand.Server.Hubs.Interfaces
         
         // Presents
         Task ReceivePresent(string presentJson);
+        
+        // QuickChat
+        Task ReceiveQuickMessage(string quickMessageJson);
     }
 }

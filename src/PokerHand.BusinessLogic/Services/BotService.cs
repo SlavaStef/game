@@ -50,7 +50,7 @@ namespace PokerHand.BusinessLogic.Services
                 StackMoney = Random.Next(minBuyIn / 100, maxBuyIn / 100) * 100,
                 CurrentBuyIn = maxBuyIn,
                 
-                Country = (PokerHand.Common.Helpers.Player.CountryName)Random.Next(1, 31),
+                Country = (PokerHand.Common.Helpers.Player.CountryCode)Random.Next(1, 31),
                 RegistrationDate = fakeUser.RegistrationDate,
                 CoinsAmount = Random.Next(0, 100),
                 Experience = Random.Next(50, 500),

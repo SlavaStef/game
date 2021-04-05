@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
+using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.Bot;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
@@ -14,7 +15,7 @@ namespace PokerHand.Common.Entities
     {
         // Properties to store in db
         public Gender Gender { get; set; }
-        public CountryName Country { get; set; }
+        public CountryCode Country { get; set; }
         public DateTime RegistrationDate { get; set; }
         public HandsSpriteType HandsSprite { get; set; }
         public int TotalMoney { get; set; }

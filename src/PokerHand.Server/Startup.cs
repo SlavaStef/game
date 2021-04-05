@@ -35,7 +35,11 @@ namespace PokerHand.Server
             services.AddDbContext<ApplicationContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("PostgreSQLConnection")));
 
-            services.AddIdentity<Player, IdentityRole<Guid>>()
+            services.AddIdentity<Player, IdentityRole<Guid>>(options =>
+                {
+                    options.User.AllowedUserNameCharacters =
+                        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -._@";
+                })
                 .AddEntityFrameworkStores<ApplicationContext>()
                 .AddDefaultTokenProviders();
 

@@ -17,7 +17,7 @@ namespace PokerHand.DataAccess.Migrations
                 .Annotation("Npgsql:Enum:hand_type", "none,high_card,one_pair,two_pairs,three_of_a_kind,straight,flush,full_house,four_of_a_kind,straight_flush,royal_flush,five_of_a_kind")
                 .Annotation("Npgsql:Enum:hands_sprite_type", "none,white_man,white_woman,black_man,black_woman");
 
-            migrationBuilder.AlterColumn<CountryName>(
+            migrationBuilder.AlterColumn<CountryCode>(
                 name: "Country",
                 table: "AspNetUsers",
                 type: "country_name",
@@ -104,7 +104,7 @@ namespace PokerHand.DataAccess.Migrations
                 type: "character varying(20)",
                 maxLength: 20,
                 nullable: false,
-                oldClrType: typeof(CountryName),
+                oldClrType: typeof(CountryCode),
                 oldType: "country_name");
 
             migrationBuilder.AlterColumn<int>(

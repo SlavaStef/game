@@ -855,7 +855,7 @@ namespace PokerHand.BusinessLogic.Services
         // CleanUp helpers
         private async Task UpdatePlayersStatistics(Table table)
         {
-            foreach (var player in table.ActivePlayers.Where(p => p.Type is PlayerType.Human))
+            foreach (var player in table.ActivePlayers.Where(p => p.Type is not PlayerType.Computer))
             {
                 var isWinner = table.SidePots
                     .First(sp => sp.Type is SidePotType.Main)

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
@@ -9,6 +11,7 @@ using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.DataAccess.Interfaces;
@@ -41,25 +44,9 @@ namespace PokerHand.BusinessLogic.Services
             _mediaService = mediaService;
         }
 
-        public async Task<PlayerProfileDto> CreatePlayer(string playerName, Gender gender, HandsSpriteType handsSprite)
+        public async Task<PlayerProfileDto> CreatePlayer(string playerName, Gender gender, HandsSpriteType handsSprite, string ipAddress)
         {
-            var newPlayer = new Player
-            {
-                UserName = playerName,
-                Type = PlayerType.Human,
-                Gender = gender,
-                Country = (CountryName) new Random().Next(1, 31),
-                RegistrationDate = DateTime.Now,
-                HandsSprite = handsSprite,
-                TotalMoney = 100_000_000,
-                CoinsAmount = 0,
-                Experience = 0,
-                GamesPlayed = 0,
-                BestHandType = HandType.None,
-                GamesWon = 0,
-                BiggestWin = 0,
-                SitAndGoWins = 0
-            };
+            var newPlayer = GeneratePlayer(playerName, gender, handsSprite, ipAddress);
 
             var createResult = await _userManager.CreateAsync(newPlayer);
 
@@ -194,5 +181,45 @@ namespace PokerHand.BusinessLogic.Services
         {
             await _unitOfWork.Players.AddExperienceAsync(playerId, experience);
         }
+
+        #region Helpers
+
+        private CountryCode GetCountryByIp(string ipAddress)
+        {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            var request = (HttpWebRequest)WebRequest.Create($"https://ipapi.co/{ipAddress}/country/");
+            request.UserAgent="ipapi.co/#c-sharp-v1.01";
+            
+            var response = (HttpWebResponse)request.GetResponse();
+            var reader = new System.IO.StreamReader(response.GetResponseStream(), UTF8Encoding.UTF8);
+            var isOk = Enum.TryParse<CountryCode>(reader.ReadToEnd(), out var parsingResult);
+
+            return isOk is true 
+                ? parsingResult 
+                : CountryCode.None;
+        }
+
+        private Player GeneratePlayer(string playerName, Gender gender, HandsSpriteType handsSprite, string ipAddress)
+        {
+            return new()
+            {
+                UserName = playerName,
+                Type = PlayerType.Human,
+                Gender = gender,
+                Country = GetCountryByIp(ipAddress),
+                RegistrationDate = DateTime.Now,
+                HandsSprite = handsSprite,
+                TotalMoney = 100_000_000,
+                CoinsAmount = 0,
+                Experience = 0,
+                GamesPlayed = 0,
+                BestHandType = HandType.None,
+                GamesWon = 0,
+                BiggestWin = 0,
+                SitAndGoWins = 0
+            };
+        }
+
+        #endregion
     }
 }

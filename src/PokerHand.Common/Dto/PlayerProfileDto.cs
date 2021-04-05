@@ -14,7 +14,7 @@ namespace PokerHand.Common.Dto
     {
         public Guid Id { get; set; }
         public Gender Gender { get; set; }
-        public CountryName Country { get; set; }
+        public CountryCode Country { get; set; }
         public HandsSpriteType HandsSprite { get; set; }
         public string UserName { get; set; }
         public DateTime RegistrationDate { get; set; }

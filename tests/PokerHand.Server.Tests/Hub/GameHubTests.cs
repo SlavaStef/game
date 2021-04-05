@@ -50,7 +50,7 @@ namespace PokerHand.Server.Tests.Hub
         {
             // Arrange
             _playerServiceMock
-                .Setup(x => x.CreatePlayer("playerName", Gender.Male, HandsSpriteType.BlackMan))
+                .Setup(x => x.CreatePlayer("playerName", Gender.Male, HandsSpriteType.BlackMan, ""))
                 .ReturnsAsync(new PlayerProfileDto {UserName = "playerName"});
 
             _clientsMock

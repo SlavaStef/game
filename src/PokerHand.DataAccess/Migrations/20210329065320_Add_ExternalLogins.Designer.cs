@@ -199,7 +199,7 @@ namespace PokerHand.DataAccess.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
-                    b.Property<CountryName>("Country")
+                    b.Property<CountryCode>("Country")
                         .HasColumnType("country_name");
 
                     b.Property<string>("Email")

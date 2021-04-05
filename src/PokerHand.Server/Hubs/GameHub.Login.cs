@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using PokerHand.Common;
-using PokerHand.Common.Dto;
 using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.Player;
 
@@ -42,7 +40,8 @@ namespace PokerHand.Server.Hubs
             var newPlayerProfileDto =
                 await _playerService.CreatePlayer(JsonSerializer.Deserialize<string>(userNameJson),
                     JsonSerializer.Deserialize<Gender>(genderJson), 
-                    JsonSerializer.Deserialize<HandsSpriteType>(handsSpriteJson));
+                    JsonSerializer.Deserialize<HandsSpriteType>(handsSpriteJson),
+                    Context.GetHttpContext().Connection.RemoteIpAddress.ToString());
 
             await Clients.Caller
                 .ReceivePlayerProfile(JsonSerializer.Serialize(newPlayerProfileDto));
@@ -66,7 +65,8 @@ namespace PokerHand.Server.Hubs
                 var newPlayerProfileDto =
                     await _playerService.CreatePlayer(JsonSerializer.Deserialize<string>(userNameJson),
                         JsonSerializer.Deserialize<Gender>(genderJson),
-                        JsonSerializer.Deserialize<HandsSpriteType>(handsSpriteJson));
+                        JsonSerializer.Deserialize<HandsSpriteType>(handsSpriteJson),
+                        Context.GetHttpContext().Connection.RemoteIpAddress.ToString());
 
                 if (newPlayerProfileDto is null)
                 {
@@ -128,6 +128,15 @@ namespace PokerHand.Server.Hubs
             
         }
 
+        public async Task DeleteExternalProvider(string playerIdJson)
+        {
+            var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
+            await _loginService.DeleteExternalLogin(playerId);
+
+            var newPlayerProfile = await _playerService.GetProfile(playerId);
+            await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(newPlayerProfile));
+        }
+        
         #region Helpers
         
         private async Task SendProfileImage(Guid playerId)

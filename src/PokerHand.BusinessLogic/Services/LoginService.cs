@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -18,17 +19,19 @@ namespace PokerHand.BusinessLogic.Services
     public class LoginService : ILoginService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly UserManager<Player> _userManager;
         private readonly IMapper _mapper;
         private readonly ILogger<LoginService> _logger;
-        
+
         public LoginService(
             IUnitOfWork unitOfWork,
             IMapper mapper, 
-            ILogger<LoginService> logger)
+            ILogger<LoginService> logger, UserManager<Player> userManager)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _logger = logger;
+            _userManager = userManager;
         }
         
         public async Task<PlayerProfileDto> AuthenticateWithPlayerId(Guid playerId)
@@ -54,7 +57,7 @@ namespace PokerHand.BusinessLogic.Services
                 }
 
                 _logger.LogInformation("TryAuthenticateWithExternalProvider. Try to get player by Id");
-                var player = await _unitOfWork.Players.GetPlayerAsync(playerId);
+                var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
 
                 if (player is null)
                 {
@@ -62,7 +65,6 @@ namespace PokerHand.BusinessLogic.Services
                     return new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = "Player not found"};
                 }
                 
-                _logger.LogInformation($"TryAuthenticateWithExternalProvider. player: {JsonSerializer.Serialize(player)}");
                 return new ResultModel<PlayerProfileDto>
                 {
                     IsSuccess = true,

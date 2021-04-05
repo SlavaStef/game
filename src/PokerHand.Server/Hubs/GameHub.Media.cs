@@ -8,10 +8,17 @@ namespace PokerHand.Server.Hubs
 {
     public partial class GameHub
     {
-        public async Task UpdateProfileImage(string imageJson)
+        public async Task UpdateProfileImage(string imageJson, string playerIdJson)
         {
-            var updateResult = await _mediaService.UpdateProfileImage(imageJson);
-
+            _logger.LogInformation("UpdateProfileImage. Start");
+            _logger.LogInformation($"UpdateProfileImage. imageJson: {imageJson}");
+            var image = new Image
+            {
+                BinaryImage = JsonSerializer.Deserialize<byte[]>(imageJson),
+                PlayerId = JsonSerializer.Deserialize<Guid>(playerIdJson)
+            };
+            var updateResult = await _mediaService.UpdateProfileImage(JsonSerializer.Serialize(image));
+            _logger.LogInformation($"UpdateProfileImage. updateResult: {updateResult}");
             if (updateResult.IsSuccess is false)
             {
                 _logger.LogError(
@@ -20,6 +27,7 @@ namespace PokerHand.Server.Hubs
             }
 
             await Clients.Caller.ReceiveProfileImage(JsonSerializer.Serialize(updateResult.Value));
+            _logger.LogInformation("UpdateProfileImage. End");
         }
 
         public async Task GetProfileImage(string playerIdJson)

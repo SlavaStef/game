@@ -21,7 +21,7 @@ namespace PokerHand.DataAccess.Context
         {
             NpgsqlConnection.GlobalTypeMapper.MapEnum<ExternalProviderName>();
             NpgsqlConnection.GlobalTypeMapper.MapEnum<Gender>();
-            NpgsqlConnection.GlobalTypeMapper.MapEnum<CountryName>();
+            NpgsqlConnection.GlobalTypeMapper.MapEnum<CountryCode>();
             NpgsqlConnection.GlobalTypeMapper.MapEnum<HandsSpriteType>();
             NpgsqlConnection.GlobalTypeMapper.MapEnum<HandType>();
         }
@@ -37,7 +37,7 @@ namespace PokerHand.DataAccess.Context
         {
             builder.HasPostgresEnum<ExternalProviderName>();
             builder.HasPostgresEnum<Gender>();
-            builder.HasPostgresEnum<CountryName>();
+            builder.HasPostgresEnum<CountryCode>();
             builder.HasPostgresEnum<HandsSpriteType>();
             builder.HasPostgresEnum<HandType>();
 

@@ -8,6 +8,7 @@ using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
+using PokerHand.Common.Helpers.Present;
 
 namespace PokerHand.Common.Entities
 {
@@ -29,6 +30,7 @@ namespace PokerHand.Common.Entities
 
         // Game properties
         [NotMapped] public string ConnectionId { get; set; }
+        [NotMapped] public List<Present> Presents { get; set; }
         [NotMapped] public bool IsAutoTop { get; set; }
         [NotMapped] public int CurrentBuyIn { get; set; }
         [NotMapped] public List<Card> PocketCards { get; set; }

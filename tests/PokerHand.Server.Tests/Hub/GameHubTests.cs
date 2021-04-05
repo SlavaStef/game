@@ -37,12 +37,13 @@ namespace PokerHand.Server.Tests.Hub
         private readonly Mock<IMediaService> _mediaServiceMock = new();
         private readonly Mock<IGameProcessService> _gameProcessServiceMock = new();
         private readonly Mock<ILoginService> _loginServiceMock = new();
+        private readonly Mock<IPresentService> _presentServiceMock = new();
 
         public GameHubTests()
         {
             _hub = new GameHub(_tableServiceMock.Object, _playerServiceMock.Object, _loggerMock.Object,
                 _playersOnlineMock.Object, _tablesOnlineMock.Object, _mapperMock.Object, _mediaServiceMock.Object,
-                _gameProcessServiceMock.Object, _loginServiceMock.Object);
+                _gameProcessServiceMock.Object, _loginServiceMock.Object, _presentServiceMock.Object);
         }
 
         [Fact]

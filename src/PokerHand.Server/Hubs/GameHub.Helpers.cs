@@ -131,6 +131,11 @@ namespace PokerHand.Server.Hubs
                 await Clients.Group(tableId)
                     .PlayerDisconnected(tableDtoJson);
             };
+
+            _presentService.OnSendPresent += async (present) =>
+            {
+                await Clients.All.ReceivePresent(present);
+            };
         }
     }
 }

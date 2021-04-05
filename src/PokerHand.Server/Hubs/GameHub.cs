@@ -22,6 +22,7 @@ namespace PokerHand.Server.Hubs
         private readonly IPlayerService _playerService;
         private readonly IMediaService _mediaService;
         private readonly ILoginService _loginService;
+        private readonly IPresentService _presentService;
         private readonly ILogger<GameHub> _logger;
         private readonly IMapper _mapper;
 
@@ -33,7 +34,9 @@ namespace PokerHand.Server.Hubs
             ITablesOnline allTables, 
             IMapper mapper, 
             IMediaService mediaService, 
-            IGameProcessService gameProcessService, ILoginService loginService)
+            IGameProcessService gameProcessService, 
+            ILoginService loginService, 
+            IPresentService presentService)
         {
             _tableService = tableService;
             _playerService = playerService;
@@ -44,6 +47,7 @@ namespace PokerHand.Server.Hubs
             _mediaService = mediaService;
             _gameProcessService = gameProcessService;
             _loginService = loginService;
+            _presentService = presentService;
 
             RegisterEventHandlers();
         }

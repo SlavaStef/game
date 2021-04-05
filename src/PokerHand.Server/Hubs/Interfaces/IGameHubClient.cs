@@ -25,5 +25,8 @@ namespace PokerHand.Server.Hubs.Interfaces
 
         // Media
         Task ReceiveProfileImage(string imageJson);
+        
+        // Presents
+        Task ReceivePresent(string presentJson);
     }
 }

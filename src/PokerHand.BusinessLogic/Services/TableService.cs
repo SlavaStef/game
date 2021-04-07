@@ -13,7 +13,6 @@ using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.GameProcess;
-using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Pot;
 using PokerHand.Common.Helpers.Table;
 using Serilog;
@@ -177,13 +176,14 @@ namespace PokerHand.BusinessLogic.Services
             if (player is null)
                 return new ResultModel<RemoveFromTableResult> {IsSuccess = false, Message = "Player is null"};
             
-            Log.Information($"RemovePlayerFromTable. count: {table.Players.Count(p => p.Type is PlayerType.Human)}");
+            Log.Information($"RemovePlayerFromTable. count: {table.Players.Count(p => p.GetType() == typeof(Player))}");
 
             foreach (var tablePlayer in table.Players)
             {
-                Log.Information($"{tablePlayer.UserName} : {JsonSerializer.Serialize(tablePlayer.Type)}");
+                Log.Information($"{tablePlayer.UserName} : {tablePlayer.GetType()}");
             }
-            if (table.Players.Count(p => p.Type is not PlayerType.Computer) is 1)
+            
+            if (table.Players.Count(p => p.GetType() == typeof(Player)) is 1)
             {
                 Log.Information("RemovePlayerFromTable. One human player");
                 await RemovePlayer(player, table);
@@ -345,6 +345,8 @@ namespace PokerHand.BusinessLogic.Services
                 table.ActivePlayers.Remove(player);
 
             table.Players.Remove(player);
+            
+            RemoveFromGroupAsync?.Invoke(player.ConnectionId, table.Id.ToString());
         }
 
         private async Task RemoveCurrentPlayer(Player player, Table table)

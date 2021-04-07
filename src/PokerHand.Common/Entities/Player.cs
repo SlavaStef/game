@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
-using PokerHand.Common.Helpers.Bot;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
@@ -42,10 +41,7 @@ namespace PokerHand.Common.Entities
         [NotMapped] public List<Card> HandCombinationCards { get; set; }
         [NotMapped] public bool IsReady { get; set; }
         [NotMapped] public int NumberOfGamesOnCurrentTable { get; set; }
-        
-        [NotMapped] public PlayerType Type { get; set; }
-        [NotMapped] public BotComplexity Complexity { get; set; }
-        
+
         public ICollection<ExternalLogin> PlayerLogins { get; set; }
     }
 }

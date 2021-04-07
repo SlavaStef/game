@@ -7,7 +7,6 @@ using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.BusinessLogic.Services;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Bot;
-using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Table;
 using Xunit;
 
@@ -34,14 +33,14 @@ namespace PokerHand.BusinessLogic.Tests.Services
                 Title = TableTitle.TropicalHouse, 
                 Players = new List<Player>
                 {
-                    new Player(),
-                    new Player()
+                    new Bot(),
+                    new Bot()
                 }
             };
 
             var result = _sut.Create(table, BotComplexity.Hard);
 
-            result.Type.Should().Be(PlayerType.Computer);
+            result.GetType().Should().Be(typeof(Bot));
             result.Complexity.Should().Be(BotComplexity.Hard);
             result.UserName.Should().NotBeNull();
             result.TotalMoney.Should().BeInRange(5_000, 25_000);

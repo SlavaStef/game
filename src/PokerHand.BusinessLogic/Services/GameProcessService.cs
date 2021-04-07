@@ -13,7 +13,6 @@ using PokerHand.Common.Helpers.Bot;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
-using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Pot;
 using PokerHand.Common.Helpers.Table;
 using Serilog;
@@ -221,9 +220,9 @@ namespace PokerHand.BusinessLogic.Services
 
                     Log.Information(
                         $"StartWagering. Table after setting current player: {JsonSerializer.Serialize(table)}");
-                    if (table.CurrentPlayer.Type is PlayerType.Computer)
+                    if (table.CurrentPlayer.GetType() == typeof(Bot))
                     {
-                        var action = _botService.Act(table.CurrentPlayer, table);
+                        var action = _botService.Act((Bot)table.CurrentPlayer, table);
 
                         Log.Information($"StartWagering. bot action: {JsonSerializer.Serialize(action)}");
                         table.CurrentPlayer.CurrentAction = action;
@@ -371,7 +370,7 @@ namespace PokerHand.BusinessLogic.Services
 
             var playersForAutoTop = table
                 .Players
-                .Where(p => p.Type is PlayerType.Human)
+                .Where(p => p.GetType() == typeof(Player))
                 .Where(player => player.StackMoney is 0 && player.IsAutoTop && player.TotalMoney >= minBuyIn);
 
             foreach (var player in playersForAutoTop)
@@ -388,7 +387,7 @@ namespace PokerHand.BusinessLogic.Services
                 }
             }
 
-            foreach (var bot in table.Players.Where(p => p.Type is PlayerType.Computer))
+            foreach (var bot in table.Players.Where(p => p.GetType() == typeof(Bot)))
             {
                 if (bot.StackMoney is 0)
                     bot.StackMoney = bot.CurrentBuyIn;
@@ -440,13 +439,13 @@ namespace PokerHand.BusinessLogic.Services
                     return;
 
                 var maxNumberOfBots = table.MaxPlayers switch {8 => 3, _ => 2};
-                var currentNumberOfBots = table.Players.Count(p => p.Type is PlayerType.Computer);
+                var currentNumberOfBots = table.Players.Count(p => p.GetType() == typeof(Bot));
 
                 // Remove bot if there are too much players
                 if (table.Players.Count == table.MaxPlayers &&
                     currentNumberOfBots > 0)
                 {
-                    var botToRemove = table.Players.First(p => p.Type is PlayerType.Computer);
+                    var botToRemove = table.Players.First(p => p.GetType() == typeof(Bot));
 
                     if (table.ActivePlayers.Contains(botToRemove))
                         table.ActivePlayers.Remove(botToRemove);
@@ -460,12 +459,12 @@ namespace PokerHand.BusinessLogic.Services
                     table.Players.Count + 2 <= table.MaxPlayers)
                 {
                     var numberOfBotsToAdd =
-                        table.MaxPlayers - 1 - table.Players.Count(p => p.Type is PlayerType.Human);
+                        table.MaxPlayers - 1 - table.Players.Count(p => p.GetType() == typeof(Player));
 
                     if (numberOfBotsToAdd > maxNumberOfBots)
                         numberOfBotsToAdd = maxNumberOfBots;
 
-                    while (table.Players.Count(p => p.Type is PlayerType.Computer) < numberOfBotsToAdd)
+                    while (table.Players.Count(p => p.GetType() == typeof(Bot)) < numberOfBotsToAdd)
                     {
                         var bot = _botService.Create(table, BotComplexity.Hard);
 
@@ -854,7 +853,7 @@ namespace PokerHand.BusinessLogic.Services
         // CleanUp helpers
         private async Task UpdatePlayersStatistics(Table table)
         {
-            foreach (var player in table.ActivePlayers.Where(p => p.Type is not PlayerType.Computer))
+            foreach (var player in table.ActivePlayers.Where(p => p.GetType() == typeof(Player)))
             {
                 var isWinner = table.SidePots
                     .First(sp => sp.Type is SidePotType.Main)

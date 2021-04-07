@@ -3,7 +3,6 @@ using System.Text.Json;
 using Bogus;
 using PokerHand.BusinessLogic.Helpers.BotLogic;
 using PokerHand.BusinessLogic.Interfaces;
-using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Bot;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
@@ -23,30 +22,31 @@ namespace PokerHand.BusinessLogic.Services
             _cardEvaluationService = cardEvaluationService;
         }
 
-        public Player Create(Table table, BotComplexity complexity)
+        public Bot Create(Table table, BotComplexity complexity)
         {
             var tableName = table.Title.ToString();
             
             var minBuyIn = TableOptions.Tables[tableName]["MinBuyIn"];
             var maxBuyIn = TableOptions.Tables[tableName]["MaxBuyIn"];
             
-            var fakeUser = new Faker<Player>()
+            var fakeUser = new Faker<Bot>()
                 .RuleFor(o => o.RegistrationDate, f => f.Date.Past(0, DateTime.Now))
                 .RuleFor(o => o.UserName, f => f.Internet.UserName())
+                .RuleFor(o => o.ImageUri, f => f.Internet.Avatar())
                 .Generate();
             
-            return new Player
+            return new Bot
             {
-                Type = PlayerType.Computer,
                 Complexity = complexity,
                 
                 Id = Guid.NewGuid(),
                 UserName = fakeUser.UserName,
+                ImageUri = fakeUser.ImageUri,
                 TotalMoney = Random.Next(maxBuyIn, maxBuyIn * 5),
                 StackMoney = Random.Next(minBuyIn / 100, maxBuyIn / 100) * 100,
                 CurrentBuyIn = maxBuyIn,
                 
-                Country = (PokerHand.Common.Helpers.Player.CountryCode)Random.Next(1, 31),
+                Country = (CountryCode)Random.Next(1, 31),
                 RegistrationDate = fakeUser.RegistrationDate,
                 CoinsAmount = Random.Next(0, 100),
                 Experience = Random.Next(50, 500),
@@ -63,7 +63,7 @@ namespace PokerHand.BusinessLogic.Services
             };
         }
             
-        public PlayerAction Act(Player bot, Table table)
+        public PlayerAction Act(Bot bot, Table table)
         {
             try
             {

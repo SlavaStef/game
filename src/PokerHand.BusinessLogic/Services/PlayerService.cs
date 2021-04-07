@@ -199,7 +199,6 @@ namespace PokerHand.BusinessLogic.Services
             return new()
             {
                 UserName = playerName,
-                Type = PlayerType.Human,
                 Gender = gender,
                 Country = GetCountryByIp(ipAddress),
                 RegistrationDate = DateTime.Now,

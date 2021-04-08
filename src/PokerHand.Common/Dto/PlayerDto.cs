@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
+using PokerHand.Common.Helpers.Player;
 
 namespace PokerHand.Common.Dto
 {
@@ -15,13 +16,11 @@ namespace PokerHand.Common.Dto
     {
         public Guid Id { get; set; }
         public string UserName { get; set; }
+        public HandsSpriteType HandsSprite { get; set; }
         public List<Card> PocketCards { get; set; }
-        public PlayerAction CurrentAction { get; set; }
         public int CurrentBet { get; set; }
         public int StackMoney { get; set; }
-        public ButtonTypeNumber Button { get; set; }
         public int IndexNumber { get; set; }
-        public HandType Hand;
-        public bool IsReady { get; set; }
+        public HandType Hand { get; set; }
     }
 }

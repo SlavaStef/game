@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using PokerHand.Common.Helpers.Authorization;
+using PokerHand.Common.Helpers.Media;
 using PokerHand.Common.Helpers.Player;
 using Serilog;
 
@@ -50,49 +52,39 @@ namespace PokerHand.Server.Hubs
         }
         
         public async Task RegisterWithExternalProvider(string userNameJson, string genderJson, string handsSpriteJson, 
-            string providerNameJson, string providerKeyJson, string image)
+            string providerNameJson, string providerKeyJson, string profileImage)
         {
-            try
-            {
-                Log.Information("RegisterWithExternalProvider. Start");
-                Log.Information($"RegisterWithExternalProvider. username: {userNameJson}");
-                Log.Information($"RegisterWithExternalProvider. genderJson: {genderJson}");
-                Log.Information($"RegisterWithExternalProvider. handsSpriteJson: {handsSpriteJson}");
-                Log.Information($"RegisterWithExternalProvider. providerNameJson: {providerNameJson}");
-                Log.Information($"RegisterWithExternalProvider. providerKeyJson: {providerKeyJson}");
-                Log.Information($"RegisterWithExternalProvider. image: {image}");
+            Log.Information("RegisterWithExternalProvider. Start");
+            Log.Information($"RegisterWithExternalProvider. username: {userNameJson}");
+            Log.Information($"RegisterWithExternalProvider. genderJson: {genderJson}");
+            Log.Information($"RegisterWithExternalProvider. handsSpriteJson: {handsSpriteJson}");
+            Log.Information($"RegisterWithExternalProvider. providerNameJson: {providerNameJson}");
+            Log.Information($"RegisterWithExternalProvider. providerKeyJson: {providerKeyJson}");
+            Log.Information($"RegisterWithExternalProvider. image: {profileImage}");
                 
-                var newPlayerProfileDto =
-                    await _playerService.CreatePlayer(JsonSerializer.Deserialize<string>(userNameJson),
-                        JsonSerializer.Deserialize<Gender>(genderJson),
-                        JsonSerializer.Deserialize<HandsSpriteType>(handsSpriteJson),
-                        Context.GetHttpContext().Connection.RemoteIpAddress.ToString());
+            var newPlayerProfileDto = await _playerService.CreatePlayer(
+                JsonSerializer.Deserialize<string>(userNameJson),
+                JsonSerializer.Deserialize<Gender>(genderJson),
+                JsonSerializer.Deserialize<HandsSpriteType>(handsSpriteJson),
+                Context.GetHttpContext().Connection.RemoteIpAddress.ToString());
 
-                if (newPlayerProfileDto is null)
-                {
-                    Log.Information($"RegisterWithExternalProvider. newPlayerProfileDto is null");
-                    return;
-                }
-                
-                Log.Information($"RegisterWithExternalProvider. newPlayerProfileDto: {newPlayerProfileDto}");
-                
-                await _loginService.CreateExternalLogin(newPlayerProfileDto.Id,
-                    JsonSerializer.Deserialize<ExternalProviderName>(providerNameJson),
-                    JsonSerializer.Deserialize<string>(providerKeyJson));
-            
-                Log.Information("RegisterWithExternalProvider. 3");
-            
-                await Clients.Caller
-                    .ReceivePlayerProfile(JsonSerializer.Serialize(newPlayerProfileDto));
-
-                await SendProfileImage(newPlayerProfileDto.Id);
-            }
-            catch (Exception e)
+            if (newPlayerProfileDto is null)
             {
-                Console.WriteLine(e);
-                throw;
+                Log.Information("RegisterWithExternalProvider. newPlayerProfileDto is null");
+                return;
             }
-            
+                
+            await Clients.Caller
+                .ReceivePlayerProfile(JsonSerializer.Serialize(newPlayerProfileDto));
+
+            await _loginService.CreateExternalLogin(
+                newPlayerProfileDto.Id,
+                JsonSerializer.Deserialize<ExternalProviderName>(providerNameJson),
+                JsonSerializer.Deserialize<string>(providerKeyJson));
+
+            await UpdateProfileImage(JsonSerializer.Serialize(newPlayerProfileDto.Id), profileImage);
+
+            Log.Information("RegisterWithExternalProvider. End");
         }
 
         public async Task TryAuthenticateWithExternalProvider(string providerKeyJson)
@@ -148,9 +140,12 @@ namespace PokerHand.Server.Hubs
                 Log.Information($"{getImageResult.Message}");
                 return;
             }
+            
+            var avatar = new Avatar
+                {BinaryImage = getImageResult.Value, PlayerId = playerId};
 
             await Clients.Caller
-                .ReceiveProfileImage(JsonSerializer.Serialize(getImageResult.Value));
+                .ReceiveProfileImage(JsonSerializer.Serialize(avatar));
         }
 
         #endregion

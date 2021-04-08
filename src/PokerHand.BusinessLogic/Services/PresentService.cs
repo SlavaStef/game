@@ -34,7 +34,7 @@ namespace PokerHand.BusinessLogic.Services
                     .Players
                     .FirstOrDefault(p => p.Id == recipientId);
             
-                recipient?.Presents.Add(present);
+                recipient.Present = present;
             
                 OnSendPresent?.Invoke(JsonSerializer.Serialize(present));
             }

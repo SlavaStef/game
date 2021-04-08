@@ -24,7 +24,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task OnLackOfStackMoney();
 
         // Media
-        Task ReceiveProfileImage(string imageJson);
+        Task ReceiveProfileImage(string avatarJson);
         
         // Presents
         Task ReceivePresent(string presentJson);

@@ -2,9 +2,9 @@
 
 namespace PokerHand.Common.Helpers.Media
 {
-    public class Image
+    public class Avatar
     {
-        public byte[] BinaryImage { get; set; }
+        public string BinaryImage { get; set; }
         public Guid PlayerId { get; set; }
     }
 }

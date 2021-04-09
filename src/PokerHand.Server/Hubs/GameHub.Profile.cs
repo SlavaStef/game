@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Threading.Tasks;
 using PokerHand.Common.Helpers.Player;
+using PokerHand.Common.ViewModels.Profile;
 
 namespace PokerHand.Server.Hubs
 {
@@ -25,7 +26,7 @@ namespace PokerHand.Server.Hubs
         public async Task UpdatePlayerProfile(string updateFormJson)
         {
             var profileDto =
-                await _playerService.UpdateProfile(JsonSerializer.Deserialize<PlayerProfileUpdateForm>(updateFormJson));
+                await _playerService.UpdateProfile(JsonSerializer.Deserialize<UpdateProfileVM>(updateFormJson));
             
             if (profileDto is null)
                 return;

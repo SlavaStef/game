@@ -1,8 +1,9 @@
 ﻿using System;
+using PokerHand.Common.Helpers.Player;
 
-namespace PokerHand.Common.Helpers.Player
+namespace PokerHand.Common.ViewModels.Profile
 {
-    public class PlayerProfileUpdateForm
+    public class UpdateProfileVM
     {
         public Guid Id { get; set; }
         public Gender Gender { get; set; }

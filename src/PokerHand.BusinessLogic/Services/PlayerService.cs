@@ -12,6 +12,7 @@ using PokerHand.Common.Dto;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.Player;
+using PokerHand.Common.ViewModels.Profile;
 using PokerHand.DataAccess.Interfaces;
 using Serilog;
 
@@ -91,17 +92,17 @@ namespace PokerHand.BusinessLogic.Services
                 : _mapper.Map<PlayerProfileDto>(player);
         }
 
-        public async Task<PlayerProfileDto> UpdateProfile(PlayerProfileUpdateForm updateForm)
+        public async Task<PlayerProfileDto> UpdateProfile(UpdateProfileVM viewModel)
         {
-            var player = await _unitOfWork.Players.GetPlayerAsync(updateForm.Id);
+            var player = await _unitOfWork.Players.GetPlayerAsync(viewModel.Id);
 
             if (player is null)
                 return null;
 
-            player.Gender = updateForm.Gender;
-            player.Country = updateForm.Country;
-            player.HandsSprite = updateForm.HandsSprite;
-            player.UserName = updateForm.UserName;
+            player.Gender = viewModel.Gender;
+            player.Country = viewModel.Country;
+            player.HandsSprite = viewModel.HandsSprite;
+            player.UserName = viewModel.UserName;
 
             await _unitOfWork.CompleteAsync();
 

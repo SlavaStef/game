@@ -54,7 +54,12 @@ namespace PokerHand.Server
                     options.SaveTokens = true;
                 });
             
-            services.AddSignalR();
+            services.AddSignalR()
+                .AddMessagePackProtocol();
+
+            services.AddControllers();
+            
+            services.AddSwaggerGen();
 
             services.AddTransient<IPlayerService, PlayerService>();
             services.AddTransient<ITableService, TableService>();
@@ -78,21 +83,23 @@ namespace PokerHand.Server
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
-            {
                 app.UseDeveloperExceptionPage();
-            }
-            
-            // using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
-            // {
-            //     var context = serviceScope.ServiceProvider.GetRequiredService<ApplicationContext>();
-            //     context.Database.Migrate();
-            // }
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+            });
             
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<GameHub>("/game");
+
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
                 
                 endpoints.MapGet("/", async context =>
                 {

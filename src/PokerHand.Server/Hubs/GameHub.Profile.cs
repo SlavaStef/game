@@ -20,7 +20,7 @@ namespace PokerHand.Server.Hubs
             var profileDto = await _playerService.GetProfile(playerId);
             
             await Clients.Caller
-                .ReceivePlayerProfile(JsonSerializer.Serialize(profileDto));
+                .ReceivePlayerProfile(JsonSerializer.Serialize(profileDto.Value));
         }
 
         public async Task UpdatePlayerProfile(string updateFormJson)

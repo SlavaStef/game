@@ -11,6 +11,6 @@ namespace PokerHand.BusinessLogic.Interfaces
         Task<PlayerProfileDto> AuthenticateWithPlayerId(Guid playerId);
         Task<ResultModel<PlayerProfileDto>> TryAuthenticateWithExternalProvider(string providerKey);
         Task CreateExternalLogin(Guid playerId, ExternalProviderName providerName, string providerKey);
-        Task DeleteExternalLogin(Guid playerId);
+        Task<ResultModel<bool>> DeleteExternalLogin(Guid playerId);
     }
 }

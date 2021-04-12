@@ -83,16 +83,16 @@ namespace PokerHand.BusinessLogic.Services
         }
 
         // Profile
-        public async Task<PlayerProfileDto> GetProfile(Guid playerId)
+        public async Task<ResultModel<PlayerProfileDto>> GetProfile(Guid playerId)
         {
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
 
-            return player is null
-                ? null
-                : _mapper.Map<PlayerProfileDto>(player);
+            return player is not null
+                ? new ResultModel<PlayerProfileDto>{IsSuccess = true, Value = _mapper.Map<PlayerProfileDto>(player)}
+                : new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = " Player not found"};
         }
 
-        public async Task<PlayerProfileDto> UpdateProfile(UpdateProfileVM viewModel)
+        public async Task<ResultModel<PlayerProfileDto>> UpdateProfile(UpdateProfileVM viewModel)
         {
             var player = await _unitOfWork.Players.GetPlayerAsync(viewModel.Id);
 
@@ -106,7 +106,7 @@ namespace PokerHand.BusinessLogic.Services
 
             await _unitOfWork.CompleteAsync();
 
-            return _mapper.Map<PlayerProfileDto>(player);
+            return new ResultModel<PlayerProfileDto> {IsSuccess = true, Value = _mapper.Map<PlayerProfileDto>(player)};
         }
 
         // Chips

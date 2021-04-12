@@ -12,7 +12,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task RegisterWithExternalProvider(string userNameJson, string genderJson, string handsSpriteJson, 
             string providerNameJson, string providerKeyJson, string profileImage);
         Task TryAuthenticateWithExternalProvider(string providerKeyJson);
-        Task DeleteExternalProvider(string playerIdJson);
+        // Task DeleteExternalProvider(string playerIdJson);
         
         // Disconnect
         Task LeaveTable(string tableIdJson, string playerIdJson);

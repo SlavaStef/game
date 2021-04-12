@@ -124,9 +124,9 @@ namespace PokerHand.Server.Hubs
         {
             var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
             await _loginService.DeleteExternalLogin(playerId);
-
-            var newPlayerProfile = await _playerService.GetProfile(playerId);
-            await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(newPlayerProfile));
+        
+            var getProfileResult = await _playerService.GetProfile(playerId);
+            await Clients.Caller.ReceivePlayerProfile(JsonSerializer.Serialize(getProfileResult.Value));
         }
         
         #region Helpers

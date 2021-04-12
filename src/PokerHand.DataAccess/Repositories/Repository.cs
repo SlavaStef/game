@@ -47,7 +47,7 @@ namespace PokerHand.DataAccess.Repositories
             return await _context.Set<TEntity>().ToListAsync();
         }
 
-        public async Task<TEntity> GetAsync(int id)
+        public async Task<TEntity> GetAsync(Guid id)
         {
             return await _context.Set<TEntity>().FindAsync(id);
         }

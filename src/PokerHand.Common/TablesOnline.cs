@@ -41,6 +41,7 @@ namespace PokerHand.Common
         {
             if (Tables.Any(t => t.Id == tableId))
                 Tables.Remove(Tables.First(t => t.Id == tableId));
+            
         }
     }
 }

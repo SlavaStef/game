@@ -168,6 +168,9 @@ namespace PokerHand.BusinessLogic.Services
 
         public async Task<ResultModel<RemoveFromTableResult>> RemovePlayerFromTable(Guid tableId, Guid playerId)
         {
+            try
+            {
+                // Preparation
             var table = _allTables.GetById(tableId);
             if (table is null)
                 return new ResultModel<RemoveFromTableResult> {IsSuccess = false, Message = "Table is null"};
@@ -176,13 +179,11 @@ namespace PokerHand.BusinessLogic.Services
             if (player is null)
                 return new ResultModel<RemoveFromTableResult> {IsSuccess = false, Message = "Player is null"};
             
-            Log.Information($"RemovePlayerFromTable. count: {table.Players.Count(p => p.GetType() == typeof(Player))}");
+            LogTableState(table);
 
-            foreach (var tablePlayer in table.Players)
-            {
-                Log.Information($"{tablePlayer.UserName} : {tablePlayer.GetType()}");
-            }
+            // REMOVE
             
+            // player is the last player on table
             if (table.Players.Count(p => p.GetType() == typeof(Player)) is 1)
             {
                 Log.Information("RemovePlayerFromTable. One human player");
@@ -190,7 +191,7 @@ namespace PokerHand.BusinessLogic.Services
                 Log.Information("RemovePlayerFromTable. One human player. player removed");
 
                 _allTables.Remove(table.Id);
-                
+
                 Log.Information("RemovePlayerFromTable. One human player. table removed");
 
                 return new ResultModel<RemoveFromTableResult>
@@ -200,6 +201,7 @@ namespace PokerHand.BusinessLogic.Services
                 };
             }
 
+            // now it is player's turn to act
             if (table.CurrentPlayer?.Id == player.Id)
             {
                 Log.Information("RemovePlayerFromTable. second If");
@@ -222,6 +224,23 @@ namespace PokerHand.BusinessLogic.Services
                 Value = new RemoveFromTableResult
                     {WasPlayerRemoved = true, WasTableRemoved = false, TableDto = _mapper.Map<TableDto>(table)}
             };
+            }
+            catch (Exception e)
+            {
+                Log.Error(e.Message);
+                Log.Error(e.StackTrace);
+                throw;
+            }
+            
+        }
+
+        private static void LogTableState(Table table)
+        {
+            Log.Information(
+                $"RemovePlayerFromTable. number of players: {table.Players.Count(p => p.GetType() == typeof(Player))}");
+
+            foreach (var tablePlayer in table.Players)
+                Log.Information($"{tablePlayer.UserName} : {tablePlayer.GetType()}");
         }
 
         #region Helpers
@@ -347,6 +366,7 @@ namespace PokerHand.BusinessLogic.Services
             table.Players.Remove(player);
             
             RemoveFromGroupAsync?.Invoke(player.ConnectionId, table.Id.ToString());
+            Log.Information($"Player {player.UserName} was removed from table group");
         }
 
         private async Task RemoveCurrentPlayer(Player player, Table table)

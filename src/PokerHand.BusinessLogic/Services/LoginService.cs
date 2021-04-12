@@ -88,9 +88,11 @@ namespace PokerHand.BusinessLogic.Services
             await _unitOfWork.ExternalLogins.Add(player, providerName, providerKey);
         }
 
-        public async Task DeleteExternalLogin(Guid playerId)
+        public async Task<ResultModel<bool>> DeleteExternalLogin(Guid playerId)
         {
             await _unitOfWork.ExternalLogins.RemoveByPlayerId(playerId);
+
+            return new ResultModel<bool> {IsSuccess = true, Value = true};
         }
     }
 }

@@ -7,7 +7,7 @@ namespace PokerHand.DataAccess.Interfaces
     public interface IPlayerRepository
     {
         Task<Player> GetPlayerAsync(Guid playerId);
-        Task<bool> PlayerExistsAsync(Guid id);
+        Task<bool> PlayerExistsAsync(Guid playerId);
         
         Task AddTotalMoneyAsync(Guid playerId, int amount);
         Task SubtractTotalMoneyAsync(Guid playerId, int amount);

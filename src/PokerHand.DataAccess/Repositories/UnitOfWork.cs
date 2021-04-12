@@ -10,7 +10,7 @@ namespace PokerHand.DataAccess.Repositories
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly ApplicationContext _context;
-        private bool _disposed = false;
+        private bool _disposed;
         private SafeHandle handle = new SafeFileHandle(IntPtr.Zero, true);
         
         public IPlayerRepository Players { get; private set; }

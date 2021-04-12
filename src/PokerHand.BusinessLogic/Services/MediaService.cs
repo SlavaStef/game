@@ -101,6 +101,30 @@ namespace PokerHand.BusinessLogic.Services
             return result;
         }
 
+        public async Task<ResultModel<bool>> HasCustomProfileImage(Guid playerId)
+        {
+            var result = new ResultModel<bool>();
+            
+            var getImageResult = await GetPlayerImage(playerId);
+
+            if (getImageResult.IsSuccess is false)
+            {
+                result.IsSuccess = false;
+                result.Message = getImageResult.Message;
+            }
+
+            if (getImageResult.Value is DefaultImage)
+            {
+                result.IsSuccess = true;
+                result.Value = false;
+                return result;
+            }
+
+            result.IsSuccess = true;
+            result.Value = true;
+            return result;
+        }
+
         #region Helpers
 
         private void RemoveProfileImage(string playerId)
@@ -136,6 +160,27 @@ namespace PokerHand.BusinessLogic.Services
 
             result.IsSuccess = true;
             result.Value = profileImage;
+        }
+        
+        private async Task<ResultModel<string>> GetPlayerImage(Guid playerId)
+        {
+            var result = new ResultModel<string>();
+            
+            var path = Path.Combine(AppContext.BaseDirectory, "wwwroot", "profileImages", $"{playerId.ToString()}");
+            Log.Information($"GetPlayerImage. Path: {path}");
+
+            if (_fileSystem.File.Exists(path) is false)
+            {
+                result.IsSuccess = false;
+                result.Message = $"File {path} doesn't exist";
+                return result;
+            }
+
+            var profileImage = await _fileSystem.File.ReadAllTextAsync(path);
+
+            result.IsSuccess = true;
+            result.Value = profileImage;
+            return result;
         }
         
         #endregion

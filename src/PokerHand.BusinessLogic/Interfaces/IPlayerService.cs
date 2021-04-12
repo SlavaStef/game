@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using PokerHand.Common;
 using PokerHand.Common.Dto;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.ViewModels.Profile;
@@ -18,8 +19,8 @@ namespace PokerHand.BusinessLogic.Interfaces
         void SetPlayerReady(Guid tableId, Guid playerId);
         void ChangeAutoTop(Guid tableId, Guid playerId, bool isAutoTop);
         
-        Task<PlayerProfileDto> GetProfile(Guid playerId);
-        Task<PlayerProfileDto> UpdateProfile(UpdateProfileVM viewModel);
+        Task<ResultModel<PlayerProfileDto>> GetProfile(Guid playerId);
+        Task<ResultModel<PlayerProfileDto>> UpdateProfile(UpdateProfileVM viewModel);
 
         Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin);
         Task IncreaseNumberOfSitNGoWinsAsync(Guid playerId);

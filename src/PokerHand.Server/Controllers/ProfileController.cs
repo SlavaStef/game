@@ -2,13 +2,16 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PokerHand.BusinessLogic.Interfaces;
+using PokerHand.Common.Helpers.Media;
+using PokerHand.Common.ViewModels.Media;
 using PokerHand.Common.ViewModels.Profile;
+using Serilog;
 
 namespace PokerHand.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ProfileController : Controller
+    public class ProfileController : BaseWebApiController
     {
         private readonly IPlayerService _playerService;
 
@@ -21,23 +24,22 @@ namespace PokerHand.Server.Controllers
         [Route("get")]
         public async Task<IActionResult> Get(Guid playerId)
         {
-            var profileDto = await _playerService.GetProfile(playerId);
+            var getProfileResult = await _playerService.GetProfile(playerId);
 
-            return profileDto is null 
-                ? Problem() 
-                : Ok(profileDto);
+            return getProfileResult.IsSuccess
+                ? Success(value: getProfileResult.Value)
+                : Error(message: getProfileResult.Message);
         }
 
         [HttpPut]
         [Route("update")]
         public async Task<IActionResult> Update([FromBody] UpdateProfileVM viewModel)
         {
-            var profileDto =
-                await _playerService.UpdateProfile(viewModel);
+            var updateResult = await _playerService.UpdateProfile(viewModel);
 
-            return profileDto is null 
-                ? Problem() 
-                : Ok(profileDto);
+            return updateResult.IsSuccess
+                ? Success(value: updateResult.Value)
+                : Error(message: updateResult.Message);
         }
     }
 }

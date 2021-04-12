@@ -10,5 +10,6 @@ namespace PokerHand.BusinessLogic.Interfaces
         Task<ResultModel<string>> GetProfileImage(Guid playerId);
         Task<ResultModel<string>> UpdateProfileImage(Guid playerId, string newProfileImage);
         Task<ResultModel<string>> SetDefaultProfileImage(Guid playerId);
+        Task<ResultModel<bool>> HasCustomProfileImage(Guid playerId);
     }
 }

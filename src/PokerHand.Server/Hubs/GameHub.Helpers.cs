@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
+using PokerHand.Common.Helpers.Table;
 using Serilog;
 
 namespace PokerHand.Server.Hubs
@@ -53,6 +54,14 @@ namespace PokerHand.Server.Hubs
             };
 
             _gameProcessService.ReceivePlayerAction += async (table, action) =>
+            {
+                Log.Information($"action: {action} : {JsonSerializer.Serialize(action)}");
+                
+                await Clients.GroupExcept(table.Id.ToString(), table.CurrentPlayer.ConnectionId)
+                    .ReceivePlayerAction(JsonSerializer.Serialize(action));
+            };
+            
+            _tableService.ReceivePlayerAction += async (table, action) =>
             {
                 Log.Information($"action: {action} : {JsonSerializer.Serialize(action)}");
                 
@@ -113,9 +122,23 @@ namespace PokerHand.Server.Hubs
                 await Clients.Client(player.ConnectionId)
                     .EndSitAndGoGame(playersPlace.ToString());
             };
+            
+            _tableService.EndSitAndGoGame += async (player, playersPlace) =>
+            {
+                await Clients.Client(player.ConnectionId)
+                    .EndSitAndGoGame(playersPlace.ToString());
+            };
 
             _gameProcessService.RemoveFromGroupAsync += async (connectionId, groupName) =>
             {
+                Log.Information($"RemoveFromGroupAsync. connectionId: {connectionId}, groupName: {groupName}");
+                await Groups
+                    .RemoveFromGroupAsync(connectionId, groupName);
+            };
+            
+            _tableService.RemoveFromGroupAsync += async (connectionId, groupName) =>
+            {
+                Log.Information($"RemoveFromGroupAsync. connectionId: {connectionId}, groupName: {groupName}");
                 await Groups
                     .RemoveFromGroupAsync(connectionId, groupName);
             };
@@ -127,6 +150,12 @@ namespace PokerHand.Server.Hubs
             };
 
             _gameProcessService.PlayerDisconnected += async (tableId, tableDtoJson) =>
+            {
+                await Clients.Group(tableId)
+                    .PlayerDisconnected(tableDtoJson);
+            };
+            
+            _tableService.PlayerDisconnected += async (tableId, tableDtoJson) =>
             {
                 await Clients.Group(tableId)
                     .PlayerDisconnected(tableDtoJson);

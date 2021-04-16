@@ -26,7 +26,7 @@ namespace PokerHand.DataAccess.Context
             NpgsqlConnection.GlobalTypeMapper.MapEnum<HandType>();
         }
 
-        // public ApplicationContext() { }
+        //public ApplicationContext() { }
         
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {

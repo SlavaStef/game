@@ -15,7 +15,7 @@ namespace PokerHand.BusinessLogic.Interfaces
         public event Action<string, string> PlayerDisconnected;
         public event Action<string, string> RemoveFromGroupAsync;
         
-        TableInfoDto GetTableInfo(string tableName);
+        ResultModel<TableInfoDto> GetTableInfo(string tableName);
         List<TableInfoDto> GetAllTablesInfo();
         Task<ResultModel<ConnectToTableResult>> AddPlayerToTable(TableConnectionOptions options);
         Task<ResultModel<RemoveFromTableResult>> RemovePlayerFromTable(Guid tableId, Guid playerId);

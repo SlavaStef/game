@@ -36,6 +36,10 @@ namespace PokerHand.DataAccess.Configurations
                 .IsRequired();
             
             builder
+                .Property(p => p.MoneyBoxAmount)
+                .IsRequired();
+            
+            builder
                 .Property(p => p.CoinsAmount)
                 .IsRequired();
             

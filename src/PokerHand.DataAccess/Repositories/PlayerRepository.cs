@@ -61,6 +61,35 @@ namespace PokerHand.DataAccess.Repositories
             await _context.SaveChangesAsync();
         }
 
+        // MoneyBox
+        public async Task<int> GetMoneyBoxAmountAsync(Guid playerId)
+        {
+            var player = await _context.Players.FirstOrDefaultAsync(p => p.Id == playerId);
+
+            return player.MoneyBoxAmount;
+        }
+
+        public async Task<int> IncreaseMoneyBoxAmountAsync(Guid playerId, int amount)
+        {
+            var player = await _context.Players.FirstOrDefaultAsync(p => p.Id == playerId);
+
+            player.MoneyBoxAmount += amount;
+                
+            await _context.SaveChangesAsync();
+
+            return player.MoneyBoxAmount;
+        }
+
+        public async Task OpenMoneyBoxAsync(Guid playerId)
+        {
+            var player = await _context.Players.FirstOrDefaultAsync(p => p.Id == playerId);
+
+            player.TotalMoney += player.MoneyBoxAmount;
+            player.MoneyBoxAmount = 0;
+
+            await _context.SaveChangesAsync();
+        }
+
         // Statistics
         public async Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin)
         {

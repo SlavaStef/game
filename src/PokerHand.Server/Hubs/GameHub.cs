@@ -20,8 +20,6 @@ namespace PokerHand.Server.Hubs
         private readonly IPlayersOnline _allPlayers;
         private readonly ITableService _tableService;
         private readonly IPlayerService _playerService;
-        private readonly IMediaService _mediaService;
-        private readonly ILoginService _loginService;
         private readonly IPresentService _presentService;
         private readonly IMapper _mapper;
 
@@ -31,9 +29,7 @@ namespace PokerHand.Server.Hubs
             IPlayersOnline allPlayers, 
             ITablesOnline allTables, 
             IMapper mapper, 
-            IMediaService mediaService, 
             IGameProcessService gameProcessService, 
-            ILoginService loginService, 
             IPresentService presentService)
         {
             _tableService = tableService;
@@ -41,34 +37,16 @@ namespace PokerHand.Server.Hubs
             _allPlayers = allPlayers;
             _allTables = allTables;
             _mapper = mapper;
-            _mediaService = mediaService;
             _gameProcessService = gameProcessService;
-            _loginService = loginService;
             _presentService = presentService;
 
             RegisterEventHandlers();
         }
-
-        public async Task Test(string message)
-        {
-            await Clients.Caller.ReceiveTestMessage(message);
-        }
         
-        //TODO: change to Json
-        public async Task GetTableInfo(string tableTitle)
+        public override async Task OnConnectedAsync()
         {
-            var tableInfo = _tableService.GetTableInfo(tableTitle);
-            
             await Clients.Caller
-                .ReceiveTableInfo(JsonSerializer.Serialize(tableInfo));
-        }
-        
-        public async Task GetAllTablesInfo()
-        {
-            var allTablesInfo = _tableService.GetAllTablesInfo();
-            
-            await Clients.Caller
-                .ReceiveAllTablesInfo(JsonSerializer.Serialize(allTablesInfo));
+                .ReceiveConnectionId(Context.ConnectionId);
         }
         
         //TODO: should receive one object

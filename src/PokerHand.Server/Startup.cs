@@ -1,5 +1,4 @@
 using System;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -38,22 +37,14 @@ namespace PokerHand.Server
             services.AddIdentity<Player, IdentityRole<Guid>>(options =>
                 {
                     options.User.AllowedUserNameCharacters =
-                        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -._@";
+                        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                        "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ" +
+                        "ÀàÂâÆæÇçÉéÈèÊêËëÎîÏïÔôŒœÙùÛûÜüŸÿ" +
+                        "0123456789 \\-._@'\"";
                 })
                 .AddEntityFrameworkStores<ApplicationContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddAuthentication()
-                .AddGoogle(options =>
-                {
-                    options.ClientId = "931980355852-kl59do3oc6vft9rp80n2et8qhvs0sjm9.apps.googleusercontent.com";
-                    options.ClientSecret = "mfnNBGBHl7ZV21ZN8-qjAJae";
-                    
-                    options.ClaimActions.MapJsonKey("urn:google:picture", "picture", "url");
-                    options.ClaimActions.MapJsonKey("urn:google:locale", "locale", "string");
-                    options.SaveTokens = true;
-                });
-            
             services.AddSignalR()
                 .AddMessagePackProtocol();
 
@@ -70,6 +61,7 @@ namespace PokerHand.Server
             services.AddTransient<IGameProcessService, GameProcessService>();
             services.AddTransient<ILoginService, LoginService>();
             services.AddTransient<IPresentService, PresentService>();
+            services.AddTransient<IMoneyBoxService, MoneyBoxService>();
             
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             

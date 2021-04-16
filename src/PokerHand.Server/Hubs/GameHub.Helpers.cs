@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using PokerHand.Common;
 using PokerHand.Common.Dto;
-using PokerHand.Common.Helpers.Table;
 using Serilog;
 
 namespace PokerHand.Server.Hubs

@@ -27,6 +27,7 @@ namespace PokerHand.BusinessLogic.Services
         private readonly ITableService _tableService;
         private readonly IBotService _botService;
         private readonly ICardEvaluationService _cardEvaluationService;
+        private readonly IMoneyBoxService _moneyBoxService;
 
         private readonly IMapper _mapper;
 
@@ -63,7 +64,8 @@ namespace PokerHand.BusinessLogic.Services
             IBotService botService,
             ICardEvaluationService cardEvaluationService,
             ITablesOnline allTables, 
-            IConfiguration configuration)
+            IConfiguration configuration, 
+            IMoneyBoxService moneyBoxService)
         {
             _mapper = mapper;
             _deckService = deckService;
@@ -73,6 +75,7 @@ namespace PokerHand.BusinessLogic.Services
             _cardEvaluationService = cardEvaluationService;
             _allTables = allTables;
             Configuration = configuration;
+            _moneyBoxService = moneyBoxService;
         }
 
         public async Task StartRound(Guid tableId)
@@ -877,6 +880,16 @@ namespace PokerHand.BusinessLogic.Services
 
                 var experience = TableOptions.Tables[table.Title.ToString()]["Experience"];
                 await _playerService.AddExperienceAsync(player.Id, experience);
+
+                var moneySpent = table.Pot.Bets[player.Id];
+
+                var win = table.SidePots
+                    .Where(sidePot => sidePot.Winners.Contains(player))
+                    .Sum(sidePot => sidePot.WinningAmountPerPlayer);
+
+                if(isWinner)
+                    await _moneyBoxService.IncreaseMoneyBoxAmount(player.Id, win);
+                
             }
         }
 

@@ -4,7 +4,7 @@ namespace PokerHand.Server.Hubs.Interfaces
 {
     public interface IGameHubClient
     {
-        Task ReceiveTestMessage(string message);
+        Task ReceiveConnectionId(string connectionId);
         Task ContinueRegistration();
         Task ReceivePlayerProfile(string playerProfileDto);
         Task ReceivePlayerNotFound();

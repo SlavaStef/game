@@ -2,10 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PokerHand.BusinessLogic.Interfaces;
-using PokerHand.Common.Helpers.Media;
-using PokerHand.Common.ViewModels.Media;
 using PokerHand.Common.ViewModels.Profile;
-using Serilog;
 
 namespace PokerHand.Server.Controllers
 {

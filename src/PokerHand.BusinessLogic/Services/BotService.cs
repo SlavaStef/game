@@ -30,7 +30,7 @@ namespace PokerHand.BusinessLogic.Services
             var maxBuyIn = TableOptions.Tables[tableName]["MaxBuyIn"];
             
             var fakeUser = new Faker<Bot>()
-                .RuleFor(o => o.RegistrationDate, f => f.Date.Past(0, DateTime.Now))
+                .RuleFor(o => o.RegistrationDate, f => f.Date.Past(1, DateTime.Now))
                 .RuleFor(o => o.UserName, f => f.Internet.UserName())
                 .RuleFor(o => o.ImageUri, f => f.Internet.Avatar())
                 .Generate();

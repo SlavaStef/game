@@ -5,7 +5,7 @@ using PokerHand.Common.Helpers.Authorization;
 
 namespace PokerHand.DataAccess.Interfaces
 {
-    public interface IExternalLoginRepository
+    public interface IExternalLoginRepository : IRepository<ExternalLogin>
     {
         Task Add(Player player, ExternalProviderName externalProvider, string providerKey);
         Task<Guid> GetByProviderKey(string providerKey);

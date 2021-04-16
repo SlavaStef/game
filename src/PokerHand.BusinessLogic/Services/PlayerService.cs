@@ -40,8 +40,9 @@ namespace PokerHand.BusinessLogic.Services
             _mediaService = mediaService;
         }
 
-        public async Task<PlayerProfileDto> CreatePlayer(string playerName, Gender gender, HandsSpriteType handsSprite, string ipAddress)
+        public async Task<ResultModel<PlayerProfileDto>> CreatePlayer(string playerName, Gender gender, HandsSpriteType handsSprite, string ipAddress)
         {
+            var result = new ResultModel<PlayerProfileDto>();
             var newPlayer = GeneratePlayer(playerName, gender, handsSprite, ipAddress);
 
             var createResult = await _userManager.CreateAsync(newPlayer);
@@ -62,7 +63,10 @@ namespace PokerHand.BusinessLogic.Services
                 Log.Error($"CreatePlayer. {setImageResult.Message} playerId: {newPlayer.Id}");
 
             Log.Information($"New player {newPlayer.UserName} registered");
-            return _mapper.Map<PlayerProfileDto>(newPlayer);
+
+            result.IsSuccess = true;
+            result.Value = _mapper.Map<PlayerProfileDto>(newPlayer);
+            return result;
         }
 
         public void SetPlayerReady(Guid tableId, Guid playerId)
@@ -86,10 +90,14 @@ namespace PokerHand.BusinessLogic.Services
         public async Task<ResultModel<PlayerProfileDto>> GetProfile(Guid playerId)
         {
             var player = await _userManager.Users.FirstOrDefaultAsync(p => p.Id == playerId);
+            
+            if (player is null)
+            {
+                var bot = _allTables.GetByPlayerId(playerId).Players.FirstOrDefault(p => p.Id == playerId);
+                return new ResultModel<PlayerProfileDto>{IsSuccess = true, Value = _mapper.Map<PlayerProfileDto>(bot)};
+            }
 
-            return player is not null
-                ? new ResultModel<PlayerProfileDto>{IsSuccess = true, Value = _mapper.Map<PlayerProfileDto>(player)}
-                : new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = " Player not found"};
+            return new ResultModel<PlayerProfileDto>{IsSuccess = true, Value = _mapper.Map<PlayerProfileDto>(player)};
         }
 
         public async Task<ResultModel<PlayerProfileDto>> UpdateProfile(UpdateProfileVM viewModel)

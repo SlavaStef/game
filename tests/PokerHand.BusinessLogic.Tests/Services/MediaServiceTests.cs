@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions.TestingHelpers;
-using System.Linq;
 using System.Net;
-using System.Text.Json;
 using FluentAssertions;
 using Moq;
 using PokerHand.BusinessLogic.Services;
 using PokerHand.Common;
 using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Bot;
-using PokerHand.Common.Helpers.Media;
 using PokerHand.Common.Helpers.Table;
 using PokerHand.DataAccess.Interfaces;
 using Xunit;

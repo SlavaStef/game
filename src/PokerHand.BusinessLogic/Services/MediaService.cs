@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -10,7 +8,6 @@ using System.Threading.Tasks;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Helpers.Bot;
-using PokerHand.Common.Helpers.Media;
 using PokerHand.DataAccess.Interfaces;
 using Serilog;
 

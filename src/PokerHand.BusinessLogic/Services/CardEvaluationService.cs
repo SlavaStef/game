@@ -254,13 +254,11 @@ namespace PokerHand.BusinessLogic.Services
 
                 foreach (var rule in listRules)
                 {
-                    //TODO: remove isJokerGame
                     var evaluationResult = rule.Check(playerHand, tableCards);
 
                     if (evaluationResult.IsWinningHand is false)
                         continue;
-
-                    // TODO: create mapping rule
+                    
                     result.Value = evaluationResult.Hand.Value;
                     result.HandType = evaluationResult.Hand.HandType;
                     result.Cards = evaluationResult.Hand.Cards;

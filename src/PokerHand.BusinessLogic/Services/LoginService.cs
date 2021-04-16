@@ -29,13 +29,14 @@ namespace PokerHand.BusinessLogic.Services
             _userManager = userManager;
         }
         
-        public async Task<PlayerProfileDto> AuthenticateWithPlayerId(Guid playerId)
+        public async Task<ResultModel<PlayerProfileDto>> AuthenticateWithPlayerId(Guid playerId)
         {
+            var result = new ResultModel<PlayerProfileDto>();
             var player = await _unitOfWork.Players.GetPlayerAsync(playerId);
 
-            return player is null 
-                ? null
-                : _mapper.Map<PlayerProfileDto>(player);
+            return player is not null
+                ? new ResultModel<PlayerProfileDto> {IsSuccess = true, Value = _mapper.Map<PlayerProfileDto>(player)}
+                : new ResultModel<PlayerProfileDto> {IsSuccess = false, Message = "Player not found"};
         }
 
         public async Task<ResultModel<PlayerProfileDto>> TryAuthenticateWithExternalProvider(string providerKey)
@@ -75,17 +76,22 @@ namespace PokerHand.BusinessLogic.Services
             
         }
 
-        public async Task CreateExternalLogin(Guid playerId, ExternalProviderName providerName, string providerKey)
+        public async Task<ResultModel> CreateExternalLogin(Guid playerId, ExternalProviderName providerName, string providerKey)
         {
+            var result = new ResultModel();
             var player = await _unitOfWork.Players.GetPlayerAsync(playerId);
 
             if (player is null)
             {
-                Log.Information($"Player {playerId} doesn't exist");
-                return;
+                result.Message = $"Player {playerId} doesn't exist";
+                result.IsSuccess = false;
+                return result;
             }
 
             await _unitOfWork.ExternalLogins.Add(player, providerName, providerKey);
+
+            result.IsSuccess = true;
+            return result;
         }
 
         public async Task<ResultModel<bool>> DeleteExternalLogin(Guid playerId)

@@ -9,7 +9,7 @@ namespace PokerHand.BusinessLogic.Interfaces
 {
     public interface IPlayerService
     {
-        Task<PlayerProfileDto> CreatePlayer(string playerName, Gender gender, HandsSpriteType handsSprite,
+        Task<ResultModel<PlayerProfileDto>> CreatePlayer(string playerName, Gender gender, HandsSpriteType handsSprite,
             string ipAddress);
 
         Task<bool> GetFromTotalMoney(Guid playerId, int amount);

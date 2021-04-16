@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using PokerHand.Common;
-using PokerHand.Common.Helpers.Media;
 
 namespace PokerHand.BusinessLogic.Interfaces
 {

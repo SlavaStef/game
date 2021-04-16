@@ -19,13 +19,15 @@ namespace PokerHand.Common.Entities
         public HandsSpriteType HandsSprite { get; set; }
         public int TotalMoney { get; set; }
         public int CoinsAmount { get; set; }
+        public int MoneyBoxAmount { get; set; }
         public int Experience { get; set; }
         public int GamesPlayed { get; set; }
         public HandType BestHandType { get; set; }
         public int GamesWon { get; set; }
         public int BiggestWin { get; set; }
         public int SitAndGoWins { get; set; }
-
+        public ICollection<ExternalLogin> PlayerLogins { get; set; }
+        
         // Game properties
         [NotMapped] public string ConnectionId { get; set; }
         [NotMapped] public Present Present { get; set; }
@@ -41,7 +43,5 @@ namespace PokerHand.Common.Entities
         [NotMapped] public List<Card> HandCombinationCards { get; set; }
         [NotMapped] public bool IsReady { get; set; }
         [NotMapped] public int NumberOfGamesOnCurrentTable { get; set; }
-
-        public ICollection<ExternalLogin> PlayerLogins { get; set; }
     }
 }

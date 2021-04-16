@@ -46,8 +46,17 @@ namespace PokerHand.BusinessLogic.Services
             _deckService = deckService;
         }
 
-        public TableInfoDto GetTableInfo(string tableName)
+        public ResultModel<TableInfoDto> GetTableInfo(string tableName)
         {
+            var result = new ResultModel<TableInfoDto>();
+
+            if (TableOptions.Tables.ContainsKey(tableName) is false)
+            {
+                result.IsSuccess = false;
+                result.Message = "Invalid table name";
+                return result;
+            }
+            
             var tableInfoDto = new TableInfoDto
             {
                 Title = tableName,
@@ -60,14 +69,16 @@ namespace PokerHand.BusinessLogic.Services
                 MaxPlayers = TableOptions.Tables[tableName]["MaxPlayers"]
             };
             
-            if (TableOptions.Tables[tableName]["TableType"] == (int)TableType.SitAndGo)
+            if (TableOptions.Tables[tableName]["TableType"] is (int)TableType.SitAndGo)
             {
                 tableInfoDto.InitialStack = TableOptions.Tables[tableName]["InitialStack"];
                 tableInfoDto.FirstPlacePrize = TableOptions.Tables[tableName]["FirstPlacePrize"];
                 tableInfoDto.SecondPlacePrize = TableOptions.Tables[tableName]["SecondPlacePrize"];
             }
 
-            return tableInfoDto;
+            result.IsSuccess = true;
+            result.Value = tableInfoDto;
+            return result;
         }
 
         public List<TableInfoDto> GetAllTablesInfo()

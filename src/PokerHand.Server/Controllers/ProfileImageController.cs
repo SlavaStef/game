@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.Helpers.Media;
 using PokerHand.Common.ViewModels.Media;
+using Serilog;
 
 namespace PokerHand.Server.Controllers
 {
@@ -33,6 +34,8 @@ namespace PokerHand.Server.Controllers
         [Route("update")]
         public async Task<IActionResult> Update([FromBody] UpdateProfileImageVM viewModel)
         {
+            Log.Information($"NEW IMAGE: {viewModel.NewProfileImage}");
+            
             var updateResult =
                 await _mediaService.UpdateProfileImage(viewModel.PlayerId, viewModel.NewProfileImage);
 

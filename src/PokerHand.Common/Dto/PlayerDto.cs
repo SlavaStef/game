@@ -22,6 +22,6 @@ namespace PokerHand.Common.Dto
         public int StackMoney { get; set; }
         public int IndexNumber { get; set; }
         public HandType Hand { get; set; }
-        public Present Present { get; set; }
+        public PresentName PresentName { get; set; }
     }
 }

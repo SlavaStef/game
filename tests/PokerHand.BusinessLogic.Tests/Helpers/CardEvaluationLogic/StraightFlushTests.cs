@@ -13,7 +13,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
         // A straight flush is a hand that contains five cards of sequential rank, all of the same suit
 
         [Fact]
-        public void StraightFlush_NoJoker_ReturnsTrue()
+        public void StraightFlush_NoJoker_ReturnsTrue_IfThereAreFiveSequentialCardsOfSameRank()
         {
             // Arrange
             var straightFlush = new StraightFlush();
@@ -45,7 +45,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
         }
 
         [Fact]
-        public void StraightFlush_NoJoker_ReturnsTrue_If6SequentialRanks()
+        public void StraightFlush_NoJoker_ReturnsTrue_IfThereAreSixSequentialCardsOfSameRank()
         {
             // Arrange
             var straightFlush = new StraightFlush();
@@ -77,7 +77,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
         }
 
         [Fact]
-        public void StraightFlush_NoJoker_ReturnsTrue_If7SequentialRanks()
+        public void StraightFlush_NoJoker_ReturnsTrue_IfThereAreSevenSequentialCardsOfSameRank()
         {
             // Arrange
             var straightFlush = new StraightFlush();
@@ -109,7 +109,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
         }
 
         [Fact]
-        public void StraightFlush_NoJoker_ReturnsFalse_IfNo5SequentialRanks()
+        public void StraightFlush_NoJoker_ReturnsFalse_IfNo5SequentialRanks_AndAllCardsOfSameSuit()
         {
             // Arrange
             var straightFlush = new StraightFlush();
@@ -137,7 +137,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
         }
 
         [Fact]
-        public void StraightFlush_NoJoker_ReturnsFalse_IfNo5SequentialCardsWithSameSuit()
+        public void StraightFlush_NoJoker_ReturnsFalse_IfThereAreFiveAndMoreSequentialCards_ButNotOfSameSuit()
         {
             // Arrange
             var straightFlush = new StraightFlush();
@@ -165,7 +165,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
         }
 
         [Fact]
-        public void StraightFlush_OneJoker_ReturnsTrue_IfThereAreFiveStraightCardsOfSameSuit()
+        public void StraightFlush_OneJoker_ReturnsTrue_IfThereAreFiveStraightCardsOfSameSuit_AndJokerIsInsideCombination()
         {
             // Arrange
             var straightFlush = new StraightFlush();

@@ -5,6 +5,7 @@ namespace PokerHand.Server.Hubs.Interfaces
     public interface IGameHubClient
     {
         Task ReceiveConnectionId(string connectionId);
+        Task ReceiveTotalMoney(string amount);
         Task ContinueRegistration();
         Task ReceivePlayerProfile(string playerProfileDto);
         Task ReceivePlayerNotFound();
@@ -27,9 +28,10 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task ReceiveProfileImage(string avatarJson);
         
         // Presents
-        Task ReceivePresent(string presentJson);
+        Task ReceivePresent(string present);
+        Task ErrorOnSendPresent(string error);
         
         // QuickChat
-        Task ReceiveQuickMessage(string quickMessageJson);
+        Task ReceiveQuickMessage(string messageTypeJson, string messageJson, string senderIndexJson);
     }
 }

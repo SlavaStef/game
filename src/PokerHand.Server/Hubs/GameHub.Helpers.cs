@@ -164,6 +164,16 @@ namespace PokerHand.Server.Hubs
             {
                 await Clients.All.ReceivePresent(present);
             };
+            
+            _presentService.OnSendPresentError += async (messageJson) =>
+            {
+                await Clients.Caller.ErrorOnSendPresent(messageJson);
+            };
+            
+            _presentService.SendTotalMoneyAmount += async (amount) =>
+            {
+                await Clients.Caller.ReceiveTotalMoney(amount);
+            };
         }
     }
 }

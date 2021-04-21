@@ -6,6 +6,7 @@ using PokerHand.Common;
 using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.ViewModels.Auth;
 using PokerHand.Common.ViewModels.Profile;
+using Serilog;
 
 namespace PokerHand.Server.Controllers
 {
@@ -73,6 +74,7 @@ namespace PokerHand.Server.Controllers
         [Route("registerWithExternalProvider")]
         public async Task<IActionResult> RegisterWithExternalProvider([FromBody] RegisterWithExternalProviderVM viewModel)
         {
+            Log.Information($"NEW IMAGE: {viewModel}");
             var ipAddress = Request.HttpContext.Connection.RemoteIpAddress?.ToString();
             
             var createPlayerResult = await _playerService.CreatePlayer(viewModel.UserName, viewModel.Gender,
@@ -93,6 +95,7 @@ namespace PokerHand.Server.Controllers
         [Route("addProvider")]
         public async Task<IActionResult> AddExternalProvider([FromBody] AddExternalProviderVM viewModel)
         {
+            Log.Information($"ADD IMAGE: {viewModel.ProfileImage}");
             await _loginService.CreateExternalLogin(viewModel.PlayerId, viewModel.ProviderName, viewModel.ProviderKey);
 
             var isCustomProfileImage = await _mediaService.HasCustomProfileImage(viewModel.PlayerId);

@@ -38,5 +38,13 @@ namespace PokerHand.Server.Controllers
                 ? Success(value: updateResult.Value)
                 : Error(message: updateResult.Message);
         }
+
+        [HttpGet("getTotalMoney")]
+        public async Task<IActionResult> GetTotalMoney(Guid playerId)
+        {
+            var totalMoney = await _playerService.GetTotalMoney(playerId);
+
+            return Success(value: totalMoney);
+        }
     }
 }

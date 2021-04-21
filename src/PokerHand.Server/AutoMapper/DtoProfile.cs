@@ -13,6 +13,7 @@ namespace PokerHand.Server.AutoMapper
             CreateMap<Player, PlayerProfileDto>();
             CreateMap<Table, TableDto>();
             CreateMap<SidePot, SidePotDto>();
+            CreateMap<ExternalLogin, ExternalLoginDto>();
         }
     }
 }

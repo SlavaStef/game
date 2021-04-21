@@ -18,6 +18,6 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task OnDisconnectedAsync(Exception exception);
         
         // QuickChat
-        Task SendQuickMessage(string quickMessageJson, string tableIdString);
+        Task SendQuickMessage(string messageTypeJson, string messageJson, string tableIdString, string senderIndexJson);
     }
 }

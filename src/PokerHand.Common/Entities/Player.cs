@@ -30,7 +30,7 @@ namespace PokerHand.Common.Entities
         
         // Game properties
         [NotMapped] public string ConnectionId { get; set; }
-        [NotMapped] public Present Present { get; set; }
+        [NotMapped] public PresentName PresentName { get; set; }
         [NotMapped] public bool IsAutoTop { get; set; }
         [NotMapped] public int CurrentBuyIn { get; set; }
         [NotMapped] public List<Card> PocketCards { get; set; }

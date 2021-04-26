@@ -26,7 +26,7 @@ namespace PokerHand.Common.Entities
         public int GamesWon { get; set; }
         public int BiggestWin { get; set; }
         public int SitAndGoWins { get; set; }
-        public ICollection<ExternalLogin> PlayerLogins { get; set; }
+        public ExternalLogin PlayerLogin { get; set; }
         
         // Game properties
         [NotMapped] public string ConnectionId { get; set; }

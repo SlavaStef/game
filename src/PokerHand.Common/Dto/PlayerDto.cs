@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.Card;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.Player;

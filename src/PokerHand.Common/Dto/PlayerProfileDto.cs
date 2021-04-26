@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using PokerHand.Common.Entities;
+using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.Player;
 
@@ -28,6 +29,6 @@ namespace PokerHand.Common.Dto
         public int GamesWon { get; set; }
         public int BiggestWin { get; set; }
         public int SitAndGoWins { get; set; }
-        public List<ExternalLoginDto> PlayerLogins { get; set; }
+        public ExternalProviderName ProviderName { get; set; }
     }
 }

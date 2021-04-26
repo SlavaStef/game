@@ -9,6 +9,11 @@ namespace PokerHand.DataAccess.Configurations
         public void Configure(EntityTypeBuilder<Player> builder)
         {
             builder
+                .HasOne(p => p.PlayerLogin)
+                .WithOne(l => l.Player)
+                .HasForeignKey<ExternalLogin>(l => l.PlayerId);
+            
+            builder
                 .HasKey(p => p.Id);
 
             builder

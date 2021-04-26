@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common.ViewModels.Profile;
+using Serilog;
 
 namespace PokerHand.Server.Controllers
 {
@@ -33,6 +35,8 @@ namespace PokerHand.Server.Controllers
         public async Task<IActionResult> Update([FromBody] UpdateProfileVM viewModel)
         {
             var updateResult = await _playerService.UpdateProfile(viewModel);
+            
+            Log.Information($"Update. updateResult: {JsonSerializer.Serialize(updateResult.Value)}");
 
             return updateResult.IsSuccess
                 ? Success(value: updateResult.Value)

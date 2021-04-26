@@ -105,7 +105,7 @@ namespace PokerHand.Server.Controllers
             var getProfileResult = await _playerService.GetProfile(viewModel.PlayerId);
 
             return getProfileResult.IsSuccess
-                ? Success(value: getProfileResult)
+                ? Success(value: getProfileResult.Value)
                 : Error(message: getProfileResult.Message);
         }
 

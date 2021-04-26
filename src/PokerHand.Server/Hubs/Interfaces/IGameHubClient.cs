@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using PokerHand.Common.Dto;
 
 namespace PokerHand.Server.Hubs.Interfaces
 {
@@ -32,6 +33,6 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task ErrorOnSendPresent(string error);
         
         // QuickChat
-        Task ReceiveQuickMessage(string messageTypeJson, string messageJson, string senderIndexJson);
+        Task ReceiveQuickMessage(string quickMessageDtoJson);
     }
 }

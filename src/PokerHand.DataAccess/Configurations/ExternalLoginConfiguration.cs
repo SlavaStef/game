@@ -12,11 +12,6 @@ namespace PokerHand.DataAccess.Configurations
                 .HasKey(p => new { p.ProviderKey, LoginProvider = p.ProviderName });
 
             builder
-                .HasOne(l => l.Player)
-                .WithMany(p => p.PlayerLogins)
-                .HasForeignKey(l => l.PlayerId);
-
-            builder
                 .HasIndex(p => p.ProviderKey);
             
             builder

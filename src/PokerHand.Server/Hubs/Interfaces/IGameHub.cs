@@ -9,7 +9,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task ConnectToTable(string tableTitleJson, string playerIdJson, string buyInJson, string isAutoTopJson);
         void ReceivePlayerActionFromClient(string actionJson, string tableIdJson);
         void ReceiveActivePlayerStatus(string tableId, string playerId);
-        Task ReceiveNewBuyIn(string tableIdJson, string playerIdJson, string amountJson, string isAutoTopJson);
+        Task ReceiveNewBuyIn(string tableIdJson, string playerIdJson, string newBuyInJson, string isAutoTopJson);
 
         // Disconnect
         Task LeaveTable(string tableIdJson, string playerIdJson);
@@ -19,5 +19,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         
         // QuickChat
         Task SendQuickMessage(string messageJson, string tableIdString, string senderIndexJson);
+
+        Task ShowWinnerCards(string tableIdString);
     }
 }

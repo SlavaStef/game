@@ -17,7 +17,7 @@ namespace PokerHand.BusinessLogic.Interfaces
         Task AddTotalMoney(Guid playerId, int amountToAdd);
         Task<int> GetTotalMoney(Guid playerId);
         void SetPlayerReady(Guid tableId, Guid playerId);
-        void ChangeAutoTop(Guid tableId, Guid playerId, bool isAutoTop);
+        ResultModel ChangeAutoTop(Guid tableId, Guid playerId, int newBuyIn, bool isAutoTop);
         
         Task<ResultModel<PlayerProfileDto>> GetProfile(Guid playerId);
         Task<ResultModel<PlayerProfileDto>> UpdateProfile(UpdateProfileVM viewModel);

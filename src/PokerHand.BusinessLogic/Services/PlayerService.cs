@@ -77,13 +77,27 @@ namespace PokerHand.BusinessLogic.Services
                 .IsReady = true;
         }
 
-        public void ChangeAutoTop(Guid tableId, Guid playerId, bool isAutoTop)
+        public ResultModel ChangeAutoTop(Guid tableId, Guid playerId, int newBuyIn, bool isAutoTop)
         {
-            _allTables
+            var result = new ResultModel();
+            
+            var player = _allTables
                 .GetById(tableId)
                 .Players
-                .First(p => p.Id == playerId)
-                .IsAutoTop = isAutoTop;
+                .FirstOrDefault(p => p.Id == playerId);
+
+            if (player is null)
+            {
+                result.IsSuccess = false;
+                result.Message = "Player not found";
+                return result;
+            }
+            
+            player.IsAutoTop = isAutoTop;
+            player.CurrentBuyIn = newBuyIn;
+
+            result.IsSuccess = true;
+            return result;
         }
 
         // Profile

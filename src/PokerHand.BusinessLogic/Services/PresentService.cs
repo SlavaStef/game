@@ -56,8 +56,17 @@ namespace PokerHand.BusinessLogic.Services
             };
             
             var totalPresentPrice = PresentOptions.Presents[presentName] * recipientsIds.Count;
-            
-            await SendErrorIfNotEnoughMoney(senderId, totalPresentPrice);
+
+            var senderTotalMoney = await _playerService.GetTotalMoney(senderId);
+
+            Log.Information(
+                $"SendErrorIfNotEnoughMoney. senderTotalMoney: {senderTotalMoney}, totalPresentPrice: {totalPresentPrice}");
+
+            if (totalPresentPrice > senderTotalMoney)
+            {
+                OnSendPresentError?.Invoke(JsonSerializer.Serialize(SendPresentErrors.NotEnoughMoney));
+                return;
+            }
 
             foreach (var recipientId in recipientsIds)
             {
@@ -78,12 +87,13 @@ namespace PokerHand.BusinessLogic.Services
             
             OnSendPresent?.Invoke(JsonSerializer.Serialize(present));
             
-            Log.Information($"SendPresent. Before GetFromTotalMoney: {await _playerService.GetTotalMoney(senderId)}");
+            Log.Information($"SendPresent. Before GetFromTotalMoney: {await _playerService.GetTotalMoney(senderId)}, from table: {table.Players.First(p => p.Id == senderId).TotalMoney}");
             
             var isOk = await _playerService.GetFromTotalMoney(senderId, totalPresentPrice);
+            table.Players.First(p => p.Id == senderId).TotalMoney = await _playerService.GetTotalMoney(senderId);
             
             Log.Information($"isOk: {isOk}");
-            Log.Information($"SendPresent. After GetFromTotalMoney: {await _playerService.GetTotalMoney(senderId)}");
+            Log.Information($"SendPresent. After GetFromTotalMoney: {await _playerService.GetTotalMoney(senderId)}, from table: {table.Players.First(p => p.Id == senderId).TotalMoney}");
 
             var newSenderTotalMoney = await _playerService.GetTotalMoney(senderId);
             SendTotalMoneyAmount?.Invoke(JsonSerializer.Serialize(newSenderTotalMoney));
@@ -95,6 +105,9 @@ namespace PokerHand.BusinessLogic.Services
         {
             var senderTotalMoney = await _playerService.GetTotalMoney(senderId);
 
+            Log.Information(
+                $"SendErrorIfNotEnoughMoney. senderTotalMoney: {senderTotalMoney}, totalPresentPrice: {totalPresentPrice}");
+            
             if (totalPresentPrice > senderTotalMoney)
                 OnSendPresentError?.Invoke(JsonSerializer.Serialize(SendPresentErrors.NotEnoughMoney));
         }

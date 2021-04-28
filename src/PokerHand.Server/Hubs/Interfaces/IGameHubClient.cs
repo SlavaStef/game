@@ -7,11 +7,6 @@ namespace PokerHand.Server.Hubs.Interfaces
     {
         Task ReceiveConnectionId(string connectionId);
         Task ReceiveTotalMoney(string amount);
-        Task ContinueRegistration();
-        Task ReceivePlayerProfile(string playerProfileDto);
-        Task ReceivePlayerNotFound();
-        Task ReceiveTableInfo(string tableInfo);
-        Task ReceiveAllTablesInfo(string allTablesInfo);
         Task ReceivePlayerDto(string playerDto);
         Task ReceiveTableState(string tableDto);
         Task OnGameEnd();
@@ -24,9 +19,6 @@ namespace PokerHand.Server.Hubs.Interfaces
         Task ReceiveWinners(string playerDtoListJson);
         Task EndSitAndGoGame(string place); //TODO: serialize
         Task OnLackOfStackMoney();
-
-        // Media
-        Task ReceiveProfileImage(string avatarJson);
         
         // Presents
         Task ReceivePresent(string present);
@@ -34,5 +26,7 @@ namespace PokerHand.Server.Hubs.Interfaces
         
         // QuickChat
         Task ReceiveQuickMessage(string quickMessageDtoJson);
+
+        Task ShowWinnerCards();
     }
 }

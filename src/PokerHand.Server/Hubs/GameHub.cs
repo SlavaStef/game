@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
@@ -108,16 +109,22 @@ namespace PokerHand.Server.Hubs
             _playerService.SetPlayerReady(tableIdGuid, playerIdGuid);
         }
 
-        public async Task ReceiveNewBuyIn(string tableIdJson, string playerIdJson, string amountJson, string isAutoTopJson)
+        public async Task ReceiveNewBuyIn(string tableIdJson, string playerIdJson, string newBuyInJson, string isAutoTopJson)
         {
             var tableId = JsonSerializer.Deserialize<Guid>(tableIdJson);
             var playerId = JsonSerializer.Deserialize<Guid>(playerIdJson);
-            var amount = JsonSerializer.Deserialize<int>(amountJson);
+            var newBuyIn = JsonSerializer.Deserialize<int>(newBuyInJson);
             var isAutoTop = JsonSerializer.Deserialize<bool>(isAutoTopJson);
 
-            await _playerService.AddStackMoneyFromTotalMoney(tableId, playerId, amount);
+            await _playerService.AddStackMoneyFromTotalMoney(tableId, playerId, newBuyIn);
 
-            _playerService.ChangeAutoTop(tableId, playerId, isAutoTop);
+            _playerService.ChangeAutoTop(tableId, playerId, newBuyIn, isAutoTop);
+        }
+
+        public async Task ShowWinnerCards(string tableIdString)
+        {
+            await Clients.GroupExcept(tableIdString, Context.ConnectionId)
+                .ShowWinnerCards();
         }
     }
 }

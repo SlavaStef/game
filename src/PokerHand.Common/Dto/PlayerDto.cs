@@ -24,5 +24,6 @@ namespace PokerHand.Common.Dto
         public int IndexNumber { get; set; }
         public HandType Hand { get; set; }
         public PresentName PresentName { get; set; }
+        public List<Card> HandCombinationCards { get; set; }
     }
 }

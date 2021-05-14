@@ -240,8 +240,8 @@ namespace PokerHand.BusinessLogic.Services
                 var listRules = new List<IRules>
                 {
                     new FiveOfAKind(), // +++
-                    new RoyalFlush(), // + no joker logic
-                    new StraightFlush(), // + no joker logic
+                    // new RoyalFlush(),
+                    new StraightFlush(), // ++ no 2 jokers logic
                     new FourOfAKind(), // +++
                     new FullHouse(), // +++
                     new Flush(), // +++

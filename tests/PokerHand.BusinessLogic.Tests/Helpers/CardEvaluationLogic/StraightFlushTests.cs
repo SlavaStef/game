@@ -11,6 +11,9 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
     {
         // STRAIGHT FLUSH
         // A straight flush is a hand that contains five cards of sequential rank, all of the same suit
+        
+        private const int Rate = 180_000;
+        
 
         [Fact]
         public void StraightFlush_NoJoker_ReturnsTrue_IfThereAreFiveSequentialCardsOfSameRank()
@@ -40,7 +43,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
             result.Hand.HandType.Should().Be(HandType.StraightFlush);
             result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
                                                     (int) CardRankType.Nine + (int) CardRankType.Ten +
-                                                    (int) CardRankType.Jack) * 180000);
+                                                    (int) CardRankType.Jack) * Rate);
             result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
@@ -72,7 +75,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
             result.Hand.HandType.Should().Be(HandType.StraightFlush);
             result.Hand.Value.Should().Be(((int) CardRankType.Eight + (int) CardRankType.Nine +
                                                     (int) CardRankType.Ten + (int) CardRankType.Jack +
-                                                    (int) CardRankType.Queen) * 180000);
+                                                    (int) CardRankType.Queen) * Rate);
             result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
@@ -104,7 +107,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
             result.Hand.HandType.Should().Be(HandType.StraightFlush);
             result.Hand.Value.Should().Be(((int) CardRankType.Eight + (int) CardRankType.Nine +
                                                     (int) CardRankType.Ten + (int) CardRankType.Jack +
-                                                    (int) CardRankType.Queen) * 180000);
+                                                    (int) CardRankType.Queen) * Rate);
             result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
 
@@ -164,6 +167,168 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
             result.Hand.Cards.Should().BeNull();
         }
 
+        // One joker
+        
+        [Fact]
+        public void StraightFlush_OneJoker_ReturnsTrue_IfThereAre4StraightCardsOfSameSuit_AndMaxSuitIsNotAce()
+        {
+            // Arrange
+            var straightFlush = new StraightFlush();
+
+            var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Black};
+            var card2 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Spade};
+            var card3 = new Card {Rank = CardRankType.Five, Suit = CardSuitType.Diamond};
+            var card4 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+
+            var expectedResult = new List<Card> {card1, card7, card6, card5, card4};
+
+            // Act
+            var result = straightFlush.Check(playerHand, tableCards);
+
+            // Assert
+            result.IsWinningHand.Should().Be(true);
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.King + (int) CardRankType.Queen +
+                                           (int) CardRankType.Jack + (int) CardRankType.Ten +
+                                           (int) CardRankType.Nine) * Rate);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+        }
+        
+        [Fact]
+        public void StraightFlush_OneJoker_ReturnsTrue_IfThereAre3StraightAnd1OfSameSuit()
+        {
+            // Arrange
+            var straightFlush = new StraightFlush();
+
+            var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Black};
+            var card2 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Spade};
+            var card3 = new Card {Rank = CardRankType.Five, Suit = CardSuitType.Diamond};
+            var card4 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+
+            var expectedResult = new List<Card> {card7, card1, card6, card5, card4};
+
+            // Act
+            var result = straightFlush.Check(playerHand, tableCards);
+
+            // Assert
+            result.IsWinningHand.Should().Be(true);
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Queen + (int) CardRankType.Jack +
+                                           (int) CardRankType.Ten + (int) CardRankType.Nine +
+                                           (int) CardRankType.Eight) * Rate);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+        }
+        
+        [Fact]
+        public void StraightFlush_OneJoker_ReturnsTrue_IfThereAre1And3StraightOfSameSuit()
+        {
+            // Arrange
+            var straightFlush = new StraightFlush();
+
+            var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Black};
+            var card2 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Spade};
+            var card3 = new Card {Rank = CardRankType.Five, Suit = CardSuitType.Diamond};
+            var card4 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+
+            var expectedResult = new List<Card> {card7, card6, card5, card1, card4};
+
+            // Act
+            var result = straightFlush.Check(playerHand, tableCards);
+
+            // Assert
+            result.IsWinningHand.Should().Be(true);
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Queen + (int) CardRankType.Jack +
+                                           (int) CardRankType.Ten + (int) CardRankType.Nine +
+                                           (int) CardRankType.Eight) * Rate);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+        }
+        
+        [Fact]
+        public void StraightFlush_OneJoker_ReturnsTrue_IfThereAre2StraightAnd2StraightOfSameSuit()
+        {
+            // Arrange
+            var straightFlush = new StraightFlush();
+
+            var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Black};
+            var card2 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Spade};
+            var card3 = new Card {Rank = CardRankType.Five, Suit = CardSuitType.Diamond};
+            var card4 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+
+            var expectedResult = new List<Card> {card7, card6, card1, card5, card4};
+
+            // Act
+            var result = straightFlush.Check(playerHand, tableCards);
+
+            // Assert
+            result.IsWinningHand.Should().Be(true);
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.Queen + (int) CardRankType.Jack +
+                                           (int) CardRankType.Ten + (int) CardRankType.Nine +
+                                           (int) CardRankType.Eight) * Rate);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+        }
+
+        [Fact]
+        public void StraightFlush_OneJoker_ReturnsTrue_IfThereAre5StraightOfSameSuitAndMaxSuitIsNotAce()
+        {
+            // Arrange
+            var royalFlush = new StraightFlush();
+
+            var card1 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Black};
+            var card2 = new Card {Rank = CardRankType.Deuce, Suit = CardSuitType.Spade};
+            var card3 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Diamond};
+            var card4 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
+            var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
+            var card6 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
+            var card7 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
+
+            var playerHand = new List<Card> {card1, card2};
+
+            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
+
+            var expectedResult = new List<Card> {card1, card7, card6, card5, card4};
+
+            // Act
+            var result = royalFlush.Check(playerHand, tableCards);
+
+            // Assert
+            result.IsWinningHand.Should().Be(true);
+            result.Hand.HandType.Should().Be(HandType.StraightFlush);
+            result.Hand.Value.Should().Be(((int) CardRankType.King + (int) CardRankType.Queen +
+                                           (int) CardRankType.Jack + (int) CardRankType.Ten +
+                                           (int) CardRankType.Nine) * Rate);
+            result.Hand.Cards.Should().ContainInOrder(expectedResult);
+        }
+
         [Fact]
         public void StraightFlush_OneJoker_ReturnsTrue_IfThereAreFiveStraightCardsOfSameSuit_AndJokerIsInsideCombination()
         {
@@ -182,7 +347,7 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
 
             var tableCards = new List<Card> {card3, card4, card5, card6, card7};
 
-            var expectedResult = new List<Card> {card6, card5, card4, card3, card2};
+            var expectedResult = new List<Card> {card7, card6, card5, card4, card3};
 
             // Act
             var result = straightFlush.Check(playerHand, tableCards);
@@ -190,74 +355,12 @@ namespace PokerHand.BusinessLogic.Tests.Helpers.CardEvaluationLogic
             // Assert
             result.IsWinningHand.Should().Be(true);
             result.Hand.HandType.Should().Be(HandType.StraightFlush);
-            result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
-                                                    (int) CardRankType.Nine + (int) CardRankType.Ten +
-                                                    (int) CardRankType.Jack) * 180000);
+            result.Hand.Value.Should().Be(((int) CardRankType.Queen + (int) CardRankType.Jack +
+                                           (int) CardRankType.Ten + (int) CardRankType.Nine + 
+                                           (int) CardRankType.Eight) * Rate);
             result.Hand.Cards.Should().ContainInOrder(expectedResult);
         }
-
-        [Fact]
-        public void StraightFlush_OneJoker_ReturnsTrue_IfThereAreFiveStraightCards_AndOneOfDifferentSuit()
-        {
-            // Arrange
-            var straightFlush = new StraightFlush();
-
-            var card1 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Diamond};
-            var card2 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
-            var card3 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
-            var card4 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Spade};
-            var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
-            var card6 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Black};
-            var card7 = new Card {Rank = CardRankType.Jack, Suit = CardSuitType.Club};
-
-            var playerHand = new List<Card> {card1, card2};
-
-            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
-
-            var expectedResult = new List<Card> {card6, card5, card4, card3, card2};
-
-            // Act
-            var result = straightFlush.Check(playerHand, tableCards);
-
-            // Assert
-            result.IsWinningHand.Should().Be(true);
-            result.Hand.HandType.Should().Be(HandType.StraightFlush);
-            result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
-                                                    (int) CardRankType.Nine + (int) CardRankType.Ten +
-                                                    (int) CardRankType.Jack) * 180000);
-            result.Hand.Cards.Should().ContainInOrder(expectedResult);
-        }
-
-        [Fact]
-        public void StraightFlush_OneJoker_ReturnsFalse_IfThereAreFiveStraightCards_AndTwoOfDifferentSuit()
-        {
-            // Arrange
-            var straightFlush = new StraightFlush();
-
-            var card1 = new Card {Rank = CardRankType.Ace, Suit = CardSuitType.Diamond};
-            var card2 = new Card {Rank = CardRankType.Seven, Suit = CardSuitType.Club};
-            var card3 = new Card {Rank = CardRankType.Eight, Suit = CardSuitType.Club};
-            var card4 = new Card {Rank = CardRankType.Nine, Suit = CardSuitType.Club};
-            var card5 = new Card {Rank = CardRankType.Ten, Suit = CardSuitType.Club};
-            var card6 = new Card {Rank = CardRankType.Joker, Suit = CardSuitType.Black};
-            var card7 = new Card {Rank = CardRankType.Queen, Suit = CardSuitType.Club};
-
-            var playerHand = new List<Card> {card1, card2};
-
-            var tableCards = new List<Card> {card3, card4, card5, card6, card7};
-
-            var expectedResult = new List<Card> {card6, card5, card4, card3, card2};
-
-            // Act
-            var result = straightFlush.Check(playerHand, tableCards);
-
-            // Assert
-            result.IsWinningHand.Should().Be(true);
-            result.Hand.HandType.Should().Be(HandType.StraightFlush);
-            result.Hand.Value.Should().Be(((int) CardRankType.Seven + (int) CardRankType.Eight +
-                                                    (int) CardRankType.Nine + (int) CardRankType.Ten +
-                                                    (int) CardRankType.Jack) * 180000);
-            result.Hand.Cards.Should().ContainInOrder(expectedResult);
-        }
+        
+        
     }
 }

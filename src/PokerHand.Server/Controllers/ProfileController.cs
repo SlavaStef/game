@@ -50,5 +50,15 @@ namespace PokerHand.Server.Controllers
 
             return Success(value: totalMoney);
         }
+        
+        [HttpPost("addTotalMoney")]
+        public async Task<IActionResult> AddTotalMoney([FromBody]AddMoneyVM model)
+        {
+            await _playerService.AddTotalMoney(model.PlayerId, model.Amount);
+
+            var newTotalMoney = await _playerService.GetTotalMoney(model.PlayerId);
+
+            return Success(value: newTotalMoney);
+        }
     }
 }

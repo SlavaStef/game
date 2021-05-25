@@ -6,8 +6,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="FluentValidation" Version="10.0.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.5" />
+      <PackageReference Include="FluentValidation" Version="10.1.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.6" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Helpers\Payment" />
     </ItemGroup>
 
 </Project>

@@ -867,10 +867,18 @@ namespace PokerHand.BusinessLogic.Services
 
                 if (isWinner)
                 {
-                    var winAmount = table.SidePots
-                        .First(sp => sp.Type is SidePotType.Main)
-                        .WinningAmountPerPlayer;
+                    var winningSidePots = table
+                        .SidePots
+                        .Where(sp => sp.Winners.Contains(player))
+                        .ToList();
 
+                    var winAmount = winningSidePots
+                        .Sum(sidePot => sidePot.WinningAmountPerPlayer);
+
+                    var spentAmount = table.Pot.Bets[player.Id];
+
+                    winAmount -= spentAmount;
+                    
                     if (player.BiggestWin < winAmount)
                         await _playerService.ChangeBiggestWinAsync(player.Id, winAmount);
                 }
@@ -887,10 +895,33 @@ namespace PokerHand.BusinessLogic.Services
                     .Where(sidePot => sidePot.Winners.Contains(player))
                     .Sum(sidePot => sidePot.WinningAmountPerPlayer);
 
-                if(isWinner)
-                    await _moneyBoxService.IncreaseMoneyBoxAmount(player.Id, win);
-                
+                await AddMoneyToMoneyBox(table, player, isWinner);
             }
+        }
+
+        private async Task AddMoneyToMoneyBox(Table table, Player player, bool isWinner)
+        {
+            if (isWinner)
+            {
+                var winningSidePots = table
+                    .SidePots
+                    .Where(sp => sp.Winners.Contains(player))
+                    .ToList();
+                
+                var winAmount = winningSidePots
+                    .Sum(sidePot => sidePot.WinningAmountPerPlayer);
+
+                var spentAmount = table.Pot.Bets[player.Id];
+                winAmount -= spentAmount;
+                
+                await _moneyBoxService.IncreaseMoneyBoxAmount(player.Id, winAmount / 20);
+                
+                return;
+            }
+
+            var lostAmount = table.Pot.Bets[player.Id];
+
+            await _moneyBoxService.IncreaseMoneyBoxAmount(player.Id, Convert.ToInt32(lostAmount * 0.015));
         }
 
         private async Task RefreshSitAndGoTable(Table table)

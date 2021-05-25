@@ -68,7 +68,7 @@ namespace PokerHand.BusinessLogic.Services
 
         private List<SidePot> CreateSidePots(Table table)
         {
-            var bets = table.Pot.Bets;
+            var bets = new Dictionary<Guid, int>(table.Pot.Bets);
             Log.Information($"CreateSidePots. Bets: {JsonSerializer.Serialize(bets)}");
 
             var finalSidePotsList = new List<SidePot>();

@@ -16,7 +16,7 @@ namespace PokerHand.DataAccess.Interfaces
 
         Task<int> GetMoneyBoxAmountAsync(Guid playerId);
         Task<int> IncreaseMoneyBoxAmountAsync(Guid playerId, int amount);
-        Task OpenMoneyBoxAsync(Guid playerId);
+        Task<int> OpenMoneyBoxAsync(Guid playerId);
         
         Task IncreaseNumberOfPlayedGamesAsync(Guid playerId, bool isWin);
         Task IncreaseNumberOfSitNGoWinsAsync(Guid playerId);

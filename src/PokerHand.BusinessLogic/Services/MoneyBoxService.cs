@@ -8,6 +8,7 @@ namespace PokerHand.BusinessLogic.Services
 {
     public class MoneyBoxService : IMoneyBoxService
     {
+        private const int MaxAmount = 2_000_000;
         private readonly IUnitOfWork _unitOfWork;
 
         public MoneyBoxService(IUnitOfWork unitOfWork)
@@ -34,7 +35,7 @@ namespace PokerHand.BusinessLogic.Services
             return result;
         }
 
-        public async Task<ResultModel<int>> IncreaseMoneyBoxAmount(Guid playerId, int amount)
+        public async Task<ResultModel<int>> IncreaseMoneyBoxAmount(Guid playerId, int amountToAdd)
         {
             var result = new ResultModel<int>();
             var playerExists = await _unitOfWork.Players.PlayerExistsAsync(playerId);
@@ -46,16 +47,33 @@ namespace PokerHand.BusinessLogic.Services
                 return result;
             }
 
-            var newMoneyBoxAmount = await _unitOfWork.Players.IncreaseMoneyBoxAmountAsync(playerId, 5);
-           
+            var currentMoneyBoxAmount = await _unitOfWork.Players.GetMoneyBoxAmountAsync(playerId);
+
+            if (currentMoneyBoxAmount >= MaxAmount)
+            {
+                result.IsSuccess = false;
+                result.Message = "MoneyBox is full";
+                result.Value = currentMoneyBoxAmount;
+
+                return result;
+            }
+            
+            int newMoneyBoxAmount;
+
+            if (currentMoneyBoxAmount + amountToAdd >= MaxAmount)
+                newMoneyBoxAmount =
+                    await _unitOfWork.Players.IncreaseMoneyBoxAmountAsync(playerId, MaxAmount - amountToAdd);
+            else
+                newMoneyBoxAmount = await _unitOfWork.Players.IncreaseMoneyBoxAmountAsync(playerId, amountToAdd);
+
             result.IsSuccess = true;
             result.Value = newMoneyBoxAmount;
             return result;
         }
 
-        public async Task<ResultModel<bool>> OpenMoneyBox(Guid playerId)
+        public async Task<ResultModel<int>> OpenMoneyBox(Guid playerId)
         {
-            var result = new ResultModel<bool>();
+            var result = new ResultModel<int>();
             var playerExists = await _unitOfWork.Players.PlayerExistsAsync(playerId);
 
             if (playerExists is false)
@@ -65,10 +83,10 @@ namespace PokerHand.BusinessLogic.Services
                 return result;
             }
 
-            await _unitOfWork.Players.OpenMoneyBoxAsync(playerId);
+            var newTotalMoneyAmount = await _unitOfWork.Players.OpenMoneyBoxAsync(playerId);
 
             result.IsSuccess = true;
-            result.Value = true;
+            result.Value = newTotalMoneyAmount;
             return result;
         }
     }

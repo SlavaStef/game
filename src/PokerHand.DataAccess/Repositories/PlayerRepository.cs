@@ -80,7 +80,7 @@ namespace PokerHand.DataAccess.Repositories
             return player.MoneyBoxAmount;
         }
 
-        public async Task OpenMoneyBoxAsync(Guid playerId)
+        public async Task<int> OpenMoneyBoxAsync(Guid playerId)
         {
             var player = await _context.Players.FirstOrDefaultAsync(p => p.Id == playerId);
 
@@ -88,6 +88,8 @@ namespace PokerHand.DataAccess.Repositories
             player.MoneyBoxAmount = 0;
 
             await _context.SaveChangesAsync();
+
+            return player.TotalMoney;
         }
 
         // Statistics

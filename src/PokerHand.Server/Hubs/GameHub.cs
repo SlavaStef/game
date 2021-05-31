@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using PokerHand.BusinessLogic.Interfaces;
 using PokerHand.Common;
 using PokerHand.Common.Helpers.GameProcess;
@@ -23,6 +24,7 @@ namespace PokerHand.Server.Hubs
         private readonly IPlayerService _playerService;
         private readonly IPresentService _presentService;
         private readonly IMapper _mapper;
+        private readonly IChatService _chatService;
 
         public GameHub(
             ITableService tableService,
@@ -31,7 +33,8 @@ namespace PokerHand.Server.Hubs
             ITablesOnline allTables, 
             IMapper mapper, 
             IGameProcessService gameProcessService, 
-            IPresentService presentService)
+            IPresentService presentService,
+            IChatService chatService)
         {
             _tableService = tableService;
             _playerService = playerService;
@@ -40,7 +43,8 @@ namespace PokerHand.Server.Hubs
             _mapper = mapper;
             _gameProcessService = gameProcessService;
             _presentService = presentService;
-
+            _chatService = chatService;
+        
             RegisterEventHandlers();
         }
         

@@ -10,7 +10,6 @@ namespace PokerHand.DataAccess.Repositories
 {
     public class PlayerRepository : Repository<Player>, IPlayerRepository
     {
-        
         public PlayerRepository(ApplicationContext context) : base(context)
         {
         }

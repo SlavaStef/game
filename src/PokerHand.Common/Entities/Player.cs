@@ -7,6 +7,7 @@ using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.GameProcess;
 using PokerHand.Common.Helpers.Player;
 using PokerHand.Common.Helpers.Present;
+using PokerHand.Common.Entities.Chat;
 
 namespace PokerHand.Common.Entities
 {
@@ -27,7 +28,13 @@ namespace PokerHand.Common.Entities
         public int BiggestWin { get; set; }
         public int SitAndGoWins { get; set; }
         public ExternalLogin PlayerLogin { get; set; }
-        
+        public string PersonalCode { get; set; }
+        public string Friends { get; set; }
+
+        public List<Message> Messages { get; set; }
+        public virtual List<Conversation> ConversationsFirst { get; set; }
+        public virtual List<Conversation> ConversationsSecond { get; set; }
+
         // Game properties
         [NotMapped] public string ConnectionId { get; set; }
         [NotMapped] public PresentName PresentName { get; set; }

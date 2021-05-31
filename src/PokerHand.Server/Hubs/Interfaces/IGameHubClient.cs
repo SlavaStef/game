@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using PokerHand.Common.Dto;
 
 namespace PokerHand.Server.Hubs.Interfaces
 {
@@ -26,6 +25,11 @@ namespace PokerHand.Server.Hubs.Interfaces
         
         // QuickChat
         Task ReceiveQuickMessage(string quickMessageDtoJson);
+
+        // Chat
+        Task ReceivePrivateMessage(string privateMessageDto);
+        Task ReceivePublicMessage(string publicMessageDto);
+        Task ConfirmMessageWasSent();
 
         Task ShowWinnerCards();
     }

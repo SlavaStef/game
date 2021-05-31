@@ -62,7 +62,8 @@ namespace PokerHand.Server
             services.AddTransient<ILoginService, LoginService>();
             services.AddTransient<IPresentService, PresentService>();
             services.AddTransient<IMoneyBoxService, MoneyBoxService>();
-            
+            services.AddTransient<IChatService, ChatService>();
+
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             services.AddSingleton<ITablesOnline, TablesOnline>();

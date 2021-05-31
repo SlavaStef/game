@@ -6,7 +6,9 @@ namespace PokerHand.DataAccess.Interfaces
     {
         IPlayerRepository Players { get; }
         IExternalLoginRepository ExternalLogins { get; }
-        
+        IConversationRepository Conversations { get; }
+        IMessageRepository Messages { get; }
+
         void DisableAutoDetectChanges();
         Task<int> CompleteAsync();
     }

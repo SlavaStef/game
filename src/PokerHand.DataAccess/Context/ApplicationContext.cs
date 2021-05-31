@@ -8,6 +8,7 @@ using PokerHand.Common.Entities;
 using PokerHand.Common.Helpers.Authorization;
 using PokerHand.Common.Helpers.CardEvaluation;
 using PokerHand.Common.Helpers.Player;
+using PokerHand.Common.Entities.Chat;
 using PokerHand.DataAccess.Configurations;
 
 namespace PokerHand.DataAccess.Context
@@ -16,6 +17,8 @@ namespace PokerHand.DataAccess.Context
     {
         public virtual DbSet<Player> Players { get; set; }
         public virtual DbSet<ExternalLogin> ExternalLogins { get; set; }
+        public virtual DbSet<Conversation> Conversations { get; set; }
+        public virtual DbSet<Message> Messages { get; set; }
 
         static ApplicationContext()
         {
@@ -43,6 +46,8 @@ namespace PokerHand.DataAccess.Context
 
             builder.ApplyConfiguration(new PlayerConfiguration());
             builder.ApplyConfiguration(new ExternalLoginConfiguration());
+            builder.ApplyConfiguration(new ConversationConfiguration());
+            builder.ApplyConfiguration(new MessageConfiguration());
 
             base.OnModelCreating(builder);
         }
